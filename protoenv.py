@@ -1,4 +1,5 @@
 import numpy as np
+import random
 from calvin_agent.evaluation.utils import (
     collect_plan,
     get_env_state_for_initial_condition,
@@ -12,55 +13,11 @@ class ProtoEnv():
         self.base_env = base_env
         self.task_oracle = task_oracle
 
-        self.initial_state = {'led': 0, 'lightbulb': 0, 'slider': 'right', 'drawer': 'open', 'red_block': 'table', 'blue_block': 'table', 'pink_block': 'slider_left', 'grasped': 0}
-        self.tasks = ('move_slider_left', 'turn_on_led', 'push_red_block_right')
-
-        #Placeholder for now, generate this dynamically later
-        '''
-        self.environment_description = [{
-                "role": "user",
-                "content": "You are a friendly, competent and helpful robot controler. You are in charge of giving language instructions to a robot about which task \
-                it should perform. The robot is able to grasp objects and move them around. The robot is infont of a table. On this table are mutltiple objects. \
-                A button to turn an LED on or off. A slider door which can be moved left or right. A red block which can be moved left, right or can be picked up. You should give \
-                concise, short instructions to the robot. You are controling the robot for \
-                one episode, which consists of four trials. At the beginning of the episode one task is randomly sampled to give a reward when completed. This task stays the same \
-                for all trials. Only this specific task gives a reward. All other tasks give no reward at all. Your job is to find the rewarding task in as few trials as possible and then exploit your knowledge to maximize the reward. \
-                In each trial you can give the robot one instruction. The robot will then try to perform the task based on your instruction. The robot is only able to complete on task per trial. \
-                After completion of a trial, you get feedback about whether the task performed by the robot was rewarding or not. You can then give the robot another instruction \
-                for the next trial. After completion of each trial, the robot and the environment is reset to the intial state. If you find a task that is rewarding, you have to continue giving the robot instructions to perform the same task again for all trials till the end of the episode. If you find a task that is not \
-                rewarding, you can give the robot instructions to perform another task. You first think about which task you choose and then give the corresponding instruction to the robot \
-                You have to use the following template to give your explanation, notes and instructions: 'Explanation: <your explanation> Notes: <your notes> Task: <your instruction>' \
-                Make sure your instructions are clear, concise and short. An example instruction could be 'Pick up the red block and move it left' or 'Press the button to ligh the LED'. Do not include anything else in your instruction besides the \
-                instruction. Only choose one instruction per trial. Do not include anything else besides your explanation and the instruction in your output! Only output a single explanation and a single instruction."
-            },
-            {"role": "assistant", "content": "I understand my job and will execute it to the best of my abilities."}]
-        '''
-
-        self.environment_description = [
-            {
-                "role": "user",
-                "content": "You are a friendly, competent and helpful robot controler. You are in charge of giving language instructions to a robot about which task \
-                it should perform.  You can choose between three different instructions: move_slider_left, turn_on_led, push_red_block_right. You are controling the robot for \
-                one episode, which consists of four trials. At the beginning of the episode one task is randomly sampled to give a reward when completed. This task stays the same \
-                for all trials. Only this specific task gives a reward. All other tasks give no reward at all. Your job is to find the rewarding task in as few trials as possible and then exploit your knowledge to maximize the reward. \
-                In each trial you can give the robot one instruction. The robot will then try to perform the task based on your instruction. The robot is only able to complete on task per trial. \
-                After completion of a trial, you get feedback about whether the task performed by the robot was rewarding or not. You can then give the robot another instruction \
-                for the next trial. If you find a task that is rewarding, you have to continue giving the robot instructions to perform the same task again for all trials till the end of the episode. If you find a task that is not \
-                rewarding, you can give the robot instructions to perform another task. You first think about which task you choose and then give the corresponding instruction to the robot \
-                You have to use the following template to give your explanation and instructions: 'Explanation: <your explanation> Task: <your instruction>' \
-                Only use one the following instructions: move_slider_left, turn_on_led, push_red_block_right. Do not include anything else in your instruction besides the \
-                instruction choices given to you. Only choose one instruction per trial. Do not include anything else besides your explanation and the instruction in your output! Only output a single explanation and a single instruction."
-            },
-            {
-                "role": "assistant", "content": "I understand my job and will execute it to the best of my abilities."
-            },
-            {
-                "role": "user", "content": "Beginning Trial 1: Please give the robot an instruction for this trial. Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Task: <your instruction>'. \
-                Remember to keep your instructions clear, concise and short. Do not include anything else in your instruction. "
-            },]
-
-
-        self.task_success_dict = {task: False for task in self.tasks}
+        self.train_tasks = ['push_red_block_right', 'push_pink_block_right', 'push_red_block_left', 'push_pink_block_left',
+                    'push_blue_block_left', 'lift_blue_block_table', 'lift_pink_block_table']
+        self.eval_tasks = ['push_blue_block_right', 'lift_red_block_table'] 
+        self.train_objects = ['blue_block', 'red_block', 'pink_block']
+        self.eval_objects = ['blue_block', 'red_block']
 
         self.num_trials = num_trials
         self.trial_steps = trial_steps
@@ -73,11 +30,19 @@ class ProtoEnv():
 
         self.provide_feedback = provide_feedback
 
-    def episode_reset(self):
+    def episode_reset(self, train=True):
         self.trial_count = 0
+        if train:
+            self.tasks = self.train_tasks
+            self.objects = self.train_objects
+        else:
+            self.tasks = self.eval_tasks
+            self.objects = self.eval_objects
+
+        self.task_success_dict = {task: False for task in self.tasks}
 
         #Sample which task to perform
-        self.meta_task = np.random.choice(self.tasks)
+        self.initial_state, self.meta_task, self.environment_description = self.create_dynamic_env()
 
         if self.provide_feedback:
             feedback = self.get_feedback()
@@ -94,6 +59,7 @@ class ProtoEnv():
         self.trial_count += 1
         self.trial_step_count = 0
         self.trial_done = False
+
         self.task_success_dict = {task: False for task in self.tasks}
 
         if self.provide_feedback:
@@ -145,3 +111,37 @@ class ProtoEnv():
                 feedback = instruction + " was not rewarding in Trial {0}. Beginning Trial {1}: Please give the robot an instruction for this trial. Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Task: <your instruction>'. \
                 Remember to keep your instructions clear, concise and short. Do not include anything else in your instruction. ".format(self.trial_count, self.trial_count+1)
         return feedback
+    
+    def create_dynamic_env(self):
+        table_objects = random.sample(self.objects, 2)
+        slider_objects = list(set(self.train_objects) - set(table_objects))
+
+        initial_state = {'led': 0, 'lightbulb': 0, 'slider': 'right', 'drawer': 'closed', table_objects[0] : 'table', table_objects[1]: 'table', 
+                         slider_objects[0]: 'slider_right', 'grasped': 0}
+        
+        #Check that the train task uses one of the two table objects
+        possible_tasks = [task for task in self.tasks if table_objects[0] in task or table_objects[1] in task]
+        meta_task = random.choice(possible_tasks)
+        print(meta_task)
+
+        #Remove the _ from the table objects
+        table_objects = [obj.replace('_', ' ') for obj in table_objects]
+        environment_description = [{
+                "role": "user",
+                "content": "You are a friendly, competent and helpful robot controler. You are in charge of giving language instructions to a robot about which task \
+                it should perform. The robot is able to grasp objects and move them around. The robot is infont of a table. On this table are mutltiple objects. \
+                A {0} and a {1} which can be pushed either to the left or righ or picked up from the table. You should give \
+                concise, short instructions to the robot. You are controling the robot for \
+                one episode, which consists of four trials. At the beginning of the episode one task is randomly sampled to give a reward when completed. This task stays the same \
+                for all trials. Only this specific task gives a reward. All other tasks give no reward at all. Your job is to find the rewarding task in as few trials as possible and then exploit your knowledge to maximize the reward. \
+                In each trial you can give the robot one instruction. The robot will then try to perform the task based on your instruction. The robot is only able to complete on task per trial. \
+                After completion of a trial, you get feedback about whether the task performed by the robot was rewarding or not. You can then give the robot another instruction \
+                for the next trial. After completion of each trial, the robot and the environment is reset to the intial state. If you find a task that is rewarding, you have to continue giving the robot instructions to perform the same task again for all trials till the end of the episode. If you find a task that is not \
+                rewarding, you can give the robot instructions to perform another task. You first think about which task you choose and then give the corresponding instruction to the robot \
+                You have to use the following template to give your explanation, notes and instructions: 'Explanation: <your explanation> Notes: <your notes> Task: <your instruction>' \
+                Make sure your instructions are clear, concise and short. Do not include anything else in your instruction besides the \
+                instruction. Only choose one instruction per trial. Do not include anything else besides your explanation and the instruction in your output! Only output a single explanation and a single instruction.".format(table_objects[0], table_objects[1])
+            },
+            {"role": "assistant", "content": "I understand my job and will execute it to the best of my abilities."}]
+        
+        return initial_state, meta_task, environment_description

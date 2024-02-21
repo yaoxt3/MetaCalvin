@@ -31,19 +31,18 @@ from calvin_agent.evaluation.utils import (
 )
 
 
-def rollout(env, agent, steps, annotation=None):
+def rollout(env, agent, steps, use_reasoning=False, annotation=None):
     agent.policy_model.reset()
-    obs, feedback, environment_description = env.episode_reset()
+    obs, feedback, environment_description = env.episode_reset(train=False)
     current_trial = 0
     instruction_step = True
     for i in range(steps):
         print(i)
-        action, instruction = agent.step(obs, feedback, use_reasoning=True, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
+        action, instruction = agent.step(obs, feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
         instruction_step = False
         obs, reward, trial, trial_done = env.step(action, instruction)
         if trial_done:
             print('trial done')
-            print(instruction)
             current_trial += 1
             if current_trial >= env.num_trials:
                 break
@@ -60,7 +59,7 @@ if __name__ == '__main__':
     task_cfg = OmegaConf.load("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
     task_oracle = hydra.utils.instantiate(task_cfg)
 
-    env = ProtoEnv(base_env, task_oracle, num_trials=4, trial_steps=250, provide_feedback=True)
+    env = ProtoEnv(base_env, task_oracle, num_trials=4, trial_steps=250, provide_feedback=False)
 
     # Load the model
     model, image_processor, tokenizer = create_model_and_transforms(
@@ -97,6 +96,6 @@ if __name__ == '__main__':
     print('here')
 
     # Rollout the environment
-    #annotation = 'do a backflip'
-    annotation = None
-    rollout(env, agent, 1000, annotation)
+    annotation = 'push the red block right'
+    #annotation = None
+    rollout(env, agent, 1000, use_reasoning=False, annotation=annotation)
