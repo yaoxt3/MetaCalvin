@@ -1,3 +1,7 @@
+import contextlib
+import torch
+import numpy as np
+
 def get_instruction_from_output(output, tokenizer):
     '''Detokenize the output of the LLM to get the instruction'''
     output = output[0]
@@ -23,3 +27,13 @@ def convert_obs_dict_to_cpu(obs):
         else:
             obs[key] = obs[key].to('cpu', torch.float16)
     return obs
+
+@contextlib.contextmanager
+#Adapted from https://github.com/hk-zh/spil/blob/master/spil/evaluation/utils.py
+def temp_seed(seed):
+    state = np.random.get_state()
+    np.random.seed(seed)
+    try:
+        yield
+    finally:
+        np.random.set_state(state)

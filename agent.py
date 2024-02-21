@@ -31,8 +31,7 @@ class OracleAgent():
                 self.policy_model.model.lang_encoder.lm_head.history_memory = self.policy_model.model.lang_encoder.lm_head.history_memory[-self.policy_model.refresh:]
             else:
                 self.policy_model.reset()
-        print(self.instruction)
-        sleep(100)
+        
         action = self.policy_model.step(obs, self.instruction, (len(self.planned_actions) == 0))
         if len(self.planned_actions) == 0:
             if action.shape == (7,):
@@ -48,6 +47,7 @@ class OracleAgent():
 
     def get_instruction(self, feedback=None, use_reasoning=True, annotation=None, env_description=None):
         '''Get the instruction from a description of the environment and the feedback'''
+
         if use_reasoning:
             assert self.reasoning_llm is not None, "Reasoning LLM is required if reasoning is used"
             assert feedback is not None, "Feedback is required if reasoning is used"
@@ -63,6 +63,7 @@ class OracleAgent():
         if self.task_llm is not None:
             instruction = self.get_task_llm_output(instruction)
         
+        
         return instruction
 
     def get_reasoning_output(self, feedback, env_description, vlm_description=None):
@@ -77,7 +78,8 @@ class OracleAgent():
                 self.reasoning_hist = env_description
         else:
             self.reasoning_hist.append(feedback)
-        instruction = self.reasoning_llm.get_instruction(self.reasoning_hist)
+        instruction, output = self.reasoning_llm.get_instruction(self.reasoning_hist)
+        self.reasoning_hist.append(output)
         return instruction
 
 

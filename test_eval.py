@@ -37,10 +37,13 @@ def rollout(env, agent, steps, annotation=None):
     current_trial = 0
     instruction_step = True
     for i in range(steps):
+        print(i)
         action, instruction = agent.step(obs, feedback, use_reasoning=True, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
         instruction_step = False
         obs, reward, trial, trial_done = env.step(action, instruction)
         if trial_done:
+            print('trial done')
+            print(instruction)
             current_trial += 1
             if current_trial >= env.num_trials:
                 break
@@ -82,18 +85,18 @@ if __name__ == '__main__':
     model.load_state_dict(checkpoint['model_state_dict'], False)
     
     model.half()
-    #model.cuda()
+    model.cuda()
     
     policy_model = ModelWrapper(model, tokenizer, image_processor, torch.float16, False)
 
     
     #Load reasoning model
-    reasoning_llm = ReasoningLLM(model_name='stabilityai/stablelm-zephyr-3b', tokenizer_name='stabilityai/stablelm-zephyr-3b', device_map="auto")
+    reasoning_llm = ReasoningLLM(model_name='stabilityai/stablelm-zephyr-3b', tokenizer_name='stabilityai/stablelm-zephyr-3b', device_map="cpu", temperature=0.8)
 
     agent = OracleAgent(policy_model, reasoning_llm=reasoning_llm, task_llm=None, vlm=None)
     print('here')
 
     # Rollout the environment
-    #annotation = 'move the slider door to the left'
+    #annotation = 'do a backflip'
     annotation = None
     rollout(env, agent, 1000, annotation)
