@@ -1,0 +1,137 @@
+import sys
+sys.path.append('../')
+
+import torch
+import hydra
+from pathlib import Path
+import os
+from hydra import initialize, compose
+
+from agent.agent import OracleAgent
+from protoenv import ProtoEnv
+from agent.reasoning_llm import ReasoningLLM
+from data_utils import *
+
+from utils import convert_obs_dict_to_cpu
+
+from robot_flamingo.models.factory import create_model_and_transforms
+from robot_flamingo.eval.eval_utils import ModelWrapper
+
+from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
+
+from omegaconf import DictConfig, OmegaConf
+
+import argparse
+
+def none_or_str(value):
+    if value == 'None':
+        return None
+    return value
+
+def main():
+    parser = argparse.ArgumentParser(description='Script to collect data from the environment using the oracle agent')
+
+    #Agent parameters
+    parser.add_argument('--checkpoint_path', default= '/home/richard/Documents/Flamingo/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
+                        type=str, help='Path to the policy model')
+    parser.add_argument('--reasoning_model', default= 'stabilityai/stablelm-zephyr-3b', type=none_or_str, help='Path to the reasoning model')
+    parser.add_argument('--task_llm', default= None, type=none_or_str, help='Path to the task planning model')
+    parser.add_argument('--vlm', default= None, type=none_or_str, help='Path to the VLM model to describe the environment')
+    parser.add_argument('--use_reasoning', action= 'store_true', help='Whether to use reasoning or not')
+    parser.add_argument('--device', default= 'cuda', type=str, help='Device to run the policy model')
+    parser.add_argument('--use_cuda_and_cpu', action= 'store_true', help='Whether split up the models between cuda and cpu or not')
+  
+    #Environment parameters
+    parser.add_argument('--provide_feedback', action= 'store_true', help='Whether to provide feedback or not')
+    parser.add_argument('--rollout_steps', default= 1000, type=int, help='Number of steps per meta_episode')
+    parser.add_argument('--num_trials', default= 4, type=int, help='Number of trials per episode')
+    parser.add_argument('--calvin_dataset_path', default= "/home/richard/Documents/GitHub/RoboTest/calvin/dataset/calvin_debug_dataset/validation",
+                        type=str, help='Path to the calvin dataset to initialize the environment')
+    parser.add_argument('--calvin_task_path', default= "/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml",
+                        type=str, help='Path to calvin new_playtable_tasks.yaml')
+
+    #Data collection parameters
+    parser.add_argument('--data_episodes', default= 1000, type=int, help='Number of episodes to collect')
+    parser.add_argument('--save_dir', default= None, type=none_or_str, help='Path to save the collected data')
+    parser.add_argument('--report_interval', default= 10, type=int, help='Interval to report the number of episodes collected')
+
+    args = parser.parse_args()
+    if args.save_dir is None:
+        #Create a directory to save the collected data if it does not exist
+        args.save_dir = os.path.join(os.getcwd(), 'data_oracle/training')
+        if not os.path.exists(args.save_dir):
+            os.makedirs(args.save_dir)
+    
+ 
+    # Load the base environment
+    base_env = get_env(Path(args.calvin_dataset_path), show_gui=False)
+    task_cfg = OmegaConf.load(args.calvin_task_path)
+    task_oracle = hydra.utils.instantiate(task_cfg)
+    env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials), provide_feedback=args.provide_feedback)
+    print("Environment loaded")
+
+    # Load the policy model
+    model, image_processor, tokenizer = create_model_and_transforms(
+        clip_vision_encoder_path="ViT-L-14",
+        clip_vision_encoder_pretrained="openai",
+        lang_encoder_path='anas-awadalla/mpt-1b-redpajama-200b-dolly',
+        tokenizer_path='anas-awadalla/mpt-1b-redpajama-200b-dolly',
+        llm_name='mpt_dolly_3b',
+        cross_attn_every_n_layers=1,
+        decoder_type='lstm',
+        fusion_mode='post',
+        use_gripper=True,
+        window_size=12,
+
+    )
+
+    checkpoint = torch.load('/home/richard/Documents/Flamingo/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', map_location='cpu', mmap=True)
+    for key in list(checkpoint['model_state_dict'].keys()):
+        #remove module from key name
+        checkpoint['model_state_dict'][key.replace('module.', '')] = checkpoint['model_state_dict'].pop(key)
+    
+    model.load_state_dict(checkpoint['model_state_dict'], False)
+    
+    model.eval()
+    model.half()
+    model.to(args.device)
+    
+    policy_model = ModelWrapper(model, tokenizer, image_processor, torch.float16, False)
+    print("Policy model loaded")
+
+    # Load reasoning, task planning and VLM models
+    reasoning_llm = None
+    task_llm = None
+    vlm = None
+
+    if args.use_cuda_and_cpu:
+        if args.reasoning_model is not None:
+            reasoning_llm = ReasoningLLM(args.reasoning_model, device_map='cpu')
+        if args.task_llm is not None:
+            task_llm = ReasoningLLM(args.task_llm, device_map='cpu')
+        if args.vlm is not None:
+            vlm = ReasoningLLM(args.vlm, device_map='cpu')
+    else:
+        if args.reasoning_model is not None:
+            reasoning_llm = ReasoningLLM(args.reasoning_model)
+        if args.task_llm is not None:
+            task_llm = ReasoningLLM(args.task_llm)
+        if args.vlm is not None:
+            vlm = ReasoningLLM(args.vlm)
+    print("Reasoning, task planning and VLM models loaded")
+    
+    # Create the agent
+    agent = OracleAgent(policy_model, reasoning_llm, task_llm, vlm)
+
+    # Collect data
+    collect_data(args, agent, env)
+
+
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+   
