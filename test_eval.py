@@ -1,9 +1,5 @@
 import sys
-#sys.path.append("/home/richard/Documents/GitHub/RoboTest/open_flamingo")
-sys.path.append("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models")
-sys.path.append("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_env")
-sys.path.append("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_env/tacto")
-sys.path.append("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_env/")
+sys.path.append('../')
 
 import torch
 import hydra
@@ -11,9 +7,9 @@ import cv2
 from pathlib import Path
 from hydra import initialize, compose
 
-from agent import OracleAgent
+from agent.agent import OracleAgent
 from protoenv import ProtoEnv
-from reasoning_llm import ReasoningLLM
+from agent.reasoning_llm import ReasoningLLM
 
 from utils import convert_obs_dict_to_cpu
 
@@ -29,7 +25,7 @@ from calvin_agent.evaluation.utils import (
     collect_plan,
     get_env_state_for_initial_condition,
 )
-
+import time
 
 def rollout(env, agent, steps, use_reasoning=False, annotation=None):
     agent.policy_model.reset()
@@ -90,12 +86,15 @@ if __name__ == '__main__':
 
     
     #Load reasoning model
-    reasoning_llm = ReasoningLLM(model_name='stabilityai/stablelm-zephyr-3b', tokenizer_name='stabilityai/stablelm-zephyr-3b', device_map="cpu", temperature=0.8)
+    #reasoning_llm = ReasoningLLM(model_name='stabilityai/stablelm-zephyr-3b', tokenizer_name='stabilityai/stablelm-zephyr-3b', device_map="cpu", temperature=0.8)
 
-    agent = OracleAgent(policy_model, reasoning_llm=reasoning_llm, task_llm=None, vlm=None)
+    agent = OracleAgent(policy_model, reasoning_llm=None, task_llm=None, vlm=None)
     print('here')
 
     # Rollout the environment
-    annotation = 'push the red block right'
+    annotation = 'pick up the red block from the table'
     #annotation = None
+    start = time.time()
     rollout(env, agent, 1000, use_reasoning=False, annotation=annotation)
+    end = time.time()
+    print(end - start)

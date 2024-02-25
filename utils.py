@@ -37,3 +37,18 @@ def temp_seed(seed):
         yield
     finally:
         np.random.set_state(state)
+
+def save_obs_and_action(obs, action, save_dir, ep_start_id):
+    '''Takes in list of obs dict and action and saves them to disk. Obs and action
+    are numpy arrays.'''
+    ep_len = len(obs)
+    for i in range(ep_start_id, ep_start_id + ep_len):
+        obs_i = obs[i - ep_start_id]
+        action_i = action[i - ep_start_id]
+        obs_i["action"] = action_i
+
+        for key in obs_i.keys():
+            obs_i[key] = obs_i[key].cpu().numpy()
+
+        save_path = save_dir + f"/episode_{i}.npz"
+        np.savez(save_path, **obs_i)
