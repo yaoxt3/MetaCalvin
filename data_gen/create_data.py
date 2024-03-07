@@ -67,7 +67,8 @@ def main():
     base_env = get_env(Path(args.calvin_dataset_path), show_gui=False)
     task_cfg = OmegaConf.load(args.calvin_task_path)
     task_oracle = hydra.utils.instantiate(task_cfg)
-    env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials), provide_feedback=args.provide_feedback)
+    env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials), 
+                   provide_feedback=args.provide_feedback, provide_train_feedback=True)
     print("Environment loaded")
 
     # Load the policy model

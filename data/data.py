@@ -772,7 +772,7 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         self.pretrain = pretrain
         self.skip_frames = skip_frames
 
-        self.episode_lookup = self._build_file_indices(self.abs_datasets_dir)
+        self.episode_lookup, self.start_idx_lookup = self._build_file_indices(self.abs_datasets_dir)
 
         self.naming_pattern, self.n_digits = lookup_naming_pattern(
             self.abs_datasets_dir, self.save_format
@@ -842,6 +842,8 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
             **seq_lang,
         }  # type:ignore
         seq_dict["idx"] = idx  # type:ignore
+        seq_dict["start_idx"] = 0 if idx[0] in self.start_idx_lookup else 1 #Used to mask hidden states for LSTM when new seq begins
+        print(idx)
 
         return seq_dict
 
@@ -892,6 +894,7 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         assert abs_datasets_dir.is_dir()
 
         episode_lookup = []
+        start_idx_lookup = []
 
         ep_start_end_ids = np.load(abs_datasets_dir / "ep_start_end_ids.npy")
         logger.info(
@@ -899,18 +902,19 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         )
         for start_idx, end_idx in ep_start_end_ids:
             assert end_idx > self.max_window_size
+            start_idx_lookup.append(start_idx)
             for idx in range(start_idx, end_idx + 1 - self.min_window_size):
                 episode_lookup.append(idx)
-        return np.array(episode_lookup)
+        return np.array(episode_lookup), np.array(start_idx_lookup)
 
     def collater(self, sample):
-        print(sample)
         action_tensors = torch.from_numpy(np.array([np.stack(s["actions"]) for s in sample]))
         state_tensors = torch.from_numpy(np.array([np.stack(s["robot_obs"]) for s in sample]))
         image_tensors = torch.stack([self.image_fn(s["rgb_obs"]["rgb_static"]) for s in sample])
         gripper_tensors = torch.stack([self.image_fn(s["rgb_obs"]["rgb_gripper"]) for s in sample])
         stacked_language = [s["lang"] for s in sample]
         text_tensors, attention_mask = self.text_fn(stacked_language)
+        hidden_state_mask = torch.stack([torch.tensor(s["start_idx"]) for s in sample])
         
         if self.rgb_pad != -1:
             bs, seq_len = image_tensors.shape[:2]
@@ -948,8 +952,8 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
             image_tensors = image_tensors[:, :-(self.act_step-1)]
             gripper_tensors = gripper_tensors[:, :-(self.act_step-1)]
             state_tensors = state_tensors[:, :-(self.act_step-1)]
-        
-        return image_tensors, (text_tensors, attention_mask), action_tensors, gripper_tensors, state_tensors, robot_obs
+
+        return image_tensors, (text_tensors, attention_mask, hidden_state_mask), action_tensors, gripper_tensors, state_tensors, robot_obs
 
 
 
@@ -1165,6 +1169,7 @@ def load_partial_traj_data():
 
 if __name__=='__main__':
     from robot_flamingo.models.factory import create_model_and_transforms
+    import time
 
     data_path = '/home/richard/Documents/GitHub/RoboTest/data_gen/data_oracle'
     model, image_processor, tokenizer = create_model_and_transforms(
@@ -1263,13 +1268,18 @@ if __name__=='__main__':
         collate_fn=calvin_dataset.collater,
         #drop_last=True
     )
+    #print(calvin_dataset.start_idx_lookup)
     #iterate one step over the dataloader to see output
     for i, data in enumerate(dataloader):
-        for d in data:
-            if isinstance(d, tuple):
-                for dd in d:
-                    print(dd.shape)
-            else:
-                print(d.shape)
-        if i == 1:
-            break
+        time.sleep(1)
+        print(i)
+        time.sleep(1)
+        #for d in data:
+        #    if isinstance(d, tuple):
+        #        for dd in d:
+                    #print(dd.shape)
+                    #print(dd)
+            #else:
+                #print(d.shape)
+        #if i == 31:
+        #    break

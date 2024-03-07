@@ -27,23 +27,39 @@ from calvin_agent.evaluation.utils import (
 )
 import time
 
+
+
 def rollout(env, agent, steps, use_reasoning=False, annotation=None):
     agent.policy_model.reset()
-    obs, feedback, environment_description = env.episode_reset(train=False)
+    obs, feedback, environment_description = env.episode_reset(train=True)
+    lm_feedback = feedback['lm_feedback']
+    train_feedback = feedback['train_feedback']
     current_trial = 0
     instruction_step = True
     for i in range(steps):
-        print(i)
-        action, instruction = agent.step(obs, feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
-        instruction_step = False
-        obs, reward, trial, trial_done = env.step(action, instruction)
+        print(train_feedback)
+        print(lm_feedback)
+        instruction = annotation
+        action, instruction = agent.step(obs, lm_feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
+        obs, reward, feedback, trial, trial_done, _ = env.step(action, instruction)
+        
+        if feedback is None:
+            instruction_step = False
+            lm_feedback = None
+        else:
+            instruction_step = True
+            lm_feedback = feedback['lm_feedback']
+            train_feedback = feedback['train_feedback']
         if trial_done:
             print('trial done')
             current_trial += 1
             if current_trial >= env.num_trials:
                 break
             obs, feedback, environment_description = env.trial_reset(instruction)
+            lm_feedback = feedback['lm_feedback']
+            train_feedback = feedback['train_feedback']
             instruction_step = True
+
 
         rgb = env.render(mode="rgb_array")[:,:,::-1]
         cv2.imshow('test',rgb)
@@ -55,7 +71,7 @@ if __name__ == '__main__':
     task_cfg = OmegaConf.load("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
     task_oracle = hydra.utils.instantiate(task_cfg)
 
-    env = ProtoEnv(base_env, task_oracle, num_trials=4, trial_steps=250, provide_feedback=False)
+    env = ProtoEnv(base_env, task_oracle, num_trials=2, trial_steps=1000, provide_feedback=True, provide_train_feedback=True)
 
     # Load the model
     model, image_processor, tokenizer = create_model_and_transforms(
@@ -68,7 +84,7 @@ if __name__ == '__main__':
     decoder_type='lstm',
     fusion_mode='post',
     use_gripper=True,
-    window_size=12,
+    window_size=30,
 
     )
 
@@ -86,15 +102,14 @@ if __name__ == '__main__':
 
     
     #Load reasoning model
-    #reasoning_llm = ReasoningLLM(model_name='stabilityai/stablelm-zephyr-3b', tokenizer_name='stabilityai/stablelm-zephyr-3b', device_map="cpu", temperature=0.8)
+    #reasoning_llm = ReasoningLLM(model_name="Qwen/Qwen1.5-4B-Chat", tokenizer_name="Qwen/Qwen1.5-4B-Chat", torch_dtype='auto', device_map="cpu", temperature=0.7)
 
     agent = OracleAgent(policy_model, reasoning_llm=None, task_llm=None, vlm=None)
-    print('here')
 
     # Rollout the environment
-    annotation = 'pick up the red block from the table'
+    annotation = 'grasp the door handle, then slide the door to the left'
     #annotation = None
     start = time.time()
-    rollout(env, agent, 1000, use_reasoning=False, annotation=annotation)
+    rollout(env, agent, 2000, use_reasoning=False, annotation=annotation)
     end = time.time()
     print(end - start)

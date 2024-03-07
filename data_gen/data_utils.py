@@ -11,14 +11,23 @@ def rollout(env, agent, steps, use_reasoning=False, train=True, annotation=None)
 
     agent.policy_model.reset()
     obs, feedback, environment_description = env.episode_reset(train=train)
+    lm_feedback = feedback['lm_feedback']
+    train_feedback = feedback['train_feedback']
     current_trial = 0
     instruction_step = True
-    annotation = 'push pink block right'
+    annotation = 'lift the pink block from the table'
     for i in range(steps):
+        
+        action, instruction = agent.step(obs, lm_feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
+        obs, reward, feedback, trial, trial_done, info = env.step(action, instruction)
 
-        action, instruction = agent.step(obs, feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
-        instruction_step = False
-        obs, reward, trial, trial_done = env.step(action, instruction)
+        if feedback is None:
+            instruction_step = False
+            lm_feedback = None
+        else:
+            instruction_step = True
+            lm_feedback = feedback['lm_feedback']
+            train_feedback = feedback['train_feedback']
 
         step_dict = {}
         for k, v in obs.items():
@@ -33,7 +42,7 @@ def rollout(env, agent, steps, use_reasoning=False, train=True, annotation=None)
             else:
                 step_dict[k] = v
 
-        step_dict['feedback'] = feedback
+        step_dict['feedback'] = train_feedback
         step_dict['rel_actions'] = action
         episode_data.append(step_dict)
 
@@ -46,15 +55,22 @@ def rollout(env, agent, steps, use_reasoning=False, train=True, annotation=None)
             else:
                 if last_trial_reward:
                     switched = True
-                last_trial_reward = False
+                    last_trial_reward = False
+                    break
+
+            if info['task_completed'] is False:
+                break
+                
 
             obs, feedback, environment_description = env.trial_reset(instruction)
+            lm_feedback = feedback['lm_feedback']
+            train_feedback = feedback['train_feedback']
             instruction_step = True
     
-    if switched:
-        return None
-    elif last_trial_reward and switched == False:
+    if last_trial_reward and switched == False:
         return episode_data
+    else:
+        return None
 
 def collect_data(args, agent, env):
     '''Collect data from env using agent. Save successful episodes.'''
