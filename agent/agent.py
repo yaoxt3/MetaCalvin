@@ -1,5 +1,7 @@
 from time import sleep
 from builtins import print
+
+
 class OracleAgent():
     def __init__(self, policy_model, reasoning_llm=None, vlm=None, task_llm=None):
         self.policy_model = policy_model

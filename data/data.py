@@ -40,7 +40,7 @@ from calvin_agent.datasets.utils.episode_utils import (
     process_rgb,
     process_state,
 )
-from sampler import SequenceSampler
+from data.sampler import SequenceSampler
 
 import numpy as np
 from omegaconf import DictConfig
@@ -821,9 +821,8 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         Returns:
             dict: Dictionary of tensors of loaded sequence with different input modalities and actions.
         """
-
         episode = self._load_episode(idx)
-
+        
         seq_state_obs = process_state(
             episode, self.observation_space, self.transforms, self.proprio_state
         )
@@ -843,7 +842,6 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         }  # type:ignore
         seq_dict["idx"] = idx  # type:ignore
         seq_dict["start_idx"] = 0 if idx[0] in self.start_idx_lookup else 1 #Used to mask hidden states for LSTM when new seq begins
-        print(idx)
 
         return seq_dict
 
@@ -932,7 +930,6 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
                 gripper_tensors = gripper_tensors.view(bs * seq_len, *gripper_tensors.shape[2:])
                 gripper_tensors = self.gripper_shift(gripper_tensors)
                 gripper_tensors = gripper_tensors.view(bs, seq_len, *gripper_tensors.shape[1:])
-        
         robot_obs = torch.zeros(1)
         
         if self.act_step != 1:
@@ -999,6 +996,9 @@ def preprocess_image(sample, image_processor):
 
 
 def preprocess_text_calvin(sample, tokenizer):
+    batch_size = len(sample)
+    seq_len = len(sample[0])
+
     tokenizer.padding_side = "right"
     sample = [
         [
@@ -1010,18 +1010,17 @@ def preprocess_text_calvin(sample, tokenizer):
     flattened_sample = [item for sublist in sample for item in sublist]
     text = tokenizer(
         flattened_sample,
-        max_length=32,
+        max_length=64,
         padding="longest",
         truncation="only_first",
         return_tensors="pt",
     )
-    batch_size = len(sample)
-    seq_len = len(sample[0])
+
     input_ids = text["input_ids"].view(batch_size, seq_len, -1)
     attention_mask = text["attention_mask"].view(batch_size, seq_len, -1)
     return input_ids, attention_mask
 
-def get_calvin_dataset(args, image_processor, tokenizer, epoch=0, floor=False):
+def get_dataset(args, image_processor, tokenizer, epoch=0, floor=False):
     dataset_path = args.calvin_dataset
 
     # ann is dict including language and info
@@ -1086,7 +1085,7 @@ def get_calvin_dataset(args, image_processor, tokenizer, epoch=0, floor=False):
 
     return DataInfo(dataloader=dataloader, shared_epoch=shared_epoch, sampler=sampler, dataset=calvin_dataset)
 
-def get_calvin_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=False):
+def get_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=False):
     dataset_path = args.calvin_dataset
 
     # ann is dict including language and info
@@ -1097,7 +1096,7 @@ def get_calvin_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=Fals
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
     calvin_dataset = DiskCalvinSeqDataset(
-        datasets_dir=Path(dataset_path) / "training",
+        datasets_dir=Path(dataset_path) / "training" if "val" not in dataset_path else Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args.window_size,
@@ -1122,11 +1121,18 @@ def get_calvin_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=Fals
     num_batches = num_worker_batches * num_workers
     num_samples = num_batches * global_batch_size
 
-    seq_sampler = SequenceSampler(
-        dataset_path + "/training",
-        args.batch_size_calvin,
-        args.window_size,
-    )
+    if "val" in dataset_path:
+        seq_sampler = SequenceSampler(
+            dataset_path,
+            args.batch_size_calvin,
+            args.window_size,
+        )
+    else:
+        seq_sampler = SequenceSampler(
+            dataset_path + "/training",
+            args.batch_size_calvin,
+            args.window_size,
+        )
 
 
     # the batch_size and num_workers are per-GPU !
@@ -1145,13 +1151,13 @@ def get_calvin_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=Fals
     dataloader.num_batches = num_batches
     dataloader.num_samples = num_samples
 
-    return DataInfo(dataloader=dataloader, shared_epoch=shared_epoch, sampler=sampler, dataset=calvin_dataset)
+    return DataInfo(dataloader=dataloader, shared_epoch=shared_epoch, sampler=seq_sampler, dataset=calvin_dataset)
 
 def get_dataset_fn(dataset_type):
-    if dataset_type == "calvin":
-        return get_calvin_dataset
+    if dataset_type == "random":
+        return get_dataset
     elif dataset_type == 'seq':
-        return get_calvin_dataset_seq
+        return get_dataset_seq
     else:
         raise ValueError(f"Unsupported dataset type: {dataset_type}")
 

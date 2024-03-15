@@ -244,6 +244,9 @@ class ProtoEnv():
     
     def get_object_descriptions(self, meta_object, distract_objects, initial_state):
         object_descriptions = []
+        objects = [meta_object] + distract_objects
+        #Shuffle the objects
+        random.shuffle(objects)
         for obj in [meta_object] + distract_objects:
             if obj in ['red block', 'pink block']:
                 object_descriptions.append('A {0} that lies on the table and can be picked up. Possible instructions: "lift the {0} from the table" '.format(obj))

@@ -1,5 +1,13 @@
 import sys
-sys.path.append('../')
+sys.path.append("../calvin/calvin_models/")
+sys.path.append("../calvin/calvin_env/")
+sys.path.append("../calvin/calvin_env/tacto")
+sys.path.append("../calvin/calvin_models/calvin_agent/")
+sys.path.append("../open_flamingo/")
+sys.path.append("../robot_flamingo/")
+sys.path.append("../agent/")
+sys.path.append("../")
+
 
 import torch
 import hydra
@@ -7,12 +15,10 @@ from pathlib import Path
 import os
 from hydra import initialize, compose
 
-from agent.agent import OracleAgent
+from agent import OracleAgent
 from protoenv import ProtoEnv
-from agent.reasoning_llm import ReasoningLLM
+from reasoning_llm import ReasoningLLM
 from data_utils import *
-
-from utils import convert_obs_dict_to_cpu
 
 from robot_flamingo.models.factory import create_model_and_transforms
 from robot_flamingo.eval.eval_utils import ModelWrapper
@@ -32,9 +38,9 @@ def main():
     parser = argparse.ArgumentParser(description='Script to collect data from the environment using the oracle agent')
 
     #Agent parameters
-    parser.add_argument('--checkpoint_path', default= '/home/richard/Documents/Flamingo/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
+    parser.add_argument('--checkpoint_path', default= '../RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
                         type=str, help='Path to the policy model')
-    parser.add_argument('--reasoning_model', default= 'stabilityai/stablelm-zephyr-3b', type=none_or_str, help='Path to the reasoning model')
+    parser.add_argument('--reasoning_model', default= 'mistralai/Mixtral-8x7B-Instruct-v0.1', type=none_or_str, help='Path to the reasoning model')
     parser.add_argument('--task_llm', default= None, type=none_or_str, help='Path to the task planning model')
     parser.add_argument('--vlm', default= None, type=none_or_str, help='Path to the VLM model to describe the environment')
     parser.add_argument('--use_reasoning', action= 'store_true', help='Whether to use reasoning or not')
@@ -45,9 +51,9 @@ def main():
     parser.add_argument('--provide_feedback', action= 'store_true', help='Whether to provide feedback or not')
     parser.add_argument('--rollout_steps', default= 1000, type=int, help='Number of steps per meta_episode')
     parser.add_argument('--num_trials', default= 4, type=int, help='Number of trials per episode')
-    parser.add_argument('--calvin_dataset_path', default= "/home/richard/Documents/GitHub/RoboTest/calvin/dataset/calvin_debug_dataset/validation",
+    parser.add_argument('--calvin_dataset_path', default= "../calvin/dataset/calvin_debug_dataset/validation",
                         type=str, help='Path to the calvin dataset to initialize the environment')
-    parser.add_argument('--calvin_task_path', default= "/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml",
+    parser.add_argument('--calvin_task_path', default= "../calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml",
                         type=str, help='Path to calvin new_playtable_tasks.yaml')
 
     #Data collection parameters
@@ -61,6 +67,7 @@ def main():
         args.save_dir = os.path.join(os.getcwd(), 'data_oracle/training')
         if not os.path.exists(args.save_dir):
             os.makedirs(args.save_dir)
+    print(args.save_dir)
     
  
     # Load the base environment
@@ -68,7 +75,7 @@ def main():
     task_cfg = OmegaConf.load(args.calvin_task_path)
     task_oracle = hydra.utils.instantiate(task_cfg)
     env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials), 
-                   provide_feedback=args.provide_feedback, provide_train_feedback=True)
+                    provide_feedback=args.provide_feedback, provide_train_feedback=True)
     print("Environment loaded")
 
     # Load the policy model
@@ -86,7 +93,7 @@ def main():
 
     )
 
-    checkpoint = torch.load('/home/richard/Documents/Flamingo/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', map_location='cpu', mmap=True)
+    checkpoint = torch.load(args.checkpoint_path, map_location='cpu', mmap=True)
     for key in list(checkpoint['model_state_dict'].keys()):
         #remove module from key name
         checkpoint['model_state_dict'][key.replace('module.', '')] = checkpoint['model_state_dict'].pop(key)
@@ -114,7 +121,7 @@ def main():
             vlm = ReasoningLLM(args.vlm, device_map='cpu')
     else:
         if args.reasoning_model is not None:
-            reasoning_llm = ReasoningLLM(args.reasoning_model)
+            reasoning_llm = ReasoningLLM(args.reasoning_model, load_in_8bit=True)
         if args.task_llm is not None:
             task_llm = ReasoningLLM(args.task_llm)
         if args.vlm is not None:
@@ -131,7 +138,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 
 
