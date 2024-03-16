@@ -30,11 +30,13 @@ def get_autocast(precision):
         return suppress
     
 def get_checkpoint(model):
-    pass
+    state_dict = model.state_dict()
 
-def get_ckpt_name(args, global_step):
-    pass
-    
+    for name, p in model.named_parameters():
+        if not p.requires_grad and 'normalizer' not in name:
+            del state_dict[name]
+
+    return state_dict
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
