@@ -1,6 +1,15 @@
 """ Main training script, adapted from RobotFlamingo """
 import sys
+sys.path.append("../calvin/calvin_models/")
+sys.path.append("../calvin/calvin_env/")
+sys.path.append("../calvin/calvin_env/tacto")
+sys.path.append("../calvin/calvin_models/calvin_agent/")
+sys.path.append("../open_flamingo/")
+sys.path.append("../robot_flamingo/")
+sys.path.append("../data/")
+sys.path.append("../agent/")
 sys.path.append("../")
+
 
 import argparse
 import copy
@@ -15,7 +24,7 @@ from huggingface_hub import hf_hub_download
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from data.data import get_data
+from data import get_data
 from open_flamingo.train.distributed import init_distributed_device, world_info_from_env
 from train.utils import get_checkpoint, train_one_epoch, get_ckpt_name, get_ckpt_name_pattern
 from torch.distributed.elastic.multiprocessing.errors import record
@@ -53,7 +62,7 @@ def main():
     parser.add_argument(
         "--checkpoint_path_foundation", 
         type=str, 
-        default="../RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth",
+        default="/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth",
         help="Path to pretrained foundation model. Can either be from RoboFlamingo or OpenFlamingo")
     parser.add_argument(
         "--cross_attn_every_n_layers",
@@ -179,6 +188,12 @@ def main():
         default=False,
         action="store_true",
         help="whether to use low-dim state as input",
+    )
+    parser.add_argument(
+        "--action_tokens",
+        default=False,
+        action="store_true",
+        help="use additional action tokens if dataset includes them"
     )
     parser.add_argument(
         "--fusion_mode",
@@ -380,19 +395,54 @@ def main():
         fwd_pred_hand=args.fwd_pred_hand,
         no_image_patch=args.no_image_patch,
         global_latent=args.global_latent,
+        action_tokens=args.action_tokens,
     )
     # Load the policy model and handle training details
     checkpoint_path = args.checkpoint_path_foundation
-    if not args.debug and not args.no_pretrain:
-        checkpoint = torch.load(checkpoint_path, map_location='cpu', mmap=True)
-        for key in list(checkpoint['model_state_dict'].keys()):
-            #remove module from key name
-            checkpoint['model_state_dict'][key.replace('module.', '')] = checkpoint['model_state_dict'].pop(key)
+    # check if a finetuning checkpoint exists for this run
+    if os.path.exists(f"{args.run_name}") and args.resume_from_checkpoint is None:
+        ckpt_name = get_ckpt_name_pattern(args)
+        checkpoint_list = glob.glob(f"{args.run_name}/{ckpt_name}")
+        print(ckpt_name)
+        checkpoint_list = [_ for _ in checkpoint_list if "__sep" not in _ and 'iter' not in _ and 'weights' not in _]
+        if len(checkpoint_list) == 0:
+            print(f"Found no checkpoints for run {args.run_name}.")
+        else:
+            args.resume_from_checkpoint = sorted(
+                checkpoint_list, key=lambda x: int(x.split("_")[-1].split(".")[0])
+            )[-1]
+            print(
+                f"Found checkpoint {args.resume_from_checkpoint} for run {args.run_name}."
+            )
     
-        model.load_state_dict(checkpoint['model_state_dict'], False)
+    if not args.debug and not args.no_pretrain:
+        if args.resume_from_checkpoint is None:
+            checkpoint = torch.load(checkpoint_path, map_location='cpu', mmap=True)
+        else:
+            checkpoint = torch.load(args.resume_from_checkpoint, map_location='cpu', mmap=True)
+            checkpoint_path = args.resume_from_checkpoint
+        
+        if 'open_flamingo' in checkpoint_path:
+            for key in list(checkpoint.keys()):
+                # remove module from key name
+                new_key = key.replace('module.', '')
+                checkpoint[new_key] = checkpoint.pop(key)
+                # We need to replace the embeddings if we include more tokens
+                if args.action_tokens:
+                    if new_key == 'lang_encoder.transformer.wte.weight':
+                        del checkpoint[new_key]
+            model.load_state_dict(checkpoint, strict=False)
+        else:
+            for key in list(checkpoint['model_state_dict'].keys()):
+                #remove module from key name
+                checkpoint['model_state_dict'][key.replace('module.', '')] = checkpoint['model_state_dict'].pop(key)
+        
+            model.load_state_dict(checkpoint['model_state_dict'], False)
 
         if args.residual:
             model.lang_encoder.clone_parameters()
+
+
         print(f"Loaded model from {checkpoint_path}")
 
     device_id = args.rank % torch.cuda.device_count()
@@ -439,17 +489,17 @@ def main():
             {"params": [p for p in params_without_wd if p.requires_grad], "weight_decay": 0.0},
         ]
     args.learning_rate = args.learning_rate * args.batch_size_calvin / 6 # adaptive lr
-    optimizer = torch.optim.AdamW(get_grouped_params(ddp_model), lr=args.learning_rate)
+    optimizer = torch.optim.AdamW(get_grouped_params(ddp_model), eps=1e-8, lr=args.learning_rate)
 
     #Load dataset and LR scheduling
     if args.seq_training:
-        dataset = get_data(args, image_processor, tokenizer, 'seq')
+        dataset = get_data(args, args.calvin_dataset, image_processor, tokenizer, 'seq')
         if args.calvin_val_dataset is not None:
-            val_dataset = get_data(args, image_processor, tokenizer, 'seq')
+            val_dataset = get_data(args, args.calvin_val_dataset, image_processor, tokenizer, 'seq')
     else:
-        dataset = get_data(args, image_processor, tokenizer, 'random')
+        dataset = get_data(args, args.calvin_dataset, image_processor, tokenizer, 'random')
         if args.calvin_val_dataset is not None:
-            val_dataset = get_data(args, image_processor, tokenizer, 'random')
+            val_dataset = get_data(args, args.calvin_val_dataset, image_processor, tokenizer, 'random')
 
     random_seed(args.seed, args.rank)
 
@@ -489,6 +539,11 @@ def main():
             optimizer, num_warmup_steps=args.warmup_steps
         )
     
+    if args.resume_from_checkpoint is not None:
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
+        
+    resume_from_epoch = 0
     print(f"Start running training on rank {args.rank}.")
 
     if args.rank == 0 and args.report_to_wandb:
@@ -498,45 +553,6 @@ def main():
             name=args.run_name,
             config=vars(args),
         )
-
-    # check if a finetuning checkpoint exists for this run
-    if os.path.exists(f"{args.run_name}") and args.resume_from_checkpoint is None:
-        ckpt_name = get_ckpt_name_pattern(args)
-        checkpoint_list = glob.glob(f"{args.run_name}/{ckpt_name}")
-        print(ckpt_name)
-        checkpoint_list = [_ for _ in checkpoint_list if "__sep" not in _ and 'iter' not in _ and 'weights' not in _]
-        if len(checkpoint_list) == 0:
-            print(f"Found no checkpoints for run {args.run_name}.")
-        else:
-            args.resume_from_checkpoint = sorted(
-                checkpoint_list, key=lambda x: int(x.split("_")[-1].split(".")[0])
-            )[-1]
-            print(
-                f"Found checkpoint {args.resume_from_checkpoint} for run {args.run_name}."
-            )
-
-    resume_from_epoch = 0
-    if args.resume_from_checkpoint is not None and args.from_scratch is False:
-        if args.rank == 0:
-            print(f"Loading checkpoint from {args.resume_from_checkpoint}")
-        checkpoint = torch.load(args.resume_from_checkpoint, map_location="cpu")
-        
-        def filter_ckpt(checkpoint, skip_keys=[]):
-            new_state_dict = OrderedDict()
-            for key, value in checkpoint.items():
-                flag = True
-                for skip_key in skip_keys:
-                    if skip_key in key:
-                        flag = False
-                        break
-                if flag:
-                    new_state_dict[key] = value
-            return new_state_dict
-        
-        ddp_model.load_state_dict(checkpoint["model_state_dict"], False)
-        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
-        resume_from_epoch = checkpoint["epoch"] + 1
 
     ddp_model.train()
     best_val_loss = None

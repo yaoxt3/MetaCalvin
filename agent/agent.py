@@ -92,5 +92,12 @@ class OracleAgent():
     def get_task_llm_output(self, task_instruction):
         '''Get the task instruction from the task LLM'''
         pass
+
+    def reset(self):
+        self.policy_model.reset()
+        self.reasoning_hist = []
+        self.subtask_instruction = None
+        self.num_instruction_step = 0
+        self.planned_actions = []
         
 

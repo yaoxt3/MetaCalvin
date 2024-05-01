@@ -57,7 +57,11 @@ def main():
                         type=str, help='Path to calvin new_playtable_tasks.yaml')
 
     #Data collection parameters
-    parser.add_argument('--data_episodes', default= 1000, type=int, help='Number of episodes to collect')
+    parser.add_argument('--data_episodes', default= 300, type=int, help='Number of episodes to collect')
+    # Hardcoded for 4 trials for now, change later
+    parser.add_argument('--zero_trial_limit', default= 5, type=int, help='Number of trials that should have zero trials of exploration before reward is found')
+    parser.add_argument('--one_trial_limit', default= 15, type=int, help='Number of trials that should have one trial of exploration before reward is found')
+    parser.add_argument('--two_trial_limit', default= 30, type=int, help='Number of trials that should have two trials of exploration before reward is found')
     parser.add_argument('--save_dir', default= None, type=none_or_str, help='Path to save the collected data')
     parser.add_argument('--report_interval', default= 10, type=int, help='Interval to report the number of episodes collected')
 

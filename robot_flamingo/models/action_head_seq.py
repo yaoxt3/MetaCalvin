@@ -223,7 +223,7 @@ class DeterministicDecoderSeq(ActionDecoder):
     def forward(  # type: ignore
         self,
         input_feature: torch.Tensor,
-        hidden_state_mask: torch.Tensor,
+        hidden_state_mask: Optional[torch.Tensor] = None,
         h_0: Optional[torch.Tensor] = None,
         state_tensor=None,
         return_feature=False
@@ -284,9 +284,12 @@ class DeterministicDecoderSeq(ActionDecoder):
                     assert len(self.history_memory) == self.history_len
                     hist_feature = torch.cat(self.history_memory, dim=1)
                     #Set hidden state to 0 for all episodes in the batch who begin in this window
-                    self.hidden_state = torch.mul(self.hidden_state, hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
+                    if hidden_state_mask is not None:
+                        h_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
+                        c_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
+                        self.hidden_state = (h_t.detach(), c_t.detach())
                     x, h_n = self.rnn(hist_feature, self.hidden_state)
-                    #self.hidden_state = h_n
+                    self.hidden_state = h_n
                     x = x[:, -1].unsqueeze(1)
                     self.rnn_out = x.squeeze(1)
             else:
@@ -295,9 +298,10 @@ class DeterministicDecoderSeq(ActionDecoder):
                 if self.hidden_state is None:
                     self.hidden_state = h_0
                 else:
-                    h_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
-                    c_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
-                    self.hidden_state = (h_t, c_t)
+                    if hidden_state_mask is not None:
+                        h_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
+                        c_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
+                        self.hidden_state = (h_t.detach(), c_t.detach())
 
                 x, h_n = self.rnn(input_feature, self.hidden_state)
                 self.hidden_state = h_n

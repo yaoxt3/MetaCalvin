@@ -40,7 +40,7 @@ from calvin_agent.datasets.utils.episode_utils import (
     process_rgb,
     process_state,
 )
-from data.sampler import SequenceSampler
+from sampler import SequenceSampler, DistributedSequenceSampler
 
 import numpy as np
 from omegaconf import DictConfig
@@ -687,6 +687,7 @@ class DiskCalvinDataset(BaseCalvinDataset):
             assert end_idx > self.max_window_size
             for idx in range(start_idx, end_idx + 1 - self.min_window_size):
                 episode_lookup.append(idx)
+        
         return np.array(episode_lookup)
 
     def collater(self, sample):
@@ -832,6 +833,7 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         info = get_state_info_dict(episode)
         seq_lang = self.process_language(episode, self.transforms, self.with_lang)
         #info = self._add_language_info(info, idx)
+
         seq_dict = {
             **seq_state_obs,
             **seq_rgb_obs,
@@ -904,6 +906,74 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
             for idx in range(start_idx, end_idx + 1 - self.min_window_size):
                 episode_lookup.append(idx)
         return np.array(episode_lookup), np.array(start_idx_lookup)
+    
+    def _pad_sequence(self, seq: Dict, pad_size: int, head: bool=False) -> Dict:
+        """
+        Pad a sequence by repeating the last frame.
+
+        Args:
+            seq: Sequence to pad.
+            pad_size: Number of frames to pad.
+
+        Returns:
+            Padded sequence.
+        """
+        seq.update({"robot_obs": self._pad_with_repetition(seq["robot_obs"], pad_size)})
+        seq.update(
+            {
+                "rgb_obs": {
+                    k: self._pad_with_repetition(v, pad_size, head)
+                    for k, v in seq["rgb_obs"].items()
+                }
+            }
+        )
+        seq.update(
+            {
+                "depth_obs": {
+                    k: self._pad_with_repetition(v, pad_size, head)
+                    for k, v in seq["depth_obs"].items()
+                }
+            }
+        )
+        #  todo: find better way of distinguishing rk and play action spaces
+        if not self.relative_actions:
+            if head:
+                seq_acts = self._pad_with_zeros(seq["actions"], pad_size, head)
+            else:
+                # repeat action for world coordinates action space
+                seq.update({"actions": self._pad_with_repetition(seq["actions"], pad_size, head)})
+        else:
+            # for relative actions zero pad all but the last action dims and repeat last action dim (gripper action)
+            if head:
+                seq_acts = self._pad_with_zeros(seq["actions"], pad_size, head)
+            else:
+                seq_acts = torch.cat(
+                    [
+                        self._pad_with_zeros(seq["actions"][..., :-1], pad_size, head),
+                        self._pad_with_repetition(seq["actions"][..., -1:], pad_size, head),
+                    ],
+                    dim=-1,
+                )
+            seq.update({"actions": seq_acts})
+        seq.update(
+            {
+                "state_info": {
+                    k: self._pad_with_repetition(v, pad_size, head)
+                    for k, v in seq["state_info"].items()
+                }
+            }
+        )
+        seq.update({"lang": self.pad_lang(seq["lang"], pad_size)})
+        return seq
+
+    @staticmethod
+    def pad_lang(lang, pad_size):
+        """
+        Pad language to seq len
+        """
+        last_lang = lang[-1]
+        padded = lang + [last_lang] * pad_size
+        return padded
 
     def collater(self, sample):
         action_tensors = torch.from_numpy(np.array([np.stack(s["actions"]) for s in sample]))
@@ -998,7 +1068,6 @@ def preprocess_image(sample, image_processor):
 def preprocess_text_calvin(sample, tokenizer):
     batch_size = len(sample)
     seq_len = len(sample[0])
-
     tokenizer.padding_side = "right"
     sample = [
         [
@@ -1017,12 +1086,11 @@ def preprocess_text_calvin(sample, tokenizer):
     )
 
     input_ids = text["input_ids"].view(batch_size, seq_len, -1)
+    out_text = []
     attention_mask = text["attention_mask"].view(batch_size, seq_len, -1)
     return input_ids, attention_mask
 
-def get_dataset(args, image_processor, tokenizer, epoch=0, floor=False):
-    dataset_path = args.calvin_dataset
-
+def get_dataset(args, dataset_path, image_processor, tokenizer, epoch=0, floor=False):
     # ann is dict including language and info
     shared_epoch = SharedEpoch(epoch=epoch)
     preprocess_image_fn = functools.partial(
@@ -1031,7 +1099,7 @@ def get_dataset(args, image_processor, tokenizer, epoch=0, floor=False):
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
     calvin_dataset = DiskCalvinDataset(
-        datasets_dir=Path(dataset_path) / "training",
+        datasets_dir=Path(dataset_path) / "validation_3_objs_biased", #if "validation" not in dataset_path else Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args.window_size,
@@ -1055,7 +1123,6 @@ def get_dataset(args, image_processor, tokenizer, epoch=0, floor=False):
     num_worker_batches = round_fn(num_batches / num_workers)  # per dataloader worker
     num_batches = num_worker_batches * num_workers
     num_samples = num_batches * global_batch_size
-
     sampler = DistributedSampler(
         calvin_dataset,
         num_replicas=args.world_size,
@@ -1085,8 +1152,7 @@ def get_dataset(args, image_processor, tokenizer, epoch=0, floor=False):
 
     return DataInfo(dataloader=dataloader, shared_epoch=shared_epoch, sampler=sampler, dataset=calvin_dataset)
 
-def get_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=False):
-    dataset_path = args.calvin_dataset
+def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, floor=False):
 
     # ann is dict including language and info
     shared_epoch = SharedEpoch(epoch=epoch)
@@ -1096,7 +1162,7 @@ def get_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=False):
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
     calvin_dataset = DiskCalvinSeqDataset(
-        datasets_dir=Path(dataset_path) / "training" if "val" not in dataset_path else Path(dataset_path),
+        datasets_dir=Path(dataset_path) / "training_3_objs_biased_merged", #if "validation" not in dataset_path else Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args.window_size,
@@ -1114,26 +1180,32 @@ def get_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=False):
     round_fn = math.floor if floor else math.ceil
 
     num_samples = len(calvin_dataset)
+    
     global_batch_size = args.batch_size_calvin * args.world_size
-    num_batches = round_fn(num_samples / global_batch_size)
+    num_batches = round_fn(num_samples / global_batch_size / args.window_size)
     num_workers = max(1, args.workers)
     num_worker_batches = round_fn(num_batches / num_workers)  # per dataloader worker
     num_batches = num_worker_batches * num_workers
     num_samples = num_batches * global_batch_size
 
-    if "val" in dataset_path:
-        seq_sampler = SequenceSampler(
-            dataset_path,
-            args.batch_size_calvin,
-            args.window_size,
-        )
-    else:
-        seq_sampler = SequenceSampler(
-            dataset_path + "/training",
-            args.batch_size_calvin,
-            args.window_size,
-        )
+    #if "val" in dataset_path:
+    #    seq_sampler = SequenceSampler(
+    #        dataset_path,
+    #        args.batch_size_calvin,
+    #        args.window_size,
+    #    )
+    #else:
+    #    seq_sampler = SequenceSampler(
+    #        dataset_path + "validation_3_objs_biased",
+    #        args.batch_size_calvin,
+    #        args.window_size,
+    #    )
 
+    seq_sampler = DistributedSequenceSampler(
+            dataset_path + "training_3_objs_biased_merged",
+            args.batch_size_calvin,
+            args.window_size,
+        )
 
     # the batch_size and num_workers are per-GPU !
     dataloader = DataLoader(
@@ -1148,24 +1220,24 @@ def get_dataset_seq(args, image_processor, tokenizer, epoch=0, floor=False):
     # dataloader = DataLoader(calvin_dataset, batch_size=args.batch_size_calvin)
 
     # add meta-data to dataloader instance for convenience
-    dataloader.num_batches = num_batches
-    dataloader.num_samples = num_samples
+    dataloader.num_batches = seq_sampler.num_batches
+    dataloader.num_samples = seq_sampler.num_samples
 
     return DataInfo(dataloader=dataloader, shared_epoch=shared_epoch, sampler=seq_sampler, dataset=calvin_dataset)
 
 def get_dataset_fn(dataset_type):
-    if dataset_type == "random":
+    if 'random' in dataset_type:
         return get_dataset
-    elif dataset_type == 'seq':
+    elif 'seq' in dataset_type:
         return get_dataset_seq
     else:
         raise ValueError(f"Unsupported dataset type: {dataset_type}")
 
 
 
-def get_data(args, image_processor, tokenizer, dataset_type, epoch=0):
+def get_data(args, dataset_path, image_processor, tokenizer, dataset_type, epoch=0):
     return get_dataset_fn(dataset_type)(
-        args, image_processor=image_processor, epoch=epoch, tokenizer=tokenizer
+        args, dataset_path, image_processor=image_processor, epoch=epoch, tokenizer=tokenizer
     )
 
 def load_partial_traj_data():
@@ -1176,8 +1248,9 @@ def load_partial_traj_data():
 if __name__=='__main__':
     from robot_flamingo.models.factory import create_model_and_transforms
     import time
+    import cv2
 
-    data_path = '/home/richard/Documents/GitHub/RoboTest/data_gen/data_oracle'
+    data_path = '/home/richard/Documents/GitHub/RoboTest/data/validation_3_objs_biased'
     model, image_processor, tokenizer = create_model_and_transforms(
         clip_vision_encoder_path="ViT-L-14",
         clip_vision_encoder_pretrained="openai",
@@ -1193,11 +1266,11 @@ if __name__=='__main__':
     )
     args = {
         'calvin_dataset': data_path,
-        'window_size': 12,
-        'min_window_size': 12,
-        'max_window_size': 12,
-        'rgb_pad': 10,
-        'gripper_pad': 4,
+        'window_size': 32,
+        'min_window_size': 1,
+        'max_window_size': 1,
+        'rgb_pad': -1,
+        'gripper_pad': -1,
         'traj_cons': False,
         'text_aug': False,
         'dif_ws': False,
@@ -1220,7 +1293,7 @@ if __name__=='__main__':
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
     calvin_dataset = DiskCalvinSeqDataset(
-        datasets_dir=Path(dataset_path) / "training",
+        datasets_dir=Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args['window_size'],
@@ -1239,6 +1312,7 @@ if __name__=='__main__':
     round_fn = math.floor if floor else math.ceil
 
     num_samples = len(calvin_dataset)
+    print(num_samples)
     global_batch_size = args['batch_size_calvin'] * args['world_size']
     num_batches = round_fn(num_samples / global_batch_size)
     num_workers = max(1, args['workers'])
@@ -1255,9 +1329,9 @@ if __name__=='__main__':
         drop_last=True,
     )
 
-    ep_start_end_ids = np.load(Path(dataset_path) / "training" / "ep_start_end_ids.npy")
+    ep_start_end_ids = np.load(Path(dataset_path) / "ep_start_end_ids.npy")
     seq_sampler = SequenceSampler(
-        dataset_path + "/training",
+        dataset_path,
         args['batch_size_calvin'],
         args['window_size'],
     )
@@ -1274,12 +1348,26 @@ if __name__=='__main__':
         collate_fn=calvin_dataset.collater,
         #drop_last=True
     )
+    dataloader.num_batches = num_batches
+    dataloader.num_samples = num_samples
+    
     #print(calvin_dataset.start_idx_lookup)
     #iterate one step over the dataloader to see output
     for i, data in enumerate(dataloader):
-        time.sleep(1)
-        print(i)
-        time.sleep(1)
+        data_vis = data[0][1].numpy()
+        lang_stack = data[-1][1]
+        text_ids = data[1][0]
+        for i in range(32):
+            print(lang_stack[i])
+            text_ids_decoded = tokenizer.decode(text_ids[1][i])
+            print(text_ids_decoded)
+            cv2.imshow('frame', data_vis[i].transpose(1, 2, 0)[:,:,::-1])
+            cv2.waitKey(50)
+        #cv2.imshow('frame', data[0].transpose(1, 2, 0)[:,:,::-1])
+        #cv2.waitKey(50)
+    #    print(data[0].shape)
+    #    print(i)
+    #    time.sleep(1)
         #for d in data:
         #    if isinstance(d, tuple):
         #        for dd in d:

@@ -1,5 +1,6 @@
 import time
 from contextlib import suppress
+import glob
 
 import torch
 from torch import nn
@@ -9,6 +10,8 @@ from tqdm import tqdm
 from robot_flamingo.utils import world_to_tcp_frame, tcp_to_world_frame
 import itertools
 from einops import rearrange
+
+torch.autograd.set_detect_anomaly(True)
 
 
 def get_cast_dtype(precision: str):
@@ -191,7 +194,6 @@ def train_one_epoch(
     wandb,
     best_val_loss,
 ):
-    
     num_batches_per_epoch_calvin = calvin_loader.num_batches
 
     num_batches_per_epoch = num_batches_per_epoch_calvin
@@ -280,7 +282,9 @@ def train_one_epoch(
 
         # compute loss
         num_actions, bin_actions = output.logits[0], output.logits[1]
-
+        
+        print(labels[0].shape)
+        print(num_actions.shape)
         # reshape for loss calculation
         if args.multi_step_action != 1:
             bs, seq_len = num_actions.shape[:2]
@@ -298,9 +302,17 @@ def train_one_epoch(
         loss = (
             divided_loss_calvin * args.loss_multiplier_calvin
         )
+
         mv_avg_loss.append(loss.item())
         loss.backward()
-        
+        for param in model.parameters():
+            if param.grad is not None and torch:
+                if torch.isnan(param).any() or torch.isinf(param).any():
+                    print("Nan/Inf in gradients")
+                    print(param.grad)
+                    print("Nan/Inf in model weights")
+                    print(param)
+                    raise ValueError("Nan/Inf in gradients")
         #### MASK GRADIENTS FOR EMBEDDINGS ####
         # Note (anas): Do not apply weight decay to embeddings as it will break this function.
         def mask_embedding(m):
@@ -319,11 +331,10 @@ def train_one_epoch(
         # step optimizer and log
         if (((num_steps + 1) % args.gradient_accumulation_steps) == 0) or (
             num_steps == num_batches_per_epoch - 1
-        ):
+        ):  
             optimizer.step()
             lr_scheduler.step()
             optimizer.zero_grad()
-
             # step time and reset end outside of rank 0
             step_time_m.update(time.time() - end)
             end = time.time()
@@ -373,7 +384,7 @@ def train_one_epoch(
         t.set_postfix({"avg loss": sum(mv_avg_loss[-avg_horizon:]) / avg_horizon, "loss": loss_calvin.item(), "Lnum": loss_calvin_num.item(), "Lbin": loss_calvin_bin.item()})
         
         if calvin_val_loader is not None and global_step % args.validate_every_iter == 0 and global_step > 0:
-            mv_avg_loss_val = validate(args, model, epoch, calvin_val_loader, tokenizer, device_id, wandb)
+            mv_avg_loss_val, saved_hidden_state = validate(args, model, epoch, calvin_val_loader, tokenizer, device_id, wandb)
             if best_val_loss is None:
                 best_val_loss = mv_avg_loss_val
                 save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step)
@@ -383,6 +394,7 @@ def train_one_epoch(
                 save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step)
 
             model.train()
+            model.lm_head.hidden_state = saved_hidden_state
 
         elif calvin_val_loader is None:
             if args.save_every_iter != -1 and global_step % args.save_every_iter == 0 and global_step > 0:
@@ -412,7 +424,8 @@ def validate(
     endofchunk_token_id = tokenizer("<|endofchunk|>", add_special_tokens=False)[
         "input_ids"
     ][-1]
-
+    # Save model hidden state for later
+    saved_hidden_state = model.lm_head.hidden_state
     model.eval()
 
     # setup logging
@@ -538,7 +551,7 @@ def validate(
                 commit=False,
             )
 
-    return mv_avg_loss
+    return mv_avg_loss, saved_hidden_state
 
 def save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step):
     print("Saving checkpoint at epoch {0} and global step {1}".format(epoch, global_step))
@@ -553,11 +566,15 @@ def save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step):
             "optimizer_state_dict": optimizer.state_dict(),
             "lr_scheduler_state_dict": lr_scheduler.state_dict(),
         }
+        
+        if args.delete_previous_checkpoint:
+            files = glob.glob(os.path.join(args.run_name, "*.pth"))
+            if len(files) > 0:
+                for file in files:
+                    os.remove(file)
+
 
         ckpt_name = get_ckpt_name(args, global_step)
         ckpt_path = os.path.join(args.run_name, ckpt_name)
         print(f"Saving checkpoint to {ckpt_path}")
         torch.save(checkpoint_dict, ckpt_path)
-        if args.delete_previous_checkpoint:
-            if epoch > 0:
-                os.remove(ckpt_path)

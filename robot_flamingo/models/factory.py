@@ -50,6 +50,17 @@ mpt_dict = {
 }
 
 
+UNEXPLORED_TOKENS = {'move_slider_left':'<|slider_left|>','move_slider_right': '<|slider_right|>', 'open_drawer':'<|open_drawer|>',
+                                'close_drawer':'<|close_drawer|>', 'turn_on_lightbulb':'<|lightbulb_on|>', 'turn_off_lightbulb':'<|lightbulb_off|>',
+                                'turn_on_led':'<|led_on|>', 'turn_off_led':'<|led_off|>', 'lift_red_block_table':'<|red_block_table|>', 
+                                'lift_pink_block_table':'<|pink_block_table|>'}
+
+EXPLORED_TOKENS = {'move_slider_left':'<|slider_left_done|>', 'move_slider_right': '<|slider_right_done|>', 'open_drawer':'<|open_drawer_done|>',
+                                'close_drawer':'<|close_drawer_done|>', 'turn_on_lightbulb':'<|lightbulb_on_done|>', 'turn_off_lightbulb':'<|lightbulb_off_done|>',
+                                'turn_on_led':'<|led_on_done|>', 'turn_off_led':'<|led_off_done|>', 'lift_red_block_table':'<|red_block_table_done|>',
+                                'lift_pink_block_table':'<|pink_block_table_done|>'}
+
+
 
 def get_transforms(
     clip_vision_encoder_path: str = "ViT-L-14",
@@ -111,6 +122,7 @@ def create_model_and_transforms(
     global_latent=1,
     refresh=-1,
     seq=False,
+    action_tokens=False,
     **flamingo_kwargs,
 ):
     """
@@ -141,8 +153,12 @@ def create_model_and_transforms(
         tokenizer_path, local_files_only=use_local_files
     )
     # add Flamingo special tokens to the tokenizer
+    if action_tokens:
+        additional_token_list = ["<|endofchunk|>", "<image>"] + ['<|rewarding|>', '<|no_reward|>'] + [val for val in UNEXPLORED_TOKENS.values()] + [val for val in EXPLORED_TOKENS.values()]
+    else:
+        additional_token_list = ["<|endofchunk|>", "<image>"]
     text_tokenizer.add_special_tokens(
-        {"additional_special_tokens": ["<|endofchunk|>", "<image>"]}
+        {"additional_special_tokens": additional_token_list}
     )
     if text_tokenizer.pad_token is None:
         # Issue: GPT models don't have a pad token, which we use to
