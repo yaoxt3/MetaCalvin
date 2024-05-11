@@ -319,6 +319,7 @@ class ProtoEnv():
             initial_state['blue_block'] = 'slider_left'
 
             used_objects = random.choice(combinations)
+            random.shuffle(used_objects)
             self.state_to_tasks(initial_state, used_objects)
             meta_task = random.choice(self.sampled_tasks)
             print(self.sampled_tasks, initial_state)
@@ -455,7 +456,6 @@ class ProtoEnv():
         variance_y = np.random.randint(-8, 8) * 0.01
         variance_z = np.random.randint(-0, 12) * 0.01
         new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
-        print(new_position)
         num_bodies = p.getNumBodies()
         for i in range(num_bodies):
             body_info = p.getBodyInfo(i)
