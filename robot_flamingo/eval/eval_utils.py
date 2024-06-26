@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import time
 import PIL.Image as Image
+import cv2
 import copy
 from collections import deque
 from moviepy.editor import ImageSequenceClip

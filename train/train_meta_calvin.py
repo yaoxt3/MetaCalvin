@@ -26,7 +26,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from data import get_data
 from open_flamingo.train.distributed import init_distributed_device, world_info_from_env
-from train.utils import get_checkpoint, train_one_epoch, get_ckpt_name, get_ckpt_name_pattern
+from train.utils import get_checkpoint, train_one_epoch, train_one_epoch_diff, get_ckpt_name, get_ckpt_name_pattern
 from torch.distributed.elastic.multiprocessing.errors import record
 from transformers import (
     get_constant_schedule_with_warmup,
@@ -220,7 +220,7 @@ def main():
         action="store_true",
         help="whether diffusion model should predict epsilon",
     )
-    parser.add_argument('--head_type', type=str, default="lstm") # diffusion
+    parser.add_argument('--head_type', type=str, default="lstm")
     parser.add_argument(
         "--from_scratch",
         default=False,
@@ -345,6 +345,8 @@ def main():
         args.eval_hist_size = args.window_size
         if args.head_type == "diffusion":
             args.eval_hist_size = args.n_obs_steps
+        else:
+            args.n_obs_steps = 0
     if args.tcp_rel:
         args.clip_state = True
     if args.save_checkpoints_to_wandb and not args.report_to_wandb:
@@ -453,11 +455,6 @@ def main():
     else:
         model = model.float()
 
-    if args.head_type == "diffusion" and (not args.debug):
-        normalizer = model.diffusion_model.normalizer
-        all_actions = np.vstack([dataset.dataset.__getitem__((i,1),True)["actions"] for i in range(0,10000)])
-        normalizer.fit(all_actions, last_n_dims=1, mode='limits')
-
     model = model.to(device_id)
 
     if args.dist:
@@ -500,6 +497,12 @@ def main():
         dataset = get_data(args, args.calvin_dataset, image_processor, tokenizer, 'random')
         if args.calvin_val_dataset is not None:
             val_dataset = get_data(args, args.calvin_val_dataset, image_processor, tokenizer, 'random')
+    
+    if args.head_type == "diffusion" and (not args.debug):
+        normalizer = model.diffusion_model.normalizer
+        actions_idx = [i for i in range(0,10000)]
+        all_actions = np.vstack([dataset.dataset.__getitem__(actions_idx, True)["actions"]])
+        normalizer.fit(all_actions, last_n_dims=1, mode='limits')
 
     random_seed(args.seed, args.rank)
 
@@ -561,7 +564,16 @@ def main():
         calvin_loader = dataset.dataloader
 
         if args.head_type == "diffusion":
-            raise NotImplementedError
+            train_one_epoch_diff(
+                args=args,
+                model=ddp_model,
+                epoch=epoch,
+                tokenizer=tokenizer,
+                optimizer=optimizer,
+                lr_scheduler=lr_scheduler,
+                calvin_loader=calvin_loader,
+                device_id=device_id,
+                wandb=wandb)
         elif args.fusion_mode == 'two_way':
             raise NotImplementedError
         else:

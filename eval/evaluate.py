@@ -47,7 +47,8 @@ def evaluate():
         "--model_checkpoint", 
         type=str, 
         default="../RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth",
-        help="Path to trained model checkpoint",)
+        help="Path to trained model checkpoint",
+    )
     parser.add_argument(
         "--cross_attn_every_n_layers",
         type=int,
@@ -123,6 +124,12 @@ def evaluate():
         default=3,
         help="number of runs per environment state",
     )
+    parser.add_argument(
+        "--window_size",
+        type=int,
+        default=64,
+        help="window size for model"
+    )
     
     args = parser.parse_args()
     seed_everything(args.seed)
@@ -133,10 +140,12 @@ def evaluate():
     task_oracle = hydra.utils.instantiate(task_cfg)
 
     base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps, instructions_per_trial=1, no_op_steps=0,
-                   provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False)
+                   provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=False)
 
     print('Environment loaded')
     # Load the model
+    window_size = 1 if args.decoder_type == 'lstm_seq' else args.window_size
+    print(window_size)
     model, image_processor, tokenizer = create_model_and_transforms(
         args.vision_encoder_path,
         args.vision_encoder_pretrained,
@@ -148,6 +157,7 @@ def evaluate():
         llm_name=args.llm_name,
         decoder_type=args.decoder_type,
         action_tokens=args.action_tokens,
+        window_size=window_size
     )
 
     checkpoint = torch.load(args.model_checkpoint, map_location='cpu', mmap=True)

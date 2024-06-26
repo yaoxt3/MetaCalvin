@@ -4,7 +4,8 @@ import itertools
 def rollout_eval(args, feedback_state, environment_state, env, model, steps):
     model.reset()
     obs, feedback, _ = env.episode_reset(feedback_state, environment_state, train=True)
-    train_feedback = feedback['train_feedback']
+    train_feedback = feedback['legacy_feedback']
+    print(train_feedback)
     current_trial = 0
     total_reward = 0
     for i in range(steps):
@@ -21,7 +22,8 @@ def rollout_eval(args, feedback_state, environment_state, env, model, steps):
             if current_trial >= env.num_trials:
                 break
             obs, feedback, _ = env.trial_reset()
-            train_feedback = feedback['train_feedback']
+            train_feedback = feedback['legacy_feedback']
+            print(train_feedback)
             
 
 
@@ -54,7 +56,6 @@ def get_environment_states(args):
             raise NotImplementedError('Only 3 objects supported for legacy feedback so far')
     else:
         raise NotImplementedError('Only legacy feedback supported so far')
-    print(len(possible_feedback), len(environment_states))
     return possible_feedback, environment_states
        
 
@@ -62,16 +63,21 @@ def eval(args, base_env, model):
     num_steps = base_env.trial_steps * base_env.num_trials
     # Get all possible environment states
     possible_feedback, environment_states = get_environment_states(args)
-    print(possible_feedback, environment_states)
     total_reward = 0
     stats = {}
-    for feedback in possible_feedback:
+    for feedback_state in possible_feedback:
         feedback_reward = 0
         for state in environment_states:
             for reset in range(args.num_resets):
-                feedback_reward += rollout_eval(args, feedback, state, base_env, model, num_steps)
-                total_reward += feedback_reward
+                #base_env.base_env.seed(args.seed + reset)
+                print("################New Episode#################")
+                reward = rollout_eval(args, feedback_state, state, base_env, model, num_steps)
+                feedback_reward += reward
+                total_reward += reward
 
-        stats[feedback] = {'total_reward': feedback_reward, 'average_reward': feedback_reward / (len(environment_states) * args.num_resets)}
+        feedback_state_str = ' '.join(feedback_state)
+        stats[feedback_state_str] = {'total_reward': feedback_reward, 'average_reward': feedback_reward / (len(environment_states) * args.num_resets)}
     
-    stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / (len(possible_feedback) * len(environment_states) * args.num_resets)} 
+    stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / (len(possible_feedback) * len(environment_states) * args.num_resets)}
+
+    return stats 

@@ -21,17 +21,21 @@ import time
 
 
 class SinusoidalPosEmb(nn.Module):
-    def __init__(self, dim):
+    def __init__(self, dim, dtype=torch.float32):
         super().__init__()
         self.dim = dim
+        self.dtype = dtype
 
     def forward(self, x):
         device = x.device
+        dtype = x.dtype
         half_dim = self.dim // 2
         emb = math.log(10000) / (half_dim - 1)
         emb = torch.exp(torch.arange(half_dim, device=device) * -emb)
         emb = x[..., None] * emb[None, :]
         emb = torch.cat((emb.sin(), emb.cos()), dim=-1)
+        if self.dtype == torch.float16:
+            emb = emb.half()
         return emb
 
 
@@ -161,10 +165,11 @@ class ConditionalUnet1D(nn.Module):
         self.returns_condition = returns_condition
         all_dims = [input_dim] + list(down_dims)
         start_dim = down_dims[0]
-
+        
+        dtype = torch.float16 # Change later
         dsed = diffusion_step_embed_dim
         diffusion_step_encoder = nn.Sequential(
-            SinusoidalPosEmb(dsed),
+            SinusoidalPosEmb(dsed, dtype=dtype),
             nn.Linear(dsed, dsed * 4),
             nn.Mish(),
             nn.Linear(dsed * 4, dsed),
@@ -261,6 +266,7 @@ class ConditionalUnet1D(nn.Module):
         output: (B,T,input_dim)
         """
         sample = einops.rearrange(sample, 'b h t -> b t h')
+        print(sample.shape)
 
         # 1. time
         timesteps = timestep
@@ -271,7 +277,6 @@ class ConditionalUnet1D(nn.Module):
             timesteps = timesteps[None].to(sample.device)
         # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
         timesteps = timesteps.expand(sample.shape[0])
-
         global_feature = self.diffusion_step_encoder(timesteps)
 
         if global_cond is not None:
@@ -301,6 +306,7 @@ class ConditionalUnet1D(nn.Module):
             x = resnet2(local_cond, global_feature)
             h_local.append(x)
 
+        # IMPORTANT: Needs atleast window size 4 to work due to convolutions
         x = sample
         h = []
         for idx, (resnet, resnet2, downsample) in enumerate(self.down_modules):
@@ -313,7 +319,7 @@ class ConditionalUnet1D(nn.Module):
         for mid_module in self.mid_modules:
             x = mid_module(x, global_feature)
         for idx, (resnet, resnet2, upsample) in enumerate(self.up_modules):
-            x = torch.cat((x, h.pop()), dim=1)
+            x = torch.cat([x, h.pop()], dim=1)
             x = resnet(x, global_feature)
             if idx == len(self.up_modules) and len(h_local) > 0:
                 x = x + h_local[1]

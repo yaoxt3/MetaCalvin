@@ -1023,6 +1023,318 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         return image_tensors, (text_tensors, attention_mask, hidden_state_mask), action_tensors, gripper_tensors, state_tensors, robot_obs
 
 
+class DiskCalvinSeqDiffDataset(BaseCalvinDataset):
+    """
+    Dataset that loads episodes as individual files from disk.
+    Args:
+        skip_frames: Skip this amount of windows for language dataset.
+        save_format: File format in datasets_dir (pkl or npz).
+        pretrain: Set to True when pretraining.
+    """
+
+    def __init__(
+        self,
+        image_fn: Callable,
+        text_fn: Callable,
+        *args: Any,
+        skip_frames: int = 1,
+        save_format: str = "npz",
+        pretrain: bool = False,
+        partial_data=False,
+        n_obs_steps: int = 4,
+        **kwargs: Any,
+    ):
+        super().__init__(*args, **kwargs)
+        self.save_format = save_format
+        self.image_fn = image_fn
+        self.text_fn = text_fn
+        self.partial_data = partial_data
+        if self.save_format == "pkl":
+            self.load_file = load_pkl
+        elif self.save_format == "npz":
+            self.load_file = load_npz
+        else:
+            raise NotImplementedError
+        self.pretrain = pretrain
+        self.skip_frames = skip_frames
+        self.n_obs_steps = n_obs_steps
+
+        self.episode_lookup, self.start_idx_lookup = self._build_file_indices(self.abs_datasets_dir)
+
+        self.naming_pattern, self.n_digits = lookup_naming_pattern(
+            self.abs_datasets_dir, self.save_format
+        )
+
+    def __getitem__(self, idx_list: list, fixed_seed=False) -> Dict:
+        """
+        Get sequence of dataset.
+
+        Args:
+            idx: Index of the sequence.
+
+        Returns:
+            Loaded sequence.
+        """
+        assert isinstance(idx_list, list)
+        head = False
+        sequence = self._get_sequences(idx_list, head=head)
+
+        if self.pad:
+            if self.n_obs_steps != 0:
+                pad_size_obs = self._get_pad_size_obs(sequence)
+                pad_size_actions = self._get_pad_size_actions(sequence)
+            else:
+                pad_size_obs  = self._get_pad_size_obs(sequence)
+                pad_size_actions = pad_size_obs
+            print(pad_size_obs, pad_size_actions)
+            sequence = self._pad_sequence(sequence, pad_size_obs, pad_size_actions, head=head)
+        
+        import copy
+        new_list = []
+        np_rgb = copy.deepcopy(sequence["rgb_obs"]["rgb_static"].numpy())
+        for i in range(np_rgb.shape[0]):
+            new_list.append(Image.fromarray(np_rgb[i, :, :, :].astype(np.uint8)))
+        sequence["rgb_obs"]["rgb_static"] = new_list
+        new_list = []
+        np_gripper = copy.deepcopy(sequence["rgb_obs"]["rgb_gripper"].numpy())
+        for i in range(np_gripper.shape[0]):
+            new_list.append(Image.fromarray(np_gripper[i, :, :, :].astype(np.uint8)))
+        sequence["rgb_obs"]["rgb_gripper"] = new_list
+        # print(pad_size, len(new_list))
+        return sequence
+    
+    def _get_sequences(self, idx: list, head: bool=False) -> Dict:
+        """
+        Load sequence of length window_size.
+
+        Args:
+            idx: Index of starting frame.
+            window_size: Length of sampled episode.
+
+        Returns:
+            dict: Dictionary of tensors of loaded sequence with different input modalities and actions.
+        """
+        episode = self._load_episode(idx)
+        
+        seq_state_obs = process_state(
+            episode, self.observation_space, self.transforms, self.proprio_state
+        )
+        seq_rgb_obs = self.process_rgb(episode, self.observation_space, self.transforms)
+        seq_depth_obs = process_depth(episode, self.observation_space, self.transforms)
+        seq_acts = process_actions(episode, self.observation_space, self.transforms)
+        info = get_state_info_dict(episode)
+        seq_lang = self.process_language(episode, self.transforms, self.with_lang)
+        #info = self._add_language_info(info, idx)
+
+        seq_dict = {
+            **seq_state_obs,
+            **seq_rgb_obs,
+            **seq_depth_obs,
+            **seq_acts,
+            **info,
+            **seq_lang,
+        }  # type:ignore
+        seq_dict["idx"] = idx  # type:ignore
+        seq_dict["start_idx"] = 0 if idx[0] in self.start_idx_lookup else 1 #Used to mask hidden states for LSTM when new seq begins
+
+        return seq_dict
+
+    def _get_episode_name(self, file_idx: int) -> Path:
+        """
+        Convert file idx to file path.
+        Args:
+            file_idx: index of starting frame.
+        Returns:
+            Path to file.
+        """
+        return Path(
+            f"{self.naming_pattern[0]}{file_idx:0{self.n_digits}d}{self.naming_pattern[1]}"
+        )
+
+    def _load_episode(self, idx: list) -> Dict[str, np.ndarray]:
+        """
+        Load consecutive frames saved as individual files on disk and combine to episode dict.
+        Args:
+            idx: Index of first frame.
+            window_size: Length of sampled episode.
+        Returns:
+            episode: Dict of numpy arrays containing the episode where keys are the names of modalities.
+        """
+        keys = list(chain(*self.observation_space.values()))
+        keys.remove("language")
+        keys.append("scene_obs")
+
+        if self.n_obs_steps == 0:
+            episodes = [
+            self.load_file(self._get_episode_name(file_idx))
+            for file_idx in range(idx[0], idx[1])
+            ]
+            episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key != "feedback"}
+            episode["feedback"] = [str(ep["feedback"]) for ep in episodes]
+
+        else:
+            obs_episodes = [
+                self.load_file(self._get_episode_name(file_idx))
+                for file_idx in range(idx[0], idx[1])
+            ]
+            labels_episodes = [
+                self.load_file(self._get_episode_name(file_idx))
+                for file_idx in range(idx[1], idx[1] + self.n_obs_steps)
+            ]
+            episode = {key: np.stack([ep[key] for ep in obs_episodes]) for key in keys if key != "feedback" or key != "rel_actions"}
+            episode["rel_actions"] = np.stack([ep["rel_actions"] for ep in labels_episodes])
+            episode["feedback"] = [str(ep["feedback"]) for ep in obs_episodes]
+        
+        
+        return episode
+    
+    def _build_file_indices(self, abs_datasets_dir: Path) -> np.ndarray:
+        """
+        This method builds the mapping from index to file_name used for loading the episodes of the non language
+        dataset.
+        Args:
+            abs_datasets_dir: Absolute path of the directory containing the dataset.
+        Returns:
+            episode_lookup: Mapping from training example index to episode (file) index.
+        """
+        assert abs_datasets_dir.is_dir()
+
+        episode_lookup = []
+        start_idx_lookup = []
+
+        ep_start_end_ids = np.load(abs_datasets_dir / "ep_start_end_ids.npy")
+        logger.info(
+            f'Found "ep_start_end_ids.npy" with {len(ep_start_end_ids)} episodes.'
+        )
+        for start_idx, end_idx in ep_start_end_ids:
+            assert end_idx > self.max_window_size
+            start_idx_lookup.append(start_idx)
+            for idx in range(start_idx, end_idx + 1 - self.min_window_size):
+                episode_lookup.append(idx)
+        return np.array(episode_lookup), np.array(start_idx_lookup)
+    
+    def _get_pad_size_obs(self, sequence: Dict) -> int:
+        return self.max_window_size - len(sequence["robot_obs"])
+    
+    def _get_pad_size_actions(self, sequence: Dict) -> int:
+        return self.n_obs_steps - len(sequence["actions"])
+    
+    def _pad_sequence(self, seq: Dict, pad_size_obs: int, pad_size_actions: int, head: bool=False) -> Dict:
+        """
+        Pad a sequence by repeating the last frame.
+
+        Args:
+            seq: Sequence to pad.
+            pad_size: Number of frames to pad.
+
+        Returns:
+            Padded sequence.
+        """
+        seq.update({"robot_obs": self._pad_with_repetition(seq["robot_obs"], pad_size_obs)})
+        seq.update(
+            {
+                "rgb_obs": {
+                    k: self._pad_with_repetition(v, pad_size_obs, head)
+                    for k, v in seq["rgb_obs"].items()
+                }
+            }
+        )
+        seq.update(
+            {
+                "depth_obs": {
+                    k: self._pad_with_repetition(v, pad_size_obs, head)
+                    for k, v in seq["depth_obs"].items()
+                }
+            }
+        )
+        #  todo: find better way of distinguishing rk and play action spaces
+        if not self.relative_actions:
+            if head:
+                seq_acts = self._pad_with_zeros(seq["actions"], pad_size_actions, head)
+            else:
+                # repeat action for world coordinates action space
+                seq.update({"actions": self._pad_with_repetition(seq["actions"], pad_size_actions, head)})
+        else:
+            # for relative actions zero pad all but the last action dims and repeat last action dim (gripper action)
+            if head:
+                seq_acts = self._pad_with_zeros(seq["actions"], pad_size_actions, head)
+            else:
+                seq_acts = torch.cat(
+                    [
+                        self._pad_with_zeros(seq["actions"][..., :-1], pad_size_actions, head),
+                        self._pad_with_repetition(seq["actions"][..., -1:], pad_size_actions, head),
+                    ],
+                    dim=-1,
+                )
+            seq.update({"actions": seq_acts})
+        seq.update(
+            {
+                "state_info": {
+                    k: self._pad_with_repetition(v, pad_size_obs, head)
+                    for k, v in seq["state_info"].items()
+                }
+            }
+        )
+        seq.update({"lang": self.pad_lang(seq["lang"], pad_size_obs)})
+        return seq
+
+    @staticmethod
+    def pad_lang(lang, pad_size):
+        """
+        Pad language to seq len
+        """
+        last_lang = lang[-1]
+        padded = lang + [last_lang] * pad_size
+        return padded
+
+    def collater(self, sample):
+        action_tensors = torch.from_numpy(np.array([np.stack(s["actions"]) for s in sample]))
+        state_tensors = torch.from_numpy(np.array([np.stack(s["robot_obs"]) for s in sample]))
+        image_tensors = torch.stack([self.image_fn(s["rgb_obs"]["rgb_static"]) for s in sample])
+        gripper_tensors = torch.stack([self.image_fn(s["rgb_obs"]["rgb_gripper"]) for s in sample])
+        stacked_language = [s["lang"] for s in sample]
+        text_tensors, attention_mask = self.text_fn(stacked_language)
+        hidden_state_mask = torch.stack([torch.tensor(s["start_idx"]) for s in sample])
+        
+        if self.rgb_pad != -1:
+            bs, seq_len = image_tensors.shape[:2]
+            if self.traj_cons:
+                image_tensors = self.rgb_shift.forward_traj(image_tensors)
+            else:
+                image_tensors = image_tensors.view(bs*seq_len, *image_tensors.shape[2:])
+                image_tensors = self.rgb_shift(image_tensors)
+                image_tensors = image_tensors.view(bs, seq_len, *image_tensors.shape[1:])
+        if self.gripper_pad != -1:
+            bs, seq_len = gripper_tensors.shape[:2]
+            if self.traj_cons:
+                gripper_tensors = self.gripper_shift.forward_traj(gripper_tensors)
+            else:
+                gripper_tensors = gripper_tensors.view(bs * seq_len, *gripper_tensors.shape[2:])
+                gripper_tensors = self.gripper_shift(gripper_tensors)
+                gripper_tensors = gripper_tensors.view(bs, seq_len, *gripper_tensors.shape[1:])
+        robot_obs = torch.zeros(1)
+        
+        if self.act_step != 1:
+        
+            actions = torch.zeros((action_tensors.shape[0], self.window_size, self.act_step, action_tensors.shape[-1]))
+            for b in range(action_tensors.shape[0]):
+                for ix in range(self.window_size):
+                    actions[b, ix] = action_tensors[b, ix:ix+self.act_step]
+
+            robot_obs = torch.zeros((action_tensors.shape[0], self.window_size, self.act_step, state_tensors.shape[-1]))
+            for b in range(action_tensors.shape[0]):
+                for ix in range(self.window_size):
+                    robot_obs[b, ix] = state_tensors[b, ix:ix+self.act_step]
+            robot_obs = torch.cat([robot_obs[..., :6], robot_obs[..., [-1]]], dim=-1)
+
+            action_tensors = actions
+            image_tensors = image_tensors[:, :-(self.act_step-1)]
+            gripper_tensors = gripper_tensors[:, :-(self.act_step-1)]
+            state_tensors = state_tensors[:, :-(self.act_step-1)]
+
+        return image_tensors, (text_tensors, attention_mask, hidden_state_mask), action_tensors, gripper_tensors, state_tensors, robot_obs
+
+
 
 
 def load_pkl(filename: Path) -> Dict[str, np.ndarray]:
@@ -1161,8 +1473,8 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
     )
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
-    calvin_dataset = DiskCalvinSeqDataset(
-        datasets_dir=Path(dataset_path) / "training_3_objs_biased_merged", #if "validation" not in dataset_path else Path(dataset_path),
+    calvin_dataset = DiskCalvinSeqDiffDataset(
+        datasets_dir=Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args.window_size,
@@ -1174,7 +1486,8 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
         min_window_size=args.min_window_size,
         max_window_size=args.max_window_size,
         act_step=args.multi_step_action,
-        partial_data=args.partial_data
+        partial_data=args.partial_data,
+        n_obs_steps=args.n_obs_steps,
     )
 
     round_fn = math.floor if floor else math.ceil
@@ -1202,7 +1515,7 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
     #    )
 
     seq_sampler = DistributedSequenceSampler(
-            dataset_path + "training_3_objs_biased_merged",
+            dataset_path,
             args.batch_size_calvin,
             args.window_size,
         )
@@ -1250,7 +1563,7 @@ if __name__=='__main__':
     import time
     import cv2
 
-    data_path = '/home/richard/Documents/GitHub/RoboTest/data/validation_3_objs_biased'
+    data_path = '/home/richard/Documents/GitHub/RoboTest/data/validation_5_objs_biased'
     model, image_processor, tokenizer = create_model_and_transforms(
         clip_vision_encoder_path="ViT-L-14",
         clip_vision_encoder_pretrained="openai",
@@ -1266,7 +1579,7 @@ if __name__=='__main__':
     )
     args = {
         'calvin_dataset': data_path,
-        'window_size': 32,
+        'window_size': 12,
         'min_window_size': 1,
         'max_window_size': 1,
         'rgb_pad': -1,
@@ -1292,7 +1605,7 @@ if __name__=='__main__':
     )
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
-    calvin_dataset = DiskCalvinSeqDataset(
+    calvin_dataset = DiskCalvinSeqDiffDataset(
         datasets_dir=Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
@@ -1305,7 +1618,9 @@ if __name__=='__main__':
         min_window_size=args['min_window_size'],
         max_window_size=args['max_window_size'],
         act_step=args['multi_step_action'],
-        partial_data=args['partial_data']
+        partial_data=args['partial_data'],
+        n_obs_steps=0,
+        pad = True,
     )
     
     floor = False
@@ -1334,6 +1649,7 @@ if __name__=='__main__':
         dataset_path,
         args['batch_size_calvin'],
         args['window_size'],
+        n_obs_steps=0,
     )
 
     # the batch_size and num_workers are per-GPU !
@@ -1350,19 +1666,22 @@ if __name__=='__main__':
     )
     dataloader.num_batches = num_batches
     dataloader.num_samples = num_samples
-    
+
+    for i, data in enumerate(dataloader):
+        print(data[0].shape)
+        print(data[2].shape)
     #print(calvin_dataset.start_idx_lookup)
     #iterate one step over the dataloader to see output
-    for i, data in enumerate(dataloader):
-        data_vis = data[0][1].numpy()
-        lang_stack = data[-1][1]
-        text_ids = data[1][0]
-        for i in range(32):
-            print(lang_stack[i])
-            text_ids_decoded = tokenizer.decode(text_ids[1][i])
-            print(text_ids_decoded)
-            cv2.imshow('frame', data_vis[i].transpose(1, 2, 0)[:,:,::-1])
-            cv2.waitKey(50)
+    #for i, data in enumerate(dataloader):
+    #    data_vis = data[0][1].numpy()
+    #    lang_stack = data[-1][1]
+    #    text_ids = data[1][0]
+    #    for i in range(32):
+    #        print(lang_stack[i])
+    #        text_ids_decoded = tokenizer.decode(text_ids[1][i])
+    #        print(text_ids_decoded)
+    #        cv2.imshow('frame', data_vis[i].transpose(1, 2, 0)[:,:,::-1])
+    #        cv2.waitKey(50)
         #cv2.imshow('frame', data[0].transpose(1, 2, 0)[:,:,::-1])
         #cv2.waitKey(50)
     #    print(data[0].shape)

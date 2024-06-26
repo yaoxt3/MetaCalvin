@@ -5,7 +5,7 @@ import torch.nn as nn
 from open_flamingo.src.helpers import PerceiverResampler
 from robot_flamingo.models.normalizer import LinearNormalizer
 from robot_flamingo.models.trajectory_gpt2 import get_gpt_model
-# from .unets import *
+from robot_flamingo.models.unets import *
 import copy
 
 def lstm_decoder(
@@ -315,7 +315,6 @@ class DeterministicDecoder(ActionDecoder):
         state_tensor=None,
         return_feature=False
     ):
-        
         
         # reshape
         if input_feature.dim() == 3:

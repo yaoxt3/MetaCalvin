@@ -352,7 +352,7 @@ def visualize_dataset(dataset):
         rgb = episode['rgb_static']
         print(feedback)
         cv2.imshow('test',rgb[:,:,::-1])
-        cv2.waitKey(10)
+        cv2.waitKey(60)
 
 def get_data_statistics(dataset):
     feedback_stats = {}
@@ -382,7 +382,7 @@ def get_data_statistics(dataset):
 if __name__ == '__main__':
     import cv2
     #get_data_statistics('/home/richard/Documents/GitHub/RoboTest/data/test')
-    get_data_statistics('/home/richard/Documents/GitHub/RoboTest/data/validation_3_objs_biased')
-    visualize_dataset('/home/richard/Documents/GitHub/RoboTest/data/validation_3_objs_biased')
+    #get_data_statistics('/home/richard/Documents/GitHub/RoboTest/data/validation_3_objs_biased')
+    visualize_dataset('/home/richard/Documents/GitHub/RoboTest/data/validation_5_objs_biased')
 
         

@@ -302,7 +302,6 @@ class DeterministicDecoderSeq(ActionDecoder):
                         h_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
                         c_t = torch.mul(self.hidden_state[0], hidden_state_mask.reshape(1, -1, 1).repeat(1, 1, self.hidden_size))
                         self.hidden_state = (h_t.detach(), c_t.detach())
-
                 x, h_n = self.rnn(input_feature, self.hidden_state)
                 self.hidden_state = h_n
                 if self.last_action:

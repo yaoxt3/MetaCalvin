@@ -91,8 +91,6 @@ class MPTFlamingoSeq(nn.Module):
             self.lang_dim = lang_encoder.config.hidden_size
 
         self.residual = residual
-        print(self.vis_dim, self.lang_dim)
-        print(lang_encoder.config)
         if not debug:
             if 'llama' in llm:
                 self.lang_encoder.init_flamingo(
@@ -143,23 +141,21 @@ class MPTFlamingoSeq(nn.Module):
                 use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, use_state=use_state, return_feature=return_feature, multi_step_action=multi_step_action)
             else:
                 raise NotImplementedError
-        elif decoder_type == 'diffusion':
-            if use_diff:
-                self.diffusion_model = DiffusionDecoder(
-                    self.action_head.hidden_size, 
-                    self.window_size,
-                    input_dim=self.action_head.out_features+1,
-                    n_timesteps=n_timesteps,
-                    horizon=diff_horizon,
-                    predict_epsilon=predict_epsilon,
-                )
-            else:
-                raise NotImplementedError
         elif decoder_type=='gpt':
             lm_head = GPTDecoder(in_features, self.window_size, use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, multi_step_action=multi_step_action, pooling=pooling, hidden_size=hidden_size)
             self.lang_encoder.lm_head = self.action_head = lm_head
         else:
             raise NotImplementedError
+        
+        if use_diff:
+            self.diffusion_model = DiffusionDecoder(
+                lm_head.hidden_size, 
+                self.window_size,
+                n_timesteps=n_timesteps,
+                horizon=diff_horizon,
+                predict_epsilon=predict_epsilon,
+            )
+
         
         sep_lm_head = True
         self.sep_lm_head = sep_lm_head
@@ -247,8 +243,8 @@ class MPTFlamingoSeq(nn.Module):
             output_hs = self.lm_head(output_hs, state_tensor=state_tensor, return_feature=return_feature)
         else:
             output_hs = self.lm_head(output_hs, hidden_state_mask, state_tensor=state_tensor, return_feature=return_feature)
+
         output.logits = output_hs
-        
         return output
 
     def _encode_vision_x(self, vision_x: torch.Tensor):
