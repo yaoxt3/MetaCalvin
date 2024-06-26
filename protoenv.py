@@ -530,10 +530,10 @@ if __name__ == '__main__':
 
     from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
 
-    base_env = get_env(Path("/home/richard/Documents/GitHub/RoboTest/calvin/dataset/calvin_debug_dataset/validation"), show_gui=False)
-    task_cfg = OmegaConf.load("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
+    base_env = get_env(Path("./calvin/dataset/calvin_debug_dataset/validation"), show_gui=False)
+    task_cfg = OmegaConf.load("./calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
     task_oracle = hydra.utils.instantiate(task_cfg)
 
-    env = ProtoEnv(base_env, task_oracle, num_trials=2, trial_steps=1000, provide_feedback=True)
+    env = ProtoEnv(base_env, task_oracle, num_trials=2, trial_steps=1000, provide_feedback=True, five_objs=True)
     obs, feedback, environment_description = env.episode_reset(train=True)
     obs, feedback, environment_description = env.episode_reset(train=True)
