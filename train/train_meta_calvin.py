@@ -62,7 +62,7 @@ def main():
     parser.add_argument(
         "--checkpoint_path_foundation", 
         type=str, 
-        default="/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth",
+        default="../RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth",
         help="Path to pretrained foundation model. Can either be from RoboFlamingo or OpenFlamingo")
     parser.add_argument(
         "--cross_attn_every_n_layers",
@@ -337,10 +337,14 @@ def main():
     parser.add_argument("--multi_step_action", type=int, default=1, help="multiple step action prediction")
 
     parser.add_argument("--seq_training", default=False, action="store_true", help="Load batches from sequences instead of random windows")
+    parser.add_argument("--feedback_type", type=str, default="train_feedback", 
+                        help="Type of feedback to use for training. train_feedback for constant feedback, alt_feedback for multiple different feedback types ")
     parser.add_argument("--dist", default=True, action="store_false", help="wether to use distributed training")
 
     args = parser.parse_args()
     
+    assert args.feedback_type in ["train_feedback", "alt_feedback"]
+
     if args.eval_hist_size == -1:
         args.eval_hist_size = args.window_size
         if args.head_type == "diffusion":
