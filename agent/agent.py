@@ -17,8 +17,9 @@ class OracleAgent():
 
     def step(self, obs, feedback=None, use_reasoning=True, annotation=None, env_description=None, instruction_step=False):
         '''Take a step in the environment'''
+        output = None
         if instruction_step:
-            self.instruction = self.get_instruction(feedback, use_reasoning, annotation, env_description)
+            self.instruction, output = self.get_instruction(feedback, use_reasoning, annotation, env_description)
             if self.task_llm is not None:
                 if self.subtask_instruction is None:
                     self.subtask_instruction = self.instruction
@@ -44,20 +45,20 @@ class OracleAgent():
         if self.policy_model.use_diff:
             self.policy_model.action_hist_queue.append(action)
         
-        return action, self.instruction
+        return action, self.instruction, output
 
 
     def get_instruction(self, feedback=None, use_reasoning=True, annotation=None, env_description=None):
         '''Get the instruction from a description of the environment and the feedback'''
-
+        output = None
         if use_reasoning:
             assert self.reasoning_llm is not None, "Reasoning LLM is required if reasoning is used"
             assert feedback is not None, "Feedback is required if reasoning is used"
             if self.vlm is None:
-                instruction = self.get_reasoning_output(feedback, env_description, None)
+                instruction, output = self.get_reasoning_output(feedback, env_description, None)
             else:
                 vlm_description = self.get_vlm_description()
-                instruction = self.get_reasoning_output(feedback, env_description, vlm_description)
+                instruction, output = self.get_reasoning_output(feedback, env_description, vlm_description)
         else:
             assert annotation is not None, "Task annotation is required if reasoning is not used"
             instruction = annotation
@@ -66,7 +67,7 @@ class OracleAgent():
             instruction = self.get_task_llm_output(instruction)
         
         
-        return instruction
+        return instruction, output
 
     def get_reasoning_output(self, feedback, env_description, vlm_description=None):
         '''Get the reasoning output from the feedback and the environment description'''
@@ -82,7 +83,7 @@ class OracleAgent():
             self.reasoning_hist.append(feedback)
         instruction, output = self.reasoning_llm.get_instruction(self.reasoning_hist)
         self.reasoning_hist.append(output)
-        return instruction
+        return instruction, output
 
 
     def get_vlm_description(self):

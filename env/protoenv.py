@@ -12,10 +12,10 @@ import time
 import re
 import hydra
 import random
-from calvin.calvin_models.calvin_agent.evaluation.utils import (
-    collect_plan,
-    get_env_state_for_initial_condition,
-)
+
+from math import pi
+
+from env.env_utils import *
 
 from pathlib import Path
 from omegaconf import OmegaConf
@@ -23,23 +23,27 @@ import pybullet as p
 
 import itertools
 
-from env_utils import get_feedback_template
-
 
 class ProtoEnv():
-    def __init__(self, base_env, task_oracle, num_trials, trial_steps, instructions_per_trial=2, no_op_steps=15,
-                 provide_feedback=True, provide_train_feedback=False, provide_lm_feedback=True, reset_robot_pos=True,
-                 five_objs=False):
+    def __init__(self, base_env, task_oracle, num_trials, trial_steps, instructions_per_trial=2, num_objs=3,
+                 provide_feedback=True, provide_train_feedback=False, provide_lm_feedback=True, reset_robot_pos=True):
         super(ProtoEnv, self).__init__()
 
         self.base_env = base_env
         self.task_oracle = task_oracle
-        self.five_objs = five_objs
+        self.num_objs = num_objs
 
-        if self.five_objs:
+        if self.num_objs == 5:
             self.train_tasks = ['move_slider_left', 'move_slider_right', 'open_drawer', 'close_drawer', 'turn_on_lightbulb',
                             'turn_off_lightbulb', 'turn_on_led', 'turn_off_led', 'lift_red_block_table']
             self.block_objects_train = ['red_block']
+            self.static_objects = ['slider', 'drawer', 'led', 'lightbulb']
+            self.objects = self.block_objects_train + self.static_objects
+        elif self.num_objs == 7:
+            self.train_tasks = ['move_slider_left', 'move_slider_right', 'open_drawer', 'close_drawer', 'turn_on_lightbulb',
+                            'turn_off_lightbulb', 'turn_on_led', 'turn_off_led', 'lift_red_block_table', 'lift_pink_block_table', 'lift_blue_block_table',
+                            'lift_red_block_slider', 'lift_pink_block_slider', 'lift_blue_block_slider']
+            self.block_objects_train = ['red_block', 'pink_block', 'blue_block']
             self.static_objects = ['slider', 'drawer', 'led', 'lightbulb']
             self.objects = self.block_objects_train + self.static_objects
         else:
@@ -54,7 +58,7 @@ class ProtoEnv():
                                             'open_drawer': 'pull the handle to open the drawer', 'close_drawer': 'push the handle to close the drawer', 'turn_on_lightbulb': 'turn on the lightbulb',
                                             'turn_off_lightbulb': 'turn off the lightbulb', 'turn_on_led': 'turn on the led', 'turn_off_led': 'turn off the led',
                                             'lift_red_block_table': 'lift the red block from the table', 'lift_pink_block_table': 'lift the pink block from the table'}
-        
+         
         self.all_tasks = self.train_tasks
 
 
@@ -67,14 +71,13 @@ class ProtoEnv():
 
         self.trial_done = False
         self.last_reward = 0
-        self.no_op_steps = no_op_steps
 
         self.provide_feedback = provide_feedback
         self.provide_train_feedback = provide_train_feedback
         self.provide_lm_feedback = provide_lm_feedback
         self.reset_robot_pos = reset_robot_pos
 
-    def episode_reset(self, feedback_state=None, environment_state=None, train=True):
+    def episode_reset(self, feedback_state=None, environment_state=None, meta_task=None, train=True):
         self.trial_count = 0
         self.trial_step_count = 0
         self.completed_instructions = 0
@@ -90,13 +93,20 @@ class ProtoEnv():
         self.episode_completed_tasks = []
 
         # Sample which task to perform
-        self.initial_state, self.meta_task, self.environment_description = self.create_dynamic_env(combinations, feedback_state, environment_state)
+        self.initial_state, self.meta_task, self.environment_description = self.create_dynamic_env(combinations, feedback_state, environment_state, meta_task)
 
         if self.reset_robot_pos:
             self.reset_robot_position()
-        robot_obs, scene_obs = get_env_state_for_initial_condition(self.initial_state)
+        robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state)
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         self.start_info = self.base_env.get_info()
+
+        # Sample templates for feedback for the tasks for variable alternative feedback
+        self.first_trial_template = build_template_first_trial()
+        self.further_trial_template = build_template_further_trial()
+        self.reward_template = random.choice(REWARD_TEMPLATES)
+
+        self.sampled_task_instructions = {key: random.choice(TASK_INSTRUCTIONS[key]) for key in TASK_INSTRUCTIONS.keys()} 
         
         if self.provide_feedback:
             feedback = self.get_feedback(trial_end=True, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
@@ -105,9 +115,10 @@ class ProtoEnv():
             feedback = None
 
         observation = self.base_env.get_obs()
-        return observation, feedback, self.environment_description
+        return observation, feedback, self.environment_description, self.start_info
 
     def trial_reset(self, instruction=None):
+        '''Reset environment for a new trial'''
         self.trial_count += 1
         self.trial_step_count = 0
         self.completed_instructions = 0
@@ -123,24 +134,38 @@ class ProtoEnv():
         self.task_success_dict = {task: False for task in self.all_tasks}
         if self.reset_robot_pos:
             self.reset_robot_position()
-        robot_obs, scene_obs = get_env_state_for_initial_condition(self.initial_state)
+        robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state)
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         observation = self.base_env.get_obs()
-        if self.no_op_steps != 0:
-            observation = [observation for _ in range(self.no_op_steps)]
-        return observation, feedback, self.environment_description
+        info = self.base_env.get_info()
+
+        return observation, feedback, self.environment_description, info
 
     def step(self, action, instruction=None):
-        feedback = None
+        '''
+            Perform step in the environment based on the action.
 
+           - Relative actions should be 7 Tuple (x,y,z, euler_x, euler_y, euler_z, gripper):
+                - tcp position (3): x,y,z in relative world coordinates normalized and clipped to (-1, 1) with scaling factor 50
+                - tcp orientation (3): euler angles x,y,z in relative world coordinates normalized and clipped to (-1, 1) with scaling factor 20
+                - gripper_action (1): binary (close = -1, open = 1)
+
+            - Absolute actions should be 3 Tuple ((x,y,z), (euler_x, euler_y, euler_z), (gripper)):
+                - tcp position (3): x,y,z in absolute world coordinates
+                - tcp orientation (3): euler angles x,y,z in absolute world coordinates
+                - gripper_action (1): binary (close = -1, open = 1)
+        '''
+        feedback = None
+        reward = 0
         self.trial_step_count += 1
-        action = action.squeeze()
+
+        if not len(action) == 3:
+            action = action.squeeze()
 
         if self.trial_step_count >= self.trial_steps or self.trial_done:
             self.trial_done = True
 
         observation, _, _, info = self.base_env.step(action)
-        reward = 0
         task_info = [list(self.task_oracle.get_task_info_for_set(self.start_info, info, {task})) for task in self.all_tasks]
         for subtask in self.all_tasks:
             check, updated = self.task_info_check(subtask, task_info)
@@ -179,22 +204,23 @@ class ProtoEnv():
     def get_feedback(self, instruction=None, info=None, trial_end=False, provide_train_feedback=False, provide_lm_feedback=True):
         lm_feedback = None
         train_feedback = None
-        legacy_feedback = None
+        alt_feedback = None
         
         if self.provide_feedback is True:
             if trial_end:
+                # Provide feedback at trial end
                 env_status = self.get_env_status(self.start_info)
                 if self.trial_count == 0:
-                    if self.trial_count == 0:
-                        if provide_lm_feedback:
-                            lm_feedback = {"role": "user", "content": "Beginning of trial 1: Please give an instruction for this trial. {0} Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>'." \
-                            "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(env_status)}
-                        if provide_train_feedback:
-                            # Backwards compatible for now
-                            used_objects_episode = [obj.replace('_', ' ') for obj in self.used_objects]
-                            train_feedback = get_feedback_template(used_objects_episode, [], [], self.meta_task, trial_one=True)
-                
+                    # Feedback for the first trial
+                    if provide_lm_feedback:
+                        lm_feedback = {"role": "user", "content": "Beginning of trial 1: Please give an instruction for this trial. {0} Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>'." \
+                        "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(env_status)}
+                    if provide_train_feedback:
+                        used_objects = ', '.join([obj.replace('_', ' ') for obj in self.used_objects])
+                        train_feedback = 'first trial. episode objects: {0}'.format(used_objects)
+                        alt_feedback = self.first_trial_template.format(used_objects)
                 else:
+                    # Feedback for the consecutive trials
                     if provide_lm_feedback:
                         assert instruction is not None, "Instruction is required for feedback"
                         completed_tasks = ''
@@ -209,16 +235,45 @@ class ProtoEnv():
                         "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(self.trial_count, completed_tasks, env_status)}
                     
                     if provide_train_feedback:
-                        
+                    
                         completed_tasks_trial = [key for key, value in self.task_success_dict.items() if value is True]
-                        episode_completed_tasks = [task.replace('_', ' ') for task in self.episode_completed_tasks]
 
-                        used_objects = [obj.replace('_', ' ') for obj in self.used_objects]
-                        train_feedback = get_feedback_template(used_objects, episode_completed_tasks, completed_tasks_trial, self.meta_task)
+                        # Train feedback for success
+                        if self.meta_task in completed_tasks_trial:
+                            reward_string = 'was rewarding last trial'
+                            task_instruction = self.task_instruction_feedback[self.meta_task]
+                            train_feedback = task_instruction + ' ' + reward_string + '; '
 
-                                     
+                            # Alt feedback for success
+                            alt_feedback = self.reward_template.format(self.sampled_task_instructions[self.meta_task])
 
+                        else:
+                            used_objects_episode = [obj.replace('_', ' ') for obj in self.used_objects]
+                            used_objects_str = ', '.join(used_objects_episode)
+                            explored_objects = []
+                            
+                            for obj in self.used_objects:
+                                for task in self.episode_completed_tasks:
+                                    if obj in ['red_block', 'blue_block', 'pink_block']:
+                                        obj = obj.replace('_', ' ')
+                                    if obj in task:
+                                        explored_objects.append(obj)
+
+                            explored_objects_str = ', '.join(explored_objects)
+                            if len(explored_objects) == 0:
+                                explored_objects_str = 'none'
+                            meta_task_str = self.meta_task.replace('_', ' ')
+                            if meta_task_str in self.episode_completed_tasks and meta_task_str not in completed_tasks_trial:
+                                train_feedback = 'no reward last trial. episode objects: {0}. explored objects: {1}. {2} was rewarding in previous trials'.format(used_objects_str, explored_objects_str, self.task_instruction_feedback[self.meta_task])
+                            else:
+                                train_feedback = 'no reward last trial. episode objects: {0}. explored objects: {1}'.format(used_objects_str, explored_objects_str)
+                            
+                            # Alt feedback
+                            alt_feedback = self.further_trial_template.format(used_objects, explored_objects_str)
+
+            # TODO: Fix and update this!!
             else:
+                # Feedback if multiple tasks can be completed per trial
                 env_status = self.get_env_status(info)
                 last_action = [key for key, value in self.task_success_dict.items() if value is True][-1]
                 last_action = self.task_instruction_feedback[last_action]
@@ -235,15 +290,14 @@ class ProtoEnv():
                     if provide_train_feedback:
                         train_feedback = "Action {0} was not rewarding.".format(last_action)
         
-        feedback = {'lm_feedback': lm_feedback, 'train_feedback': train_feedback, 'legacy_feedback': legacy_feedback}
+        feedback = {'lm_feedback': lm_feedback, 'train_feedback': train_feedback, 'alt_feedback': alt_feedback}
 
         return feedback
     
-    def create_dynamic_env(self, combinations, feedback_state=None, environment_state=None):
+    def create_dynamic_env(self, combinations, feedback_state=None, environment_state=None, meta_task=None):
 
         if environment_state is None:
             used_objects = random.choice(combinations)
-            table_object = ['red_block']
             initial_state = {}
             for static_object in self.static_objects:
                 if static_object in ['led', 'lightbulb']:
@@ -253,13 +307,31 @@ class ProtoEnv():
                 else:
                     initial_state[static_object] = random.choice(['left', 'right'])
             #Hack for now
-            if self.five_objs is False:
+            if self.num_objs == 3:
                 initial_state['led'] = 0
+            else:
+                initial_state['led'] = random.choice([0, 1])
+            initial_state['led'] = 0
 
-            # Handle block objects and hide unused in slider for now
-            initial_state[table_object[0]] = 'table'
-            initial_state['pink_block'] = 'slider_right' #Change later
-            initial_state['blue_block'] = 'slider_left'
+            if self.num_objs == 7:
+                locations = ['table', 'slider_left', 'slider_right']
+                for block in self.block_objects_train:
+                    # First check for all blocks that they are not behind the slider if they are to be used in the episode
+                    if block in used_objects:
+                        location_used_block = random.choice([loc for loc in locations if initial_state['slider'] not in loc])
+                        locations.remove(location_used_block)
+                        initial_state[block] = location_used_block
+                
+                for block in [blk for blk in self.block_objects_train if blk not in used_objects]:
+                    sampled_location = random.choice(locations)
+                    locations.remove(sampled_location)
+                    initial_state[block] = sampled_location
+            else:
+                initial_state['red_block'] = 'table'
+                initial_state['pink_block'] = 'slider_right' 
+                initial_state['blue_block'] = 'slider_left'
+            initial_state['slider'] = 'right'
+            initial_state['lightbulb'] = 1
 
             random.shuffle(used_objects)
             self.state_to_tasks(initial_state, used_objects)
@@ -270,42 +342,24 @@ class ProtoEnv():
             initial_state = environment_state
             used_objects = feedback_state
             self.state_to_tasks(initial_state, used_objects)
-            meta_task = random.choice(self.sampled_tasks)
+            if meta_task is None:
+                meta_task = random.choice(self.sampled_tasks)
+            else:
+                assert meta_task in self.sampled_tasks, "Meta task must be possible for environment state"
 
         object_descriptions = self.get_object_descriptions(used_objects, initial_state)
 
-        environment_description = [{"role": "user", "content": "You are a helpfull assistant that gives me instructions on which tasks I should complete, given a set of " \
-        "objects that I can interact with. It is not known which task is rewarding, so I need to explore the task space to find the rewarding task as efficiently and quickly " \
-        "as possible. Once I find the rewarding task I should exploit my knowledge and keep repeating this task. Following objects are present in the environment:"
-        " 1) {0}" \
-        " 2) {1}" \
-        " 3) {2}" \
-        "The objects can only be manipulated in the ways that are described above. There are no hidden features or functions " \
-        "I have multiple trials to find the rewarding task. The rewarding task stays " \
-        "the same throughout the trials but all the objects are put back to their initial states at the beiginning of each trial. After the completion of a task you get feedback if the task was rewarding or not. Additionally at the end of each trial you will get " \
-        "information about all completed task in the trial and their reward. In order to be as helpful as possible to me you have to follow these guidelines:" \
-        " 1) You should act as a mentor and guide me to the next task based on the current environment state and information gathered from previous trials about completed tasks. " \
-        " 2) You have to adhere to the following template when giving instructions: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>' If you have any explanations or notes than you have to add them in the specified format " \
-        " 3) Do not give instructions that include other forms of manipulation for the objects besides the ones mentioned in the object descriptions. You have to adjust your instructions to the current environment state. For example the instruction 'open the drawer' does not make sense if the drawer is currently open " \
-        " 4) Keep your instructions clear, concise and precise. Do not add any additional information. An example instruction can be: 'pick up the red block'. All instructions have to follow this format. " \
-        " 5) Only use one action in your instruction. For example do not say 'pick up the bink block and move it to the left'. Only use the available actions given to you "
-        " 6) Use the information given to you to give instructions that explore the task space as efficiently as possible. Do not repeat instructions for tasks which were not rewarding. " \
-        " 7) If you gave an instruction for a task but I did not complete it, you may repeat the instruction again." \
-        " 8) If you find a rewarding instruction you must repeat it for all future trials. Do not give an instruction for a different task" \
-        " 9) Explore the objects in the order they are given to you. Explore the first object first. If it is not rewarding, explore the second object. If this is not rewarding explore the third object" \
-        "Because you are a helpfull assistant you will strictly follow these instructions and guide me on my mission to find the rewarding task and maximize my total reward. ".format(object_descriptions[0], object_descriptions[1], object_descriptions[2])},
-        {"role": "assistant", "content": "I understand your instructions and will strictly follow them. I will use my reasoning skills to give useful instructions about which task" \
-        "you should complete in order to maximize the total reward."}]
-        
+        environment_description = [ENVIRONMENT_DESCRIPTION[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2]), ENVIRONMENT_DESCRIPTION[1]]
         return initial_state, meta_task, environment_description
     
     def get_object_descriptions(self, objects, initial_state):
         object_descriptions = []
         self.used_objects = objects
         for obj in objects:
-            if obj in ['red_block', 'pink_block']:
+            if obj in ['red_block', 'pink_block', 'blue_block']:
+                block_state = 'slider' if 'slider' in initial_state[obj] else 'table'
                 obj = obj.replace('_', ' ')
-                object_descriptions.append('A {0} that lies on the table and can be picked up. Possible instructions: "lift the {0} from the table" '.format(obj))
+                object_descriptions.append('A {0} that lies on the {1} and can be picked up. Possible instructions: "lift the {0} from the table", "lift the {0} from the slider'.format(obj, block_state))
             elif obj in ['slider']:
                 slider_state = initial_state[obj]
                 object_descriptions.append('A {0} door that is currently at the {1} and can be moved to the left or right. Possible instructions: "move the door to the left", "move the door to the right"'.format(obj, slider_state))
@@ -345,7 +399,12 @@ class ProtoEnv():
                 elif obj == 'slider':
                     obj_status = 'The slider door is currently at the {0}'.format(slider_status)
             else:
-                obj_status = '{0} is currently on the table'.format(obj)
+                location = self.initial_state[obj]
+                if location == 'table':
+                    location = 'on the table'
+                else:
+                    location = 'in the slider'
+                obj_status = '{0} is currently {1} '.format(obj, location)
             object_status_list.append(obj_status)
         
         env_status_string = 'The current status of the environment: {0}; {1}; {2}.'.format(object_status_list[0], object_status_list[1], object_status_list[2])
@@ -357,7 +416,7 @@ class ProtoEnv():
         task_info = [task for sublist in task_info for task in sublist]
         task_pairs = [['open_drawer', 'close_drawer'], ['turn_on_lightbulb', 'turn_off_lightbulb'], ['turn_on_led', 'turn_off_led'], 
                       ['move_slider_left', 'move_slider_right']]
-        block_tasks = ['lift_red_block_table', 'lift_pink_block_table', 'lift_blue_block_table']
+        block_tasks = ['lift_red_block_table', 'lift_pink_block_table', 'lift_blue_block_table', 'lift_red_block_slider', 'lift_pink_block_slider', 'lift_blue_block_slider']
 
         if task in block_tasks:
             if task in task_info:
@@ -394,13 +453,21 @@ class ProtoEnv():
     def reset_robot_position(self):
         '''reset robot initial position after each trial'''
         base_position = [-0.34, -0.46, 0.24]
+        '''
+        variance_x = np.random.choice(np.arange(-0.05, 0.05, 0.001))
+        variance_y = np.random.choice(np.arange(-0.02, 0.02, 0.001))
+        variance_z = np.random.choice(np.arange(-0.02, 0.02, 0.001))
+        new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
+        '''
+        base_position = [-0.34, -0.46, 0.24]
         if self.initial_state['drawer'] == 'open':
             variance_x = np.random.randint(-15, 25) * 0.01
         else:
-            variance_x = np.random.randint(-15, 35) * 0.01
+            variance_x = np.random.randint(-15, 25) * 0.01
         variance_y = np.random.randint(-0, 5) * 0.01
         variance_z = np.random.randint(-5, 5) * 0.01
         new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
+        
         print(new_position)
         
         num_bodies = p.getNumBodies()
@@ -411,13 +478,96 @@ class ProtoEnv():
             if body_name == 'panda':
                 p.resetBasePositionAndOrientation(body_id, new_position, [0.0, 0.0, 0.0, 1.0])
     
+    def get_env_state_for_initial_condition(self, initial_condition):
+        robot_obs = np.array(
+        [
+            0.02586889,
+            -0.2313129,
+            0.5712808,  # tcp x,y,z in world coordinates
+            3.09045411,
+            -0.02908596,
+            1.50013585, # euler angles x,y,z in world coordinates
+            0.07999963, # gripper width
+            -1.21779124,
+            1.03987629,
+            2.11978254,
+            -2.34205014,
+            -0.87015899,
+            1.64119093,
+            0.55344928, # joint angles
+            -1.0,       # gripper state
+        ]
+        )
+        block_rot_z_range = (pi / 2 - pi / 8, pi / 2 + pi / 8)
+        block_slider_left = np.array([-2.40851662e-01, 9.24044687e-02, 4.60990009e-01])
+        block_slider_right = np.array([7.03416330e-02, 9.24044687e-02, 4.60990009e-01])
+        block_table = block_table = [
+            np.array([5.00000896e-02, -1.20000177e-01, 4.59990009e-01]),
+            np.array([2.29995412e-01, -1.19995140e-01, 4.59990010e-01]),
+        ]
+
+        
+
+        scene_obs = np.zeros(24)
+        if initial_condition["slider"] == "left":
+            scene_obs[0] = 0.28 + np.random.uniform(-0.02, 0.02)
+        else:
+            scene_obs[0] = 0.05 + np.random.uniform(-0.02, 0.02)
+        if initial_condition["drawer"] == "open":
+            scene_obs[1] = 0.22 + np.random.uniform(-0.02, 0.02)
+        if initial_condition["lightbulb"] == 1:
+            scene_obs[3] = 0.078 + np.random.uniform(-0.05, 0.05)
+        scene_obs[4] = initial_condition["lightbulb"]
+        scene_obs[5] = initial_condition["led"]
+        # red block
+        if initial_condition["red_block"] == "slider_right":
+            scene_obs[6:9] = block_slider_right
+        elif initial_condition["red_block"] == "slider_left":
+            scene_obs[6:9] = block_slider_left
+        else:
+            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
+                              block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+        scene_obs[11] = np.random.uniform(*block_rot_z_range)
+        # blue block
+        if initial_condition["blue_block"] == "slider_right":
+            scene_obs[12:15] = block_slider_right
+        elif initial_condition["blue_block"] == "slider_left":
+            scene_obs[12:15] = block_slider_left
+        elif initial_condition["red_block"] == "table":
+            scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1] + np.random.uniform(-0.005, 0.005),
+                                block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
+        else:
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
+                               block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+        scene_obs[17] = np.random.uniform(*block_rot_z_range)
+        # pink block
+        if initial_condition["pink_block"] == "slider_right":
+            scene_obs[18:21] = block_slider_right
+        elif initial_condition["pink_block"] == "slider_left":
+            scene_obs[18:21] = block_slider_left
+        elif initial_condition["red_block"] == "table" or initial_condition['blue block'] == 'table':
+            scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1] + np.random.uniform(-0.005, 0.005),
+                                block_table[1][2] + np.random.uniform(-0.005, 0.005)]
+        else:
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
+                               block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
+        scene_obs[23] = np.random.uniform(*block_rot_z_range)
+
+        return robot_obs, scene_obs
+    
     def state_to_tasks(self, initial_state, objects):
         self.sampled_tasks = []
         self.sampled_tasks_completed = []
         for obj in objects:
             state = initial_state[obj]
             if obj in ['red_block', 'pink_block', 'blue_block']:
-                self.sampled_tasks.append('lift_{0}_table'.format(obj))
+                # We have to make sure that the block is not hidden behind the slider door
+                if 'slider' in state:
+                    slider_location = state.split('_')[1]
+                    if slider_location != initial_state['slider']:
+                        self.sampled_tasks.append('lift_{0}_{1}'.format(obj, state))
+                else:
+                    self.sampled_tasks.append('lift_{0}_{1}'.format(obj, state))
             elif obj in ['slider']:
                 obj_state = 'left' if state == 'right' else 'right'
                 self.sampled_tasks.append('move_slider_{0}'.format(obj_state))
@@ -436,15 +586,41 @@ class ProtoEnv():
         all_combinations.extend(list(itertools.combinations(self.objects, 3)))
         all_combinations = [list(combination) for combination in all_combinations]
 
-        if self.five_objs:
+        if self.num_objs == 5:
             # create eval subset of combinations of objects not seen during training
             for combination in all_combinations:
                 if 'slider' in combination and 'led' in combination:
                     eval_combinations.append(combination)
                 else:
                     train_combinations.append(combination)
+        elif self.num_objs == 7:
+            for combination in all_combinations:
+                if 'slider' in combination and 'led' in combination or 'red block' in combination and 'blue block' in combination:
+                    eval_combinations.append(combination)
+                else:
+                    train_combinations.append(combination)      
         else:
             train_combinations = all_combinations
             eval_combinations = all_combinations
-        
+
         return train_combinations, eval_combinations
+
+
+    
+
+
+
+if __name__ == '__main__':
+    import hydra
+    from omegaconf import DictConfig, OmegaConf
+    from pathlib import Path
+
+    from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
+
+    base_env = get_env(Path("./calvin/dataset/calvin_debug_dataset/validation"), show_gui=False)
+    task_cfg = OmegaConf.load("./calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
+    task_oracle = hydra.utils.instantiate(task_cfg)
+
+    env = ProtoEnv(base_env, task_oracle, num_trials=2, trial_steps=1000, provide_feedback=True, num_objs=7)
+    obs, feedback, environment_description = env.episode_reset(train=True)
+    obs, feedback, environment_description = env.episode_reset(train=True)

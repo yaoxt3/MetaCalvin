@@ -17,6 +17,7 @@ from hydra import initialize, compose
 
 from agent import OracleAgent
 from protoenv import ProtoEnv
+from env_v1 import Env
 from reasoning_llm import ReasoningLLM
 from data_utils import *
 
@@ -24,6 +25,7 @@ from robot_flamingo.models.factory import create_model_and_transforms
 from robot_flamingo.eval.eval_utils import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
+from pytorch_lightning import seed_everything
 
 from omegaconf import DictConfig, OmegaConf
 
@@ -64,24 +66,32 @@ def main():
     parser.add_argument('--two_trial_limit', default= 30, type=int, help='Number of trials that should have two trials of exploration before reward is found')
     parser.add_argument('--save_dir', default= None, type=none_or_str, help='Path to save the collected data')
     parser.add_argument('--report_interval', default= 10, type=int, help='Interval to report the number of episodes collected')
+    parser.add_argument('--seed', default=42, type=int)
 
+    
     args = parser.parse_args()
+    
+    
     if args.save_dir is None:
         #Create a directory to save the collected data if it does not exist
         args.save_dir = os.path.join(os.getcwd(), 'data_oracle/training')
         if not os.path.exists(args.save_dir):
             os.makedirs(args.save_dir)
     print(args.save_dir)
+
+    seed_everything(args.seed)
     
  
     # Load the base environment
     base_env = get_env(Path(args.calvin_dataset_path), show_gui=False)
     task_cfg = OmegaConf.load(args.calvin_task_path)
     task_oracle = hydra.utils.instantiate(task_cfg)
-    env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials), 
-                    provide_feedback=args.provide_feedback, provide_train_feedback=True)
+    env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials),
+                    instructions_per_trial=args.instructions_per_trial, no_op_steps=args.no_op_steps, provide_feedback=args.provide_feedback, 
+                    reset_robot_pos=args.reset_robot_pos, five_objs=args.five_objs, provide_train_feedback=True)
     print("Environment loaded")
 
+    
     # Load the policy model
     model, image_processor, tokenizer = create_model_and_transforms(
         clip_vision_encoder_path="ViT-L-14",
@@ -118,14 +128,14 @@ def main():
 
     if args.use_cuda_and_cpu:
         if args.reasoning_model is not None:
-            reasoning_llm = ReasoningLLM(args.reasoning_model, device_map='cpu')
+            reasoning_llm = ReasoningLLM(args.reasoning_model, device_map='cpu', cache_dir='/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/huggingface_cache')
         if args.task_llm is not None:
             task_llm = ReasoningLLM(args.task_llm, device_map='cpu')
         if args.vlm is not None:
             vlm = ReasoningLLM(args.vlm, device_map='cpu')
     else:
         if args.reasoning_model is not None:
-            reasoning_llm = ReasoningLLM(args.reasoning_model, load_in_8bit=True)
+            reasoning_llm = ReasoningLLM(args.reasoning_model, cache_dir='/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/huggingface_cache', load_in_8bit=True)
         if args.task_llm is not None:
             task_llm = ReasoningLLM(args.task_llm)
         if args.vlm is not None:
@@ -137,11 +147,12 @@ def main():
 
     # Collect data
     collect_data(args, agent, env)
-
+    
 
 
 if __name__ == '__main__':
     main()
+
 
 
 

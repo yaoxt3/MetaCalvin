@@ -14,7 +14,8 @@ import pybullet as p
 from pathlib import Path
 
 from agent.agent import OracleAgent
-from protoenv import ProtoEnv
+from env.protoenv import ProtoEnv
+from env.env_v1 import Env
 from agent.reasoning_llm import ReasoningLLM
 
 
@@ -29,6 +30,14 @@ import time
 
 from pytorch_lightning import seed_everything
 from eval.utils import eval
+import csv
+import os
+
+def none_or_str(value):
+    if value == 'None':
+        return None
+    return value
+
 
 def evaluate():
     parser = argparse.ArgumentParser()
@@ -109,8 +118,8 @@ def evaluate():
     parser.add_argument(
         "--feedback",
         type=str,
-        default="legacy",
-        help="type of feedback",
+        default="train_feedback",
+        help="type of feedback [train_feedback, alt_feedback]",
     )
     parser.add_argument(
         "--num_objs",
@@ -125,14 +134,37 @@ def evaluate():
         help="number of runs per environment state",
     )
     parser.add_argument(
+        "--eval_performance",
+        action="store_true",
+        help="evaluate on train performance",
+    )
+    parser.add_argument(
         "--window_size",
         type=int,
         default=64,
         help="window size for model"
     )
-    
+    parser.add_argument(
+        "--run_name",
+        type=none_or_str,
+        default=None,
+        help="name of the run",
+    )
+    parser.add_argument(
+        "--path_to_results",
+        type=none_or_str,
+        default=None,
+        help="path to results file if it exists",
+    )
     args = parser.parse_args()
     seed_everything(args.seed)
+
+    if args.run_name is None:
+        run_name = f"eval_{args.model_checkpoint.split('/')[-1].split('.')[0]}_{args.num_objs}_{args.feedback}"
+    else:
+        run_name = args.run_name
+    
+    assert args.feedback in ['train_feedback', 'alt_feedback'], 'Feedback type not supported'
 
     # Load the environment
     base_env = get_env(Path(args.path_to_env), show_gui=False)
@@ -140,7 +172,7 @@ def evaluate():
     task_oracle = hydra.utils.instantiate(task_cfg)
 
     base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps, instructions_per_trial=1, no_op_steps=0,
-                   provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=False)
+                provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=False, five_objs=args.num_objs == 5)
 
     print('Environment loaded')
     # Load the model
@@ -174,7 +206,29 @@ def evaluate():
     print('Model loaded')
 
     eval_stats = eval(args, base_env, policy_model)
-    print(eval_stats)
+    
+    # Save the evaluation stats first check if a results file exists
+    if args.path_to_results is not None:
+        results_file = Path(args.path_to_results)
+        if results_file.exists():
+            with open(results_file, 'a') as file:
+                writer = csv.writer(file)
+                writer.writerow([run_name] + [eval_stats[key] for key in eval_stats.keys()])
+        else:
+            with open(results_file, 'w') as file:
+                writer = csv.writer(file)
+                columns = ['run_name'] + list(eval_stats.keys())
+                writer.writerow(columns)
+                writer.writerow([run_name] + [eval_stats[key] for key in eval_stats.keys()])
+    else:
+        results_file = Path(f'./results/results.csv')
+        if not results_file.exists():
+            os.makedirs(results_file.parent, exist_ok=True)
+        with open(results_file, 'w') as file:
+            writer = csv.writer(file)
+            columns = ['run_name'] + list(eval_stats.keys())
+            writer.writerow(columns)
+            writer.writerow([run_name] + [eval_stats[key] for key in eval_stats.keys()])
 
 
 

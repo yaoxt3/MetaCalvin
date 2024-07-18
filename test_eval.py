@@ -14,7 +14,8 @@ import pybullet as p
 from pathlib import Path
 
 from agent.agent import OracleAgent
-from protoenv import ProtoEnv
+from env.protoenv import ProtoEnv
+#from env.env_v1 import ProtoEnv
 from agent.reasoning_llm import ReasoningLLM
 
 from utils import convert_obs_dict_to_cpu
@@ -35,6 +36,26 @@ import time
 
 from pytorch_lightning import seed_everything
 
+def wrap_text(text, font, max_width):
+    words = text.split()
+    lines = []
+    current_line = words[0]
+    
+    for word in words[1:]:
+        test_line = current_line + " " + word
+        text_width, _ = cv2.getTextSize(test_line, font, fontScale=0.3, thickness=1)[0]
+        
+        if text_width <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+    
+    lines.append(current_line)
+    # reverse the lines to maintain order
+    lines.reverse()
+    return lines
+
 
 
 def rollout(env, agent, steps, use_reasoning=False, annotation=None):
@@ -51,6 +72,7 @@ def rollout(env, agent, steps, use_reasoning=False, annotation=None):
         instruction = annotation
         action, instruction = agent.step(obs, lm_feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
         #print(sum([abs(a) for a in list(action[:-1])])/len(action[:-1]))
+        # Add small random noise to first 6 actions
         obs, reward, feedback, trial, trial_done, _ = env.step(action, instruction)
         
         if feedback is None:
@@ -59,7 +81,7 @@ def rollout(env, agent, steps, use_reasoning=False, annotation=None):
         else:
             instruction_step = True
             lm_feedback = feedback['lm_feedback']
-            train_feedback = feedback['train_feedback']
+            train_feedback = feedback['legacy_feedback']
             print(train_feedback)
         if trial_done:
             print('trial done')
@@ -70,7 +92,7 @@ def rollout(env, agent, steps, use_reasoning=False, annotation=None):
             obs, feedback, environment_description = env.trial_reset(instruction)
             agent.policy_model.reset()
             lm_feedback = feedback['lm_feedback']
-            train_feedback = feedback['train_feedback']
+            train_feedback = feedback['legacy_feedback']
             print(train_feedback)
             instruction_step = True
             
@@ -80,30 +102,36 @@ def rollout(env, agent, steps, use_reasoning=False, annotation=None):
         cv2.imshow('test',rgb)
         cv2.waitKey(1)
 
-def rollout_eval(env, model, steps):
+import cv2
+import numpy as np
+
+def rollout_eval(env, model, steps, fps=15):
     model.reset()
     obs, feedback, environment_description = env.episode_reset(train=True)
     lm_feedback = feedback['lm_feedback']
-    train_feedback = feedback['train_feedback']
-    #train_feedback = 'Objects: slider, drawer, lightbulb'
+    train_feedback = feedback['legacy_feedback']
     print(train_feedback)
     reset_actions = None
     current_trial = 0
-    #train_feedback = 'no reward last trial. episode objects: lightbulb, slider, drawer. explored objects: lightbulb'
+    
+    # Initialize video writer
+    height, width, _ = env.render(mode="rgb_array").shape
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter('/home/richard/Documents/GitHub/RoboTest/Videos/test.mp4', fourcc, fps, (width, height))
+
     for i in range(steps):
         if reset_actions is None:
-            train_feedback = 'move the door to the right was rewarding last trial; '
+            #train_feedback = 'move the door to the left was rewarding last trial; '
             action = model.step(obs, train_feedback)
+            #print(sum([abs(a) for a in list(action[:-1])])/len(action[:-1]))
         else:
             action = reset_actions
             reset_actions = None
-        #print(sum([abs(a) for a in list(action[:-1])])/len(action[:-1]))
         obs, reward, feedback, trial, trial_done, _ = env.step(action)
         
         if feedback is not None:
             lm_feedback = feedback['lm_feedback']
-            train_feedback = feedback['train_feedback']
-            print(train_feedback, 'HERE!!!!')
+            train_feedback = feedback['legacy_feedback']
 
         if trial_done:
             print('trial done')
@@ -111,23 +139,49 @@ def rollout_eval(env, model, steps):
             if current_trial >= env.num_trials:
                 break
             obs, feedback, environment_description = env.trial_reset()
-            #model.reset()
             reset_actions = None
             lm_feedback = feedback['lm_feedback']
-            train_feedback = feedback['train_feedback']
-            #if current_trial == 1:
-            #    train_feedback = 'no reward last trial. episode objects: lightbulb, slider, drawer. explored objects: lightbulb, slider'
-            #else:
-            #    train_feedback = 'push the handle to close the drawer was rewarding last trial;'
+            train_feedback = feedback['legacy_feedback']
             print(train_feedback, 'THERE')
 
+        rgb = env.render(mode="rgb_array")
+        rgb = np.array(rgb[:, :, ::-1], dtype=np.uint8) 
+        
+        # Put feedback text on the frame
+        feedback_text = f'{train_feedback}'
+        max_text_width = int(width * 0.9)  # Limit text width to 90% of frame width
+        lines = wrap_text(feedback_text, cv2.FONT_HERSHEY_SIMPLEX, max_text_width)
+        
+        font_scale = 0.3  # Adjust font size based on scale factor
+        font_color = (0, 255, 0)  # Green color
+        thickness = 1 # Adjust thickness based on scale factor
+        line_type = cv2.LINE_AA  # Anti-aliased line type for smoother text
+        
+        y = height - 10
+        for line in lines:
+            text_size = cv2.getTextSize(line, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)[0]
+            x = int((width - text_size[0]) / 2)  # Center text horizontally
+            cv2.putText(rgb, line, (x, y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_color, thickness, line_type)
+            y -= int(text_size[1] * 1.5)  # Adjust vertical spacing between lines
+        
+        # Write the frame to the video file
+        out.write(rgb)
+        
+        cv2.imshow('test', rgb)
+        cv2.waitKey(1000)
 
-        rgb = env.render(mode="rgb_array")[:,:,::-1]
-        cv2.imshow('test',rgb)
-        cv2.waitKey(1)
+    # Release video writer and close display window
+    out.release()
+    cv2.destroyAllWindows()
+
+# Example usage
+# rollout_eval(env, model, steps=1000)
+
+
+
 
 if __name__ == '__main__':
-    seed_everything(10) # 781
+    seed_everything(38) # 781
     # Load the base environment
     base_env = get_env(Path("/home/richard/Documents/GitHub/RoboTest/calvin/dataset/calvin_debug_dataset/validation"), show_gui=False)
     #base_env.seed(42)
@@ -135,8 +189,8 @@ if __name__ == '__main__':
     task_cfg = OmegaConf.load("/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
     task_oracle = hydra.utils.instantiate(task_cfg)
 
-    env = ProtoEnv(base_env, task_oracle, num_trials=4, trial_steps=200, instructions_per_trial=1, no_op_steps=0,
-                   provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False)
+    env = ProtoEnv(base_env, task_oracle, num_trials=10, trial_steps=400, instructions_per_trial=1, no_op_steps=0,
+                   provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=False, num_objs=3)
 
     # Load the model
     model, image_processor, tokenizer = create_model_and_transforms(
@@ -146,21 +200,36 @@ if __name__ == '__main__':
     tokenizer_path='anas-awadalla/mpt-1b-redpajama-200b-dolly',
     llm_name='mpt_dolly_3b',
     cross_attn_every_n_layers=1,
-    decoder_type='lstm',
+    decoder_type='lstm_seq',
     fusion_mode='post',
     use_gripper=True,
-    window_size=12,
+    window_size=1,
+    action_tokens=False,
 
     )
 
     
-    checkpoint = torch.load('/home/richard/Documents/GitHub/RoboTest/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', map_location='cpu', mmap=True)
-    
+    checkpoint = torch.load('/home/richard/Documents/GitHub/RoboTest/RoboCheckpoint/lstm_seq_ws32_3_objs.pth', map_location='cpu', mmap=True)
+
     for key in list(checkpoint['model_state_dict'].keys()):
         #remove module from key name
         checkpoint['model_state_dict'][key.replace('module.', '')] = checkpoint['model_state_dict'].pop(key)
     
     model.load_state_dict(checkpoint['model_state_dict'], False)
+    # Save the model checkpoint
+    
+    '''
+    state_dict = model.state_dict()
+
+    for name, p in model.named_parameters():
+        if not p.requires_grad and 'normalizer' not in name:
+            del state_dict[name]
+
+    checkpoint_dict = {
+        'model_state_dict': state_dict,
+    } 
+    torch.save(checkpoint_dict, '/home/richard/Documents/GitHub/RoboTest/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth')
+    '''
     model.half()
     model.cuda()
     
@@ -173,12 +242,12 @@ if __name__ == '__main__':
     agent = OracleAgent(policy_model, reasoning_llm=None, task_llm=None, vlm=None)
 
     # Rollout the environment
-    annotation = 'push the handle to close the drawer'
+    annotation = 'move the slider door to the left'
     #annotation = None
     #start = time.time()
-    rollout(env, agent, 2000, use_reasoning=False, annotation=annotation)
+    #rollout(env, agent, 3000, use_reasoning=False, annotation=annotation)
     #end = time.time()
     #print(end - start)
 
-    #rollout_eval(env, policy_model, 1600)
+    rollout_eval(env, policy_model, 1600)
     

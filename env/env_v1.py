@@ -23,22 +23,14 @@ import pybullet as p
 
 import itertools
 
-UNEXPLORED_TOKENS = {'move_slider_left':'<|slider_left|>','move_slider_right': '<|slider_right|>', 'open_drawer':'<|open_drawer|>',
-                                'close_drawer':'<|close_drawer|>', 'turn_on_lightbulb':'<|lightbulb_on|>', 'turn_off_lightbulb':'<|lightbulb_off|>',
-                                'turn_on_led':'<|led_on|>', 'turn_off_led':'<|led_off|>', 'lift_red_block_table':'<|red_block_table|>', 
-                                'lift_pink_block_table':'<|pink_block_table|>'}
-
-EXPLORED_TOKENS = {'move_slider_left':'<|slider_left_done|>', 'move_slider_right': '<|slider_right_done|>', 'open_drawer':'<|open_drawer_done|>',
-                                'close_drawer':'<|close_drawer_done|>', 'turn_on_lightbulb':'<|lightbulb_on_done|>', 'turn_off_lightbulb':'<|lightbulb_off_done|>',
-                                'turn_on_led':'<|led_on_done|>', 'turn_off_led':'<|led_off_done|>', 'lift_red_block_table':'<|red_block_table_done|>',
-                                'lift_pink_block_table':'<|pink_block_table_done|>'}
+from env.env_utils import *
 
 
-class ProtoEnv():
+class Env():
     def __init__(self, base_env, task_oracle, num_trials, trial_steps, instructions_per_trial=2, no_op_steps=15,
                  provide_feedback=True, provide_train_feedback=False, provide_lm_feedback=True, reset_robot_pos=True,
                  five_objs=False):
-        super(ProtoEnv, self).__init__()
+        super(Env, self).__init__()
 
         self.base_env = base_env
         self.task_oracle = task_oracle
@@ -63,10 +55,6 @@ class ProtoEnv():
                                             'turn_off_lightbulb': 'turn off the lightbulb', 'turn_on_led': 'turn on the led', 'turn_off_led': 'turn off the led',
                                             'lift_red_block_table': 'lift the red block from the table', 'lift_pink_block_table': 'lift the pink block from the table'}
         
-        self.unexplored_tokens = UNEXPLORED_TOKENS
-                                 
-        self.explored_tokens = EXPLORED_TOKENS
-         
         self.all_tasks = self.train_tasks
 
 
@@ -87,6 +75,7 @@ class ProtoEnv():
         self.reset_robot_pos = reset_robot_pos
 
     def episode_reset(self, feedback_state=None, environment_state=None, train=True):
+        '''Reset the environment for a new episode and return the observation, feedback and environment description'''
         self.trial_count = 0
         self.trial_step_count = 0
         self.completed_instructions = 0
@@ -110,6 +99,13 @@ class ProtoEnv():
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         self.start_info = self.base_env.get_info()
         
+        # Sample templates for feedback for the tasks
+        self.first_trial_template = build_template_first_trial()
+        self.further_trial_template = build_template_further_trial()
+        self.reward_template = random.choice(REWARD_TEMPLATES)
+
+        self.sampled_task_instructions = {key: random.choice(TASK_INSTRUCTIONS[key]) for key in TASK_INSTRUCTIONS.keys()} 
+
         if self.provide_feedback:
             feedback = self.get_feedback(trial_end=True, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
             self.instruction_success_dict = {}
@@ -120,6 +116,7 @@ class ProtoEnv():
         return observation, feedback, self.environment_description
 
     def trial_reset(self, instruction=None):
+        '''Reset the environment for a new trial and return the observation, feedback and environment description'''
         self.trial_count += 1
         self.trial_step_count = 0
         self.completed_instructions = 0
@@ -143,7 +140,9 @@ class ProtoEnv():
         return observation, feedback, self.environment_description
 
     def step(self, action, instruction=None):
+        '''Take a step in the environment and return the observation, reward, feedback, trial count, trial done and step info'''
         feedback = None
+        reward = 0
 
         self.trial_step_count += 1
         action = action.squeeze()
@@ -152,7 +151,6 @@ class ProtoEnv():
             self.trial_done = True
 
         observation, _, _, info = self.base_env.step(action)
-        reward = 0
         task_info = [list(self.task_oracle.get_task_info_for_set(self.start_info, info, {task})) for task in self.all_tasks]
         for subtask in self.all_tasks:
             check, updated = self.task_info_check(subtask, task_info)
@@ -189,6 +187,7 @@ class ProtoEnv():
         return self.base_env.render(mode=mode)
     
     def get_feedback(self, instruction=None, info=None, trial_end=False, provide_train_feedback=False, provide_lm_feedback=True):
+        '''Generate environment feedback for the llm and/or agent'''
         lm_feedback = None
         train_feedback = None
         legacy_feedback = None
@@ -203,13 +202,8 @@ class ProtoEnv():
                             "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(env_status)}
                         if provide_train_feedback:
                             # Backwards compatible for now
-                            used_objects_episode = [obj.replace('_', ' ') for obj in self.used_objects]
-                            legacy_feedback = 'first trial. episode objects: {0}, {1}, {2}'.format(used_objects_episode[0], used_objects_episode[1], used_objects_episode[2])
-                            # New instructions
-                            task_tokens = []
-                            for task in self.sampled_tasks:
-                                task_tokens.append(self.unexplored_tokens[task])
-                            train_feedback = 'first trial. episode tasks: {0}, {1}, {2}; explored tasks: none'.format(task_tokens[0], task_tokens[1], task_tokens[2])
+                            used_objects = ', '.join([obj.replace('_', ' ') for obj in self.used_objects])
+                            train_feedback = self.first_trial_template.format(used_objects)
                 
                 else:
                     if provide_lm_feedback:
@@ -227,20 +221,12 @@ class ProtoEnv():
                     
                     if provide_train_feedback:
                         
-                        # Backwards Compatability
                         completed_tasks_trial = [key for key, value in self.task_success_dict.items() if value is True]
-                       
                         if self.meta_task in completed_tasks_trial:
-                            reward_string = 'was rewarding last trial'
-                            task_instruction = self.task_instruction_feedback[self.meta_task]
-                            train_feedback = task_instruction + ' ' + reward_string + '; '
-                            legacy_feedback = train_feedback
-
+                            train_feedback = self.reward_template.format(self.sampled_task_instructions[self.meta_task])
                         else:
-                            used_objects_episode = [obj.replace('_', ' ') for obj in self.used_objects]
-                            used_objects_str = ', '.join(used_objects_episode)
-                            explored_objects = []
                             
+                            explored_objects = []
                             for obj in self.used_objects:
                                 for task in self.episode_completed_tasks:
                                     if obj in ['red_block', 'blue_block', 'pink_block']:
@@ -251,42 +237,11 @@ class ProtoEnv():
                             explored_objects_str = ', '.join(explored_objects)
                             if len(explored_objects) == 0:
                                 explored_objects_str = 'none'
-                            meta_task_str = self.meta_task.replace('_', ' ')
-                            if meta_task_str in self.episode_completed_tasks and meta_task_str not in completed_tasks_trial:
-                                legacy_feedback = 'no reward last trial. episode objects: {0}. explored objects: {1}. {2} was rewarding in previous trials'.format(used_objects_str, explored_objects_str, self.task_instruction_feedback[self.meta_task])
-                            else:
-                                legacy_feedback = 'no reward last trial. episode objects: {0}. explored objects: {1}'.format(used_objects_str, explored_objects_str)
 
-                        # New feedback
-                        completed_tasks_trial = [key for key, value in self.task_success_dict.items() if value is True]
+                            used_objects = ', '.join([obj.replace('_', ' ') for obj in self.used_objects])
+                            train_feedback = self.further_trial_template.format(used_objects, explored_objects_str)
 
-                        if self.meta_task in completed_tasks_trial:
-                            task_token = self.unexplored_tokens[self.meta_task]
-                            train_feedback = task_token + ' was <|rewarding|> last trial'
-
-                        else:
-                            for task in completed_tasks_trial:
-                                if task not in self.sampled_tasks_completed:
-                                    self.sampled_tasks_completed.append(task)
-
-
-                            unexplored_tasks_str = ''
-                            explored_tasks_str = ''
-                            for task in self.sampled_tasks:
-                                if task in self.sampled_tasks_completed:
-                                    task_token = self.explored_tokens[task]
-                                    explored_tasks_str += ', ' + task_token
-                                else:
-                                    task_token = self.unexplored_tokens[task]
-                                    unexplored_tasks_str += ', ' + task_token
-
-                            if len(unexplored_tasks_str) == 0:
-                                unexplored_tasks_str = 'none'
-                            if len(explored_tasks_str) == 0:
-                                explored_tasks_str = 'none'
-                            
-                            train_feedback = ' <|no_reward|> last trial. episode objects: {0}. explored objects: {1}'.format(unexplored_tasks_str, explored_tasks_str)
-
+                                    
             else:
                 env_status = self.get_env_status(info)
                 last_action = [key for key, value in self.task_success_dict.items() if value is True][-1]
@@ -309,7 +264,7 @@ class ProtoEnv():
         return feedback
     
     def create_dynamic_env(self, combinations, feedback_state=None, environment_state=None):
-
+        '''Create the environment state and meta task for the episode by random sampling or from a given feedback state and environment state'''
         if environment_state is None:
             used_objects = random.choice(combinations)
             table_object = ['red_block']
@@ -343,32 +298,12 @@ class ProtoEnv():
 
         object_descriptions = self.get_object_descriptions(used_objects, initial_state)
 
-        environment_description = [{"role": "user", "content": "You are a helpfull assistant that gives me instructions on which tasks I should complete, given a set of " \
-        "objects that I can interact with. It is not known which task is rewarding, so I need to explore the task space to find the rewarding task as efficiently and quickly " \
-        "as possible. Once I find the rewarding task I should exploit my knowledge and keep repeating this task. Following objects are present in the environment:"
-        " 1) {0}" \
-        " 2) {1}" \
-        " 3) {2}" \
-        "The objects can only be manipulated in the ways that are described above. There are no hidden features or functions " \
-        "I have multiple trials to find the rewarding task. The rewarding task stays " \
-        "the same throughout the trials but all the objects are put back to their initial states at the beiginning of each trial. After the completion of a task you get feedback if the task was rewarding or not. Additionally at the end of each trial you will get " \
-        "information about all completed task in the trial and their reward. In order to be as helpful as possible to me you have to follow these guidelines:" \
-        " 1) You should act as a mentor and guide me to the next task based on the current environment state and information gathered from previous trials about completed tasks. " \
-        " 2) You have to adhere to the following template when giving instructions: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>' If you have any explanations or notes than you have to add them in the specified format " \
-        " 3) Do not give instructions that include other forms of manipulation for the objects besides the ones mentioned in the object descriptions. You have to adjust your instructions to the current environment state. For example the instruction 'open the drawer' does not make sense if the drawer is currently open " \
-        " 4) Keep your instructions clear, concise and precise. Do not add any additional information. An example instruction can be: 'pick up the red block'. All instructions have to follow this format. " \
-        " 5) Only use one action in your instruction. For example do not say 'pick up the bink block and move it to the left'. Only use the available actions given to you "
-        " 6) Use the information given to you to give instructions that explore the task space as efficiently as possible. Do not repeat instructions for tasks which were not rewarding. " \
-        " 7) If you gave an instruction for a task but I did not complete it, you may repeat the instruction again." \
-        " 8) If you find a rewarding instruction you must repeat it for all future trials. Do not give an instruction for a different task" \
-        " 9) Explore the objects in the order they are given to you. Explore the first object first. If it is not rewarding, explore the second object. If this is not rewarding explore the third object" \
-        "Because you are a helpfull assistant you will strictly follow these instructions and guide me on my mission to find the rewarding task and maximize my total reward. ".format(object_descriptions[0], object_descriptions[1], object_descriptions[2])},
-        {"role": "assistant", "content": "I understand your instructions and will strictly follow them. I will use my reasoning skills to give useful instructions about which task" \
-        "you should complete in order to maximize the total reward."}]
+        environment_description = environment_description = [ENVIRONMENT_DESCRIPTION[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2]), ENVIRONMENT_DESCRIPTION[1]]
         
         return initial_state, meta_task, environment_description
     
     def get_object_descriptions(self, objects, initial_state):
+        '''Get the descriptions of the objects in the environment as a list of strings'''
         object_descriptions = []
         self.used_objects = objects
         for obj in objects:
@@ -392,6 +327,7 @@ class ProtoEnv():
         return object_descriptions
     
     def get_env_status(self, info):
+        '''Get the status of the environment as a string'''
         info = info['scene_info']
         light_status = info['lights']['lightbulb']['logical_state']
         led_status = info['lights']['led']['logical_state']
@@ -481,6 +417,7 @@ class ProtoEnv():
                 p.resetBasePositionAndOrientation(body_id, new_position, [0.0, 0.0, 0.0, 1.0])
     
     def state_to_tasks(self, initial_state, objects):
+        '''Convert the initial state of the environment to the tasks that can be performed'''
         self.sampled_tasks = []
         self.sampled_tasks_completed = []
         for obj in objects:
@@ -498,6 +435,7 @@ class ProtoEnv():
                 self.sampled_tasks.append('turn_{0}_{1}'.format(obj_state, obj))
     
     def get_object_combinations(self):
+        '''Get all possible combinations of objects for training and evaluation'''
         train_combinations = []
         eval_combinations = []
 
@@ -517,23 +455,3 @@ class ProtoEnv():
             eval_combinations = all_combinations
         
         return train_combinations, eval_combinations
-
-
-    
-
-
-
-if __name__ == '__main__':
-    import hydra
-    from omegaconf import DictConfig, OmegaConf
-    from pathlib import Path
-
-    from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
-
-    base_env = get_env(Path("./calvin/dataset/calvin_debug_dataset/validation"), show_gui=False)
-    task_cfg = OmegaConf.load("./calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
-    task_oracle = hydra.utils.instantiate(task_cfg)
-
-    env = ProtoEnv(base_env, task_oracle, num_trials=2, trial_steps=1000, provide_feedback=True, five_objs=True)
-    obs, feedback, environment_description = env.episode_reset(train=True)
-    obs, feedback, environment_description = env.episode_reset(train=True)

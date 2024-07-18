@@ -1,3 +1,12 @@
+import sys
+sys.path.append("./calvin/calvin_models/")
+sys.path.append("./calvin/calvin_env/")
+sys.path.append("./calvin/calvin_env/tacto")
+sys.path.append("./calvin/calvin_models/calvin_agent/")
+sys.path.append("./open_flamingo/")
+sys.path.append("./robot_flamingo/")
+sys.path.append("../")
+
 import numpy as np
 import torch
 import os
@@ -6,10 +15,11 @@ import gc
 from contextlib import contextmanager
 
 from typing import List, Dict, Any, Tuple
+from env.env_utils import *
 
 
 def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_lmits, total_episodes, use_reasoning=False, train=True, annotation=None):
-    '''Perform rollout of oracle agent in env. Save episode if successful.'''
+    '''Perform rollout of oracle agent in env. Save episode if successful. Expects actions output by agent to be relative actions'''
     episode_data = []
     last_trial_reward = False
     switched = False
@@ -18,29 +28,41 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     agent.reset()
     #make sure all meta task are sampled equally
     while True:
-        obs, feedback, environment_description = env.episode_reset(train=train)
+        obs, feedback, environment_description, info = env.episode_reset(train=train)
         meta_task = env.meta_task
         print(meta_task, 'Resampled')
         if meta_task_stats[meta_task] <= round(total_episodes/len(env.train_tasks)):
             meta_task_stats_episode[meta_task] += 1
             break
 
-    lm_feedback = feedback['lm_feedback']
-    train_feedback = feedback['train_feedback']
+    env_feedback = feedback['lm_feedback']
     current_trial = 0
     trials_before_reward = 0
     instruction_step = True
     for i in range(steps):
-        action, instruction = agent.step(obs, lm_feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
+        action, instruction, output = agent.step(obs, env_feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
+        
+        # Copy rel and  absolute actions
         action_save = action.copy()
-        obs, reward, feedback, trial, trial_done, info = env.step(action, instruction)
+        abs_action = env.base_env.robot.relative_to_absolute(action_save)
+        # Record step data
+        environment_description = environment_description if instruction_step else None
+        output = output if instruction_step else None
+        step_dict = create_episode_dict(obs, action_save, abs_action, feedback, instruction, output, environment_description, current_trial, i)
+        episode_data.append(step_dict)
+
+        # Next step
+        obs, reward, feedback, trial, trial_done, step_info = env.step(action, instruction)
+        info = step_info['info'] # Contains robot and scene info
+        
+
+
         if feedback is None:
             instruction_step = False
-            lm_feedback = None
+            env_feedback = None
         else:
             instruction_step = True
-            lm_feedback = feedback['lm_feedback']
-            train_feedback = feedback['train_feedback']
+            env_feedback = feedback['lm_feedback']
 
             if trial_done is False:
                 if reward:
@@ -51,26 +73,8 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
                         switched = True
                         last_trial_reward = False
                         break
-            
-        
-        if trial_done is False:
-            step_dict = {}
-            for k, v in obs.items():
-                if isinstance(v, dict):
-                    for k2, v2 in v.items():
-                        if isinstance(v2, torch.Tensor):
-                            step_dict[k2] = v2.detach().cpu().numpy()
-                        else:
-                            step_dict[k2] = v2
-                if isinstance(v, torch.Tensor):
-                    step_dict[k] = v.detach().cpu().numpy()
-                else:
-                    step_dict[k] = v
-            step_dict['feedback'] = train_feedback
-            step_dict['rel_actions'] = action_save
-            episode_data.append(step_dict)
 
-        else:
+        if trial_done:
             current_trial += 1
             if reward:
                 last_trial_reward = True
@@ -100,33 +104,9 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
                 break
                 
 
-            reset_obs, feedback, environment_description = env.trial_reset(instruction)
-            lm_feedback = feedback['lm_feedback']
-            train_feedback = feedback['train_feedback']
+            obs, feedback, environment_description, info = env.trial_reset(instruction)
+            env_feedback = feedback['lm_feedback']
             instruction_step = True
-
-            if isinstance(reset_obs, list):
-                for obs in reset_obs:
-                    step_dict = {}
-                    for k, v in obs.items():
-                        if isinstance(v, dict):
-                            for k2, v2 in v.items():
-                                if isinstance(v2, torch.Tensor):
-                                    step_dict[k2] = v2.detach().cpu().numpy()
-                                else:
-                                    step_dict[k2] = v2
-                        if isinstance(v, torch.Tensor):
-                            step_dict[k] = v.detach().cpu().numpy()
-                        else:
-                            step_dict[k] = v
-                    step_dict['feedback'] = train_feedback
-                    step_dict['rel_actions'] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1])
-                    episode_data.append(step_dict)
-
-                obs = reset_obs[-1]
-
-            else:
-                obs = reset_obs
             
             # Reset the agent model
             agent.policy_model.reset()
@@ -237,7 +217,51 @@ def save_obs_and_action(obs, save_dir, ep_start_id, meta_task_stats, exploration
     save_path_explore = save_dir + "/exploration_stats.npz"
     np.savez(save_path_meta, **meta_task_stats)
     np.savez(save_path_explore, **exploration_stats)
-            
+
+
+def create_episode_dict(obs, rel_actions, abs_actions, feedback, instruction, output, info, trial_done, idx):
+    '''Create episode dictionary for saving to disk.'''
+    step_dict = {}
+    for k, v in obs.items():
+        if isinstance(v, dict):
+            for k2, v2 in v.items():
+                if isinstance(v2, torch.Tensor):
+                    step_dict[k2] = v2.detach().cpu().numpy()
+                else:
+                    step_dict[k2] = v2
+        if isinstance(v, torch.Tensor):
+            step_dict[k] = v.detach().cpu().numpy()
+        else:
+            step_dict[k] = v
+
+    # Collect feedback from env and LLM output/instruction
+    step_dict['feedback'] = feedback['train_feedback']
+    step_dict['alt_feedback'] = feedback['alt_feedback']
+    step_dict['env_feedback'] = feedback['lm_feedback']
+    step_dict['lm_output'] = output
+    step_dict['lm_instruction'] = instruction
+
+    # Convert info to numpy arrays
+    state_info = {}
+    robot_obs = []
+    for k, v in info['robot_info'].items():
+        robot_obs.append(v)
+    state_info['robot_obs'] = np.array(robot_obs)
+    scene_obs = []
+    for k, v in info['scene_info'].items():
+        scene_obs.append(v)
+    state_info['scene_obs'] = np.array(scene_obs)
+    step_dict['state_info'] = state_info
+
+    # Collect actions
+    step_dict['rel_actions'] = rel_actions
+    step_dict['actions'] = abs_actions
+
+    # Collect additional info
+    step_dict['trial_done'] = trial_done
+    step_dict['idx'] = idx
+
+    return step_dict
 
 def merge_datasets(data_dir1, data_dir2):
     '''Merge two data directories into one. Assumes that the data directories are
@@ -278,6 +302,8 @@ def merge_datasets(data_dir1, data_dir2):
         save_path = data_dir1 + f"/episode_{i:06}.npz"
         np.savez(save_path, **episode)
 
+
+
 def convert_to_dict(npz_file):
     return_dict = {}
     for key in npz_file.keys():
@@ -287,57 +313,72 @@ def convert_to_dict(npz_file):
             return_dict[key] = int(npz_file[key])
     return return_dict
 
-def reframe_train_feedback(dataset):
-    ep_start_end_ids = np.load(dataset + "/ep_start_end_ids.npy")
-    len_dataset = ep_start_end_ids[-1][1] + 1
-    possible_objects = ['red block', 'pink block', 'slider', 'drawer', 'led', 'lightbulb']
-    used_objects = []
-    for ep in ep_start_end_ids:
-        used_objects = []
-        ep_start = ep[0]
-        ep_end = ep[1]
-        for i in range(ep_start, ep_end+1):
-            episode = np.load(dataset + f"/episode_{i:06}.npz", allow_pickle=True)
-            episode = dict(episode)
-            feedback = np.array2string(episode['feedback'])
+
+
+def add_alternative_language(data_dir):
+    '''Add alternative labels to exisiting datasets.'''
+    ep_start_end_ids = np.load(data_dir + "/ep_start_end_ids.npy")
+    for i in range(len(ep_start_end_ids)):
+        ep_start_id, ep_end_id = ep_start_end_ids[i][0], ep_start_end_ids[i][1]
+
+        first_trial_template = build_template_first_trial()
+        further_trial_template = build_template_further_trial()
+        reward_template = random.choice(REWARD_TEMPLATES)
+
+        sampled_task_instructions = {key: random.choice(TASK_INSTRUCTIONS[key]) for key in TASK_INSTRUCTIONS.keys()} 
+
+        for j in range(ep_start_id, ep_end_id + 1):
+            time_step_data = np.load(data_dir + f"/episode_{j:06}.npz", allow_pickle=True)
+            time_step_data = dict(time_step_data)
+            feedback = str(time_step_data['feedback'])
             print(feedback)
+            if j == ep_start_id:
+                episode_objects = get_episode_objects(feedback)
+                episode_objects_str = str(', '.join(episode_objects))
             
-            if 'Trial 1' in feedback:
-                for obj in possible_objects:
-                    if obj in feedback:
-                        used_objects.append(obj)
-                feedback_out = '{0}, {1}, {2}'.format(used_objects[0], used_objects[1], used_objects[2])
+            if "no reward last trial" in feedback:
+                explored_objects = get_explored_objects(feedback)
+                explored_objects_str = str(', '.join(explored_objects))
+                alternative_feedback = further_trial_template.format(episode_objects_str, explored_objects_str)
+  
+            elif "was rewarding last trial" in feedback:
+                reward_task = get_reward_object(feedback)
+                reward_task_key = TASK_INSTRUCTION_FEEDBACK[reward_task]
+                reward_task_str = random.choice(TASK_INSTRUCTIONS[reward_task_key])
+                alternative_feedback = reward_template.format(reward_task_str)
+            
             else:
-                if 'trial 1' in feedback or 'trial 2' in feedback or 'trial 3' in feedback:
-                    if 'trial 1' in feedback:
-                        trial = 'Trial 2'
-                    elif 'trial 2' in feedback:
-                        trial = 'Trial 3'
-                    elif 'trial 3' in feedback:
-                        trial = 'Trial 4'
+                alternative_feedback = first_trial_template.format(episode_objects_str)
+            
+            print(alternative_feedback)
+            #time_step_data['alternative_feedback'] = alternative_feedback
+            #save_path = data_dir + f"/episode_{j:06}.npz"
+            #np.savez(save_path, **time_step_data)
 
-                    if 'was not rewarding' in feedback and 'was rewarding' not in feedback:
-                        feedback = '{0}, {1}, {2}'.format(used_objects[0], used_objects[1], used_objects[2])
-                    elif 'was rewarding' in feedback:
-                        feedback_split = feedback.split(':')[1].split(';')
-                        for split in [feedback_split[0], feedback_split[1]]:
-                            if 'was rewarding' in split:
-                                feedback_out = split
 
-                else:
-                    #if 'Trial 1' or 'trial 1' in feedback:
-                    #    trial = 'Trial 1'
-                    #elif 'Trial 2' or 'trial 2' in feedback:
-                    #    trial = 'Trial 2'
-                    #elif 'Trial 3' or 'trial 3' in feedback:
-                    #    trial = 'Trial 3'
-                    feedback_out = '{0}, {1}, {2}'.format(used_objects[0], used_objects[1], used_objects[2])
-                    feedback_out = '{0}, {1}, {2}'.format(used_objects[0], used_objects[1], used_objects[2])
-                
-            print(feedback_out)
-        episode['feedback'] = feedback_out
-        save_path = dataset + f"/episode_{i:06}.npz"
-        np.savez(save_path, **episode)
+def get_episode_objects(test_string):
+    episode_objects = []
+    episode_objects_start = test_string.find("episode objects: ") + len("episode objects: ")
+    episode_objects_end = test_string.find(". explored objects")
+    episode_objects_string = test_string[episode_objects_start:episode_objects_end]
+    episode_objects = episode_objects_string.split(", ")
+    return episode_objects
+
+
+def get_explored_objects(test_string):
+    explored_objects = []
+    explored_objects_start = test_string.find("explored objects: ") + len("explored objects: ")
+    explored_objects_end = len(test_string)
+    explored_objects_string = test_string[explored_objects_start:explored_objects_end]
+    explored_objects = explored_objects_string.split(", ")
+    return explored_objects
+
+def get_reward_object(reward_string):
+    reward_task = ""
+    reward_string.split("was rewarding")
+    reward_task = reward_string.split("was rewarding")[0]
+    return reward_task
+
 
 def visualize_dataset(dataset):
     ep_start_end_ids = np.load(dataset + "/ep_start_end_ids.npy")
@@ -353,6 +394,7 @@ def visualize_dataset(dataset):
         print(feedback)
         cv2.imshow('test',rgb[:,:,::-1])
         cv2.waitKey(60)
+
 
 def get_data_statistics(dataset):
     feedback_stats = {}
@@ -380,9 +422,8 @@ def get_data_statistics(dataset):
 
 
 if __name__ == '__main__':
+    import numpy as np
     import cv2
-    #get_data_statistics('/home/richard/Documents/GitHub/RoboTest/data/test')
-    #get_data_statistics('/home/richard/Documents/GitHub/RoboTest/data/validation_3_objs_biased')
-    visualize_dataset('/home/richard/Documents/GitHub/RoboTest/data/validation_5_objs_biased')
 
+    visualize_dataset('/home/richard/Data')
         

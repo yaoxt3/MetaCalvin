@@ -87,7 +87,6 @@ from omegaconf import DictConfig
 import pyhash
 import torch
 from torch.utils.data import Dataset
-from robot_flamingo.data.vl_dataset import CaptionDataset, VQADataset
 
 hasher = pyhash.fnv1_32()
 logger = logging.getLogger(__name__)
@@ -607,6 +606,7 @@ class DiskCalvinDataset(BaseCalvinDataset):
         *args: Any,
         skip_frames: int = 1,
         save_format: str = "npz",
+        feedback_type: str = "train_feedback",
         pretrain: bool = False,
         partial_data=False,
         **kwargs: Any,
@@ -624,6 +624,7 @@ class DiskCalvinDataset(BaseCalvinDataset):
             raise NotImplementedError
         self.pretrain = pretrain
         self.skip_frames = skip_frames
+        self.feedback_type = feedback_type
 
         self.episode_lookup = self._build_file_indices(self.abs_datasets_dir)
 
@@ -661,8 +662,8 @@ class DiskCalvinDataset(BaseCalvinDataset):
             self.load_file(self._get_episode_name(file_idx))
             for file_idx in range(start_idx, end_idx)
         ]
-        episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key != "feedback"}
-        episode["feedback"] = [str(ep["feedback"]) for ep in episodes]
+        episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key not in ["feedback", "alt_feedback", "env_feedback", "lm_output", "lm_instruction"]}
+        episode["feedback"] = [str(ep[self.feedback_type]) for ep in episodes]
         
         return episode
 
@@ -875,9 +876,8 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
             self.load_file(self._get_episode_name(file_idx))
             for file_idx in range(idx[0], idx[1])
         ]
-        episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key != "feedback"}
-        
-        episode["feedback"] = [str(ep["feedback"]) for ep in episodes]
+        episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key not in ["feedback", "alt_feedback", "env_feedback", "lm_output", "lm_instruction"]}
+        episode["feedback"] = [str(ep[self.feedback_type]) for ep in episodes]
         
         
         return episode
@@ -1169,8 +1169,8 @@ class DiskCalvinSeqDiffDataset(BaseCalvinDataset):
             self.load_file(self._get_episode_name(file_idx))
             for file_idx in range(idx[0], idx[1])
             ]
-            episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key != "feedback"}
-            episode["feedback"] = [str(ep["feedback"]) for ep in episodes]
+            episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key not in ["feedback", "alt_feedback", "env_feedback", "lm_output", "lm_instruction"]}
+            episode["feedback"] = [str(ep[self.feedback_type]) for ep in episodes]
 
         else:
             obs_episodes = [
@@ -1181,9 +1181,10 @@ class DiskCalvinSeqDiffDataset(BaseCalvinDataset):
                 self.load_file(self._get_episode_name(file_idx))
                 for file_idx in range(idx[1], idx[1] + self.n_obs_steps)
             ]
-            episode = {key: np.stack([ep[key] for ep in obs_episodes]) for key in keys if key != "feedback" or key != "rel_actions"}
+            episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key not in ["rel_actions", "feedback", "alt_feedback", "env_feedback", "lm_output", "lm_instruction"]}
+            episode["feedback"] = [str(ep[self.feedback_type]) for ep in episodes]
             episode["rel_actions"] = np.stack([ep["rel_actions"] for ep in labels_episodes])
-            episode["feedback"] = [str(ep["feedback"]) for ep in obs_episodes]
+            
         
         
         return episode
@@ -1411,7 +1412,7 @@ def get_dataset(args, dataset_path, image_processor, tokenizer, epoch=0, floor=F
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
     calvin_dataset = DiskCalvinDataset(
-        datasets_dir=Path(dataset_path) / "validation_3_objs_biased", #if "validation" not in dataset_path else Path(dataset_path),
+        datasets_dir=Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args.window_size,
@@ -1423,7 +1424,8 @@ def get_dataset(args, dataset_path, image_processor, tokenizer, epoch=0, floor=F
         min_window_size=args.min_window_size,
         max_window_size=args.max_window_size,
         act_step=args.multi_step_action,
-        partial_data=args.partial_data
+        partial_data=args.partial_data,
+        feedback_type=args.feedback_type,
     )
 
     round_fn = math.floor if floor else math.ceil
@@ -1473,7 +1475,7 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
     )
     preprocess_text_fn = functools.partial(preprocess_text_calvin, tokenizer=tokenizer)
 
-    calvin_dataset = DiskCalvinSeqDiffDataset(
+    calvin_dataset = DiskCalvinSeqDataset(
         datasets_dir=Path(dataset_path),
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
@@ -1488,6 +1490,7 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
         act_step=args.multi_step_action,
         partial_data=args.partial_data,
         n_obs_steps=args.n_obs_steps,
+        feedback_type=args.feedback_type,
     )
 
     round_fn = math.floor if floor else math.ceil
@@ -1500,19 +1503,6 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
     num_worker_batches = round_fn(num_batches / num_workers)  # per dataloader worker
     num_batches = num_worker_batches * num_workers
     num_samples = num_batches * global_batch_size
-
-    #if "val" in dataset_path:
-    #    seq_sampler = SequenceSampler(
-    #        dataset_path,
-    #        args.batch_size_calvin,
-    #        args.window_size,
-    #    )
-    #else:
-    #    seq_sampler = SequenceSampler(
-    #        dataset_path + "validation_3_objs_biased",
-    #        args.batch_size_calvin,
-    #        args.window_size,
-    #    )
 
     seq_sampler = DistributedSequenceSampler(
             dataset_path,
