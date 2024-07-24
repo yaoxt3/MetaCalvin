@@ -597,6 +597,7 @@ class DiskCalvinDataset(BaseCalvinDataset):
         skip_frames: Skip this amount of windows for language dataset.
         save_format: File format in datasets_dir (pkl or npz).
         pretrain: Set to True when pretraining.
+        feedback_type: Which type of feedback should be trained with.
     """
 
     def __init__(

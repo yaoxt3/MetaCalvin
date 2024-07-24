@@ -25,7 +25,7 @@ import itertools
 
 
 class ProtoEnv():
-    def __init__(self, base_env, task_oracle, num_trials, trial_steps, instructions_per_trial=2, num_objs=3,
+    def __init__(self, base_env, task_oracle, num_trials, trial_steps, instructions_per_trial=1, num_objs=3,
                  provide_feedback=True, provide_train_feedback=False, provide_lm_feedback=True, reset_robot_pos=True):
         super(ProtoEnv, self).__init__()
 
@@ -132,8 +132,8 @@ class ProtoEnv():
             feedback = None
 
         self.task_success_dict = {task: False for task in self.all_tasks}
-        if self.reset_robot_pos:
-            self.reset_robot_position()
+        #if self.reset_robot_pos:
+        self.reset_robot_position()
         robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state)
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         observation = self.base_env.get_obs()
@@ -269,7 +269,7 @@ class ProtoEnv():
                                 train_feedback = 'no reward last trial. episode objects: {0}. explored objects: {1}'.format(used_objects_str, explored_objects_str)
                             
                             # Alt feedback
-                            alt_feedback = self.further_trial_template.format(used_objects, explored_objects_str)
+                            alt_feedback = self.further_trial_template.format(used_objects_str, explored_objects_str)
 
             # TODO: Fix and update this!!
             else:
@@ -330,8 +330,6 @@ class ProtoEnv():
                 initial_state['red_block'] = 'table'
                 initial_state['pink_block'] = 'slider_right' 
                 initial_state['blue_block'] = 'slider_left'
-            initial_state['slider'] = 'right'
-            initial_state['lightbulb'] = 1
 
             random.shuffle(used_objects)
             self.state_to_tasks(initial_state, used_objects)
@@ -349,7 +347,9 @@ class ProtoEnv():
 
         object_descriptions = self.get_object_descriptions(used_objects, initial_state)
 
-        environment_description = [ENVIRONMENT_DESCRIPTION[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2]), ENVIRONMENT_DESCRIPTION[1]]
+        ENVIRONMENT_DESCRIPTION[0]['content'] = ENVIRONMENT_DESCRIPTION[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2])
+        environment_description = ENVIRONMENT_DESCRIPTION
+        
         return initial_state, meta_task, environment_description
     
     def get_object_descriptions(self, objects, initial_state):
@@ -452,22 +452,12 @@ class ProtoEnv():
     
     def reset_robot_position(self):
         '''reset robot initial position after each trial'''
-        base_position = [-0.34, -0.46, 0.24]
-        '''
-        variance_x = np.random.choice(np.arange(-0.05, 0.05, 0.001))
-        variance_y = np.random.choice(np.arange(-0.02, 0.02, 0.001))
-        variance_z = np.random.choice(np.arange(-0.02, 0.02, 0.001))
-        new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
-        '''
-        base_position = [-0.34, -0.46, 0.24]
-        if self.initial_state['drawer'] == 'open':
-            variance_x = np.random.randint(-15, 25) * 0.01
-        else:
-            variance_x = np.random.randint(-15, 25) * 0.01
-        variance_y = np.random.randint(-0, 5) * 0.01
+        base_position = [-0.34, -0.46, 0.29]
+        variance_x = np.random.randint(-15, 15) * 0.01
+        variance_y = np.random.randint(-2, 2) * 0.01
         variance_z = np.random.randint(-5, 5) * 0.01
-        new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
         
+        new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
         print(new_position)
         
         num_bodies = p.getNumBodies()
@@ -510,13 +500,11 @@ class ProtoEnv():
 
         scene_obs = np.zeros(24)
         if initial_condition["slider"] == "left":
-            scene_obs[0] = 0.28 + np.random.uniform(-0.02, 0.02)
-        else:
-            scene_obs[0] = 0.05 + np.random.uniform(-0.02, 0.02)
+            scene_obs[0] = 0.28
         if initial_condition["drawer"] == "open":
-            scene_obs[1] = 0.22 + np.random.uniform(-0.02, 0.02)
+            scene_obs[1] = 0.22
         if initial_condition["lightbulb"] == 1:
-            scene_obs[3] = 0.078 + np.random.uniform(-0.05, 0.05)
+            scene_obs[3] = 0.07
         scene_obs[4] = initial_condition["lightbulb"]
         scene_obs[5] = initial_condition["led"]
         # red block
@@ -525,19 +513,20 @@ class ProtoEnv():
         elif initial_condition["red_block"] == "slider_left":
             scene_obs[6:9] = block_slider_left
         else:
-            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
-                              block_table[0][2] + np.random.uniform(-0.005, 0.005)]
-        scene_obs[11] = np.random.uniform(*block_rot_z_range)
+            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1],
+                               block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+        #rotate block by 90 degrees
+        scene_obs[11] = pi / 2 
         # blue block
         if initial_condition["blue_block"] == "slider_right":
             scene_obs[12:15] = block_slider_right
         elif initial_condition["blue_block"] == "slider_left":
             scene_obs[12:15] = block_slider_left
         elif initial_condition["red_block"] == "table":
-            scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
                                 block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1],
                                block_table[0][2] + np.random.uniform(-0.005, 0.005)]
         scene_obs[17] = np.random.uniform(*block_rot_z_range)
         # pink block
@@ -546,10 +535,10 @@ class ProtoEnv():
         elif initial_condition["pink_block"] == "slider_left":
             scene_obs[18:21] = block_slider_left
         elif initial_condition["red_block"] == "table" or initial_condition['blue block'] == 'table':
-            scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
                                 block_table[1][2] + np.random.uniform(-0.005, 0.005)]
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1],
                                block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
         scene_obs[23] = np.random.uniform(*block_rot_z_range)
 

@@ -11,6 +11,7 @@ import numpy as np
 import torch
 import os
 import time
+from copy import deepcopy
 import gc
 from contextlib import contextmanager
 
@@ -18,7 +19,8 @@ from typing import List, Dict, Any, Tuple
 from env.env_utils import *
 
 
-def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_lmits, total_episodes, use_reasoning=False, train=True, annotation=None):
+
+def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_lmits, total_episodes, use_reasoning=False, eval=False, annotation=None):
     '''Perform rollout of oracle agent in env. Save episode if successful. Expects actions output by agent to be relative actions'''
     episode_data = []
     last_trial_reward = False
@@ -26,9 +28,10 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     meta_task_stats_episode = meta_task_stats.copy()
     exploration_stats_episode = exploration_stats.copy()
     agent.reset()
+    robot = deepcopy(env.base_env.robot) # Copy the robot to avoid changing the original robot state for computing absolute actions
     #make sure all meta task are sampled equally
     while True:
-        obs, feedback, environment_description, info = env.episode_reset(train=train)
+        obs, feedback, environment_description, info = env.episode_reset(train= eval==False)
         meta_task = env.meta_task
         print(meta_task, 'Resampled')
         if meta_task_stats[meta_task] <= round(total_episodes/len(env.train_tasks)):
@@ -44,24 +47,25 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
         
         # Copy rel and  absolute actions
         action_save = action.copy()
-        abs_action = env.base_env.robot.relative_to_absolute(action_save)
+        abs_action = robot.relative_to_absolute(action_save)
         # Record step data
-        environment_description = environment_description if instruction_step else None
-        output = output if instruction_step else None
+        if not instruction_step or current_trial != 0:
+            environment_description = None
         step_dict = create_episode_dict(obs, action_save, abs_action, feedback, instruction, output, environment_description, current_trial, i)
         episode_data.append(step_dict)
 
         # Next step
-        obs, reward, feedback, trial, trial_done, step_info = env.step(action, instruction)
+        obs, reward, feedback_new, trial, trial_done, step_info = env.step(action, instruction)
         info = step_info['info'] # Contains robot and scene info
         
 
 
-        if feedback is None:
+        if feedback_new is None:
             instruction_step = False
             env_feedback = None
         else:
             instruction_step = True
+            feedback = feedback_new
             env_feedback = feedback['lm_feedback']
 
             if trial_done is False:
@@ -97,7 +101,7 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
                     print('Break cause of exploration')
                     break
 
-            if info['task_completed'] is False:
+            if step_info['task_completed'] is False:
                 break
 
             if current_trial >= env.num_trials:
@@ -154,22 +158,22 @@ def collect_data(args, agent, env):
 
     # Check for existing start id
     if os.path.isfile(args.save_dir + "/ep_start_end_ids.npy"):
-        ep_start_end_ids = np.load(args.save_dir + "/ep_start_end_ids.npy")
+        ep_start_end_ids = np.load(args.save_dir + "/ep_start_end_ids.npy", allow_pickle=True)
         ep_start_id = ep_start_end_ids[-1][1] + 1
         saved_ep = ep_start_end_ids.shape[0]
         episodes_left = args.data_episodes - saved_ep
         print(f"Found existing episode start id. Starting from episode {saved_ep}. {episodes_left} episodes left.")
-        meta_task_stats_npz = np.load(args.save_dir + "/meta_task_stats.npz")
+        meta_task_stats_npz = np.load(args.save_dir + "/meta_task_stats.npz", allow_pickle=True)
         meta_task_stats = convert_to_dict(meta_task_stats_npz)
-        exploration_stats_npz = np.load(args.save_dir + "/exploration_stats.npz")
-        exploration_stats = convert_to_dict(exploration_stats_npz)
+        exploration_stats_npz = np.load(args.save_dir + "/exploration_stats.npz", allow_pickle=True)
+        exploration_stats = convert_to_dict(exploration_stats_npz, True)
 
     while saved_ep < args.data_episodes:
         start = time.time()
         print(meta_task_stats)
         print(exploration_stats)
         episode_data = rollout(env, agent, args.rollout_steps, meta_task_stats, exploration_stats, exploration_stats_limits,
-                                total_episodes, args.use_reasoning)
+                                total_episodes, args.use_reasoning, args.eval)
         episode_data = next(episode_data)
 
         if episode_data is not None:
@@ -218,7 +222,6 @@ def save_obs_and_action(obs, save_dir, ep_start_id, meta_task_stats, exploration
     np.savez(save_path_meta, **meta_task_stats)
     np.savez(save_path_explore, **exploration_stats)
 
-
 def create_episode_dict(obs, rel_actions, abs_actions, feedback, instruction, output, info, trial_done, idx):
     '''Create episode dictionary for saving to disk.'''
     step_dict = {}
@@ -236,22 +239,9 @@ def create_episode_dict(obs, rel_actions, abs_actions, feedback, instruction, ou
 
     # Collect feedback from env and LLM output/instruction
     step_dict['feedback'] = feedback['train_feedback']
-    step_dict['alt_feedback'] = feedback['alt_feedback']
     step_dict['env_feedback'] = feedback['lm_feedback']
     step_dict['lm_output'] = output
     step_dict['lm_instruction'] = instruction
-
-    # Convert info to numpy arrays
-    state_info = {}
-    robot_obs = []
-    for k, v in info['robot_info'].items():
-        robot_obs.append(v)
-    state_info['robot_obs'] = np.array(robot_obs)
-    scene_obs = []
-    for k, v in info['scene_info'].items():
-        scene_obs.append(v)
-    state_info['scene_obs'] = np.array(scene_obs)
-    step_dict['state_info'] = state_info
 
     # Collect actions
     step_dict['rel_actions'] = rel_actions
@@ -263,10 +253,12 @@ def create_episode_dict(obs, rel_actions, abs_actions, feedback, instruction, ou
 
     return step_dict
 
+            
+
 def merge_datasets(data_dir1, data_dir2):
     '''Merge two data directories into one. Assumes that the data directories are
     created using the save_obs_and_action function.'''
-    #Load episode start and end ids
+    # Load episode start and end ids
     ep_start_end_ids1 = np.load(data_dir1 + "/ep_start_end_ids.npy")
     ep_start_end_final_id1 = ep_start_end_ids1[-1][1]
     ep_start_end_ids2 = np.load(data_dir2 + "/ep_start_end_ids.npy")
@@ -280,20 +272,20 @@ def merge_datasets(data_dir1, data_dir2):
     np.save(data_dir1 + "/ep_start_end_ids.npy", ep_start_end_ids)
 
     # Merge Stats
-    meta_task_stats1 = np.load(data_dir1 + "/meta_task_stats.npz")
-    meta_task_stats2 = np.load(data_dir2 + "/meta_task_stats.npz")
+    meta_task_stats1 = np.load(data_dir1 + "/meta_task_stats.npz", allow_pickle=True)
+    meta_task_stats2 = np.load(data_dir2 + "/meta_task_stats.npz", allow_pickle=True)
     meta_task_stats = {}
     for key in meta_task_stats1.keys():
         meta_task_stats[key] = int(meta_task_stats1[key]) + int(meta_task_stats2[key])
     np.savez(data_dir1 + "/meta_task_stats.npz", **meta_task_stats)
 
-    exploration_stats1 = np.load(data_dir1 + "/exploration_stats.npz")
-    exploration_stats2 = np.load(data_dir2 + "/exploration_stats.npz")
+    exploration_stats1 = np.load(data_dir1 + "/exploration_stats.npz", allow_pickle=True)
+    exploration_stats2 = np.load(data_dir2 + "/exploration_stats.npz", allow_pickle=True)
     exploration_stats = {}
     for key in exploration_stats1.keys():
         exploration_stats[key] = {}
-        for sub_key in exploration_stats1[key].keys():
-            exploration_stats[key][sub_key] = int(exploration_stats1[key][sub_key]) + int(exploration_stats2[key][sub_key])
+        for sub_key in exploration_stats1[key].item().keys():
+            exploration_stats[key][sub_key] = int(exploration_stats1[key].item()[sub_key]) + int(exploration_stats2[key].item()[sub_key])
     np.savez(data_dir1 + "/exploration_stats.npz", **exploration_stats)
 
     # Merge episodes
@@ -302,18 +294,17 @@ def merge_datasets(data_dir1, data_dir2):
         save_path = data_dir1 + f"/episode_{i:06}.npz"
         np.savez(save_path, **episode)
 
-
-
-def convert_to_dict(npz_file):
+def convert_to_dict(npz_file, nested=False):
     return_dict = {}
     for key in npz_file.keys():
-        if isinstance(npz_file[key], Dict):
-            return_dict[key] = convert_to_dict(npz_file[key])    
+        if nested:
+            nested_dict = {}
+            for n_key in npz_file[key].item().keys():
+                nested_dict[n_key] = int(npz_file[key].item()[n_key])
+            return_dict[key] = nested_dict    
         else:
             return_dict[key] = int(npz_file[key])
     return return_dict
-
-
 
 def add_alternative_language(data_dir):
     '''Add alternative labels to exisiting datasets.'''
@@ -327,34 +318,38 @@ def add_alternative_language(data_dir):
 
         sampled_task_instructions = {key: random.choice(TASK_INSTRUCTIONS[key]) for key in TASK_INSTRUCTIONS.keys()} 
 
+
         for j in range(ep_start_id, ep_end_id + 1):
             time_step_data = np.load(data_dir + f"/episode_{j:06}.npz", allow_pickle=True)
             time_step_data = dict(time_step_data)
             feedback = str(time_step_data['feedback'])
-            print(feedback)
-            if j == ep_start_id:
-                episode_objects = get_episode_objects(feedback)
-                episode_objects_str = str(', '.join(episode_objects))
-            
-            if "no reward last trial" in feedback:
-                explored_objects = get_explored_objects(feedback)
-                explored_objects_str = str(', '.join(explored_objects))
-                alternative_feedback = further_trial_template.format(episode_objects_str, explored_objects_str)
-  
-            elif "was rewarding last trial" in feedback:
-                reward_task = get_reward_object(feedback)
-                reward_task_key = TASK_INSTRUCTION_FEEDBACK[reward_task]
-                reward_task_str = random.choice(TASK_INSTRUCTIONS[reward_task_key])
-                alternative_feedback = reward_template.format(reward_task_str)
-            
-            else:
-                alternative_feedback = first_trial_template.format(episode_objects_str)
-            
-            print(alternative_feedback)
-            #time_step_data['alternative_feedback'] = alternative_feedback
-            #save_path = data_dir + f"/episode_{j:06}.npz"
-            #np.savez(save_path, **time_step_data)
+            alternative_feedback = get_alternative_feedback(feedback, first_trial_template, further_trial_template, reward_template, sampled_task_instructions)
+            time_step_data['alternative_feedback'] = alternative_feedback
+            save_path = data_dir + f"/episode_{j:06}.npz"
+            np.savez(save_path, **time_step_data)
 
+def get_alternative_feedback(feedback, first_trial_template, further_trial_template, reward_template, sampled_task_instructions):
+    if "no reward last trial" in feedback:
+        episode_objects = get_episode_objects(feedback)
+        episode_objects_str = str(', '.join(episode_objects))
+        explored_objects = get_explored_objects(feedback)
+        explored_objects_str = str(', '.join(explored_objects))
+        alternative_feedback = further_trial_template.format(episode_objects_str, explored_objects_str)
+
+    elif "was rewarding last trial" in feedback:
+        episode_objects = get_episode_objects(feedback)
+        episode_objects_str = str(', '.join(episode_objects))
+        reward_task = get_reward_object(feedback)
+        reward_task_key = TASK_INSTRUCTION_FEEDBACK[reward_task]
+        reward_task_str = sampled_task_instructions[reward_task_key]
+        alternative_feedback = reward_template.format(reward_task_str)
+    
+    else:
+        episode_objects = get_episode_objects(feedback)
+        episode_objects_str = str(', '.join(episode_objects))
+        alternative_feedback = first_trial_template.format(episode_objects_str)
+
+    return alternative_feedback
 
 def get_episode_objects(test_string):
     episode_objects = []
@@ -363,7 +358,6 @@ def get_episode_objects(test_string):
     episode_objects_string = test_string[episode_objects_start:episode_objects_end]
     episode_objects = episode_objects_string.split(", ")
     return episode_objects
-
 
 def get_explored_objects(test_string):
     explored_objects = []
@@ -375,34 +369,19 @@ def get_explored_objects(test_string):
 
 def get_reward_object(reward_string):
     reward_task = ""
-    reward_string.split("was rewarding")
-    reward_task = reward_string.split("was rewarding")[0]
+    reward_task = reward_string.split(" was rewarding")[0]
     return reward_task
-
-
-def visualize_dataset(dataset):
-    ep_start_end_ids = np.load(dataset + "/ep_start_end_ids.npy")
-    len_dataset = ep_start_end_ids[-1][1] + 1
-    possible_objects = ['red block', 'pink block', 'slider', 'drawer', 'led', 'lightbulb']
-    used_objects = []
-    for i in range(len_dataset):
-        episode = np.load(dataset + f"/episode_{i:06}.npz", allow_pickle=True)
-        episode = dict(episode)
-        feedback = np.array2string(episode['feedback'])
-        action = episode['rel_actions']
-        rgb = episode['rgb_static']
-        print(feedback)
-        cv2.imshow('test',rgb[:,:,::-1])
-        cv2.waitKey(60)
 
 
 def get_data_statistics(dataset):
     feedback_stats = {}
     ep_start_end_ids = np.load(dataset + "/ep_start_end_ids.npy")
     len_dataset = ep_start_end_ids[-1][1] + 1
+    print(len(ep_start_end_ids))
     for i in range(len_dataset):
         episode = np.load(dataset + f"/episode_{i:06}.npz", allow_pickle=True)
         episode = dict(episode)
+        print(np.mean(episode['rel_actions'][:6]))
         feedback = np.array2string(episode['feedback'])
         if feedback in feedback_stats.keys():
             feedback_stats[feedback] += 1

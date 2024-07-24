@@ -44,8 +44,8 @@ def evaluate():
     parser.add_argument("--vision_encoder_path", default="ViT-L-14", type=str)
     parser.add_argument("--vision_encoder_pretrained", default="openai", type=str)
     parser.add_argument("--lm_path", default="anas-awadalla/mpt-1b-redpajama-200b-dolly", type=str)
-    parser.add_argument("--path_to_env", default="/home/richard/Documents/GitHub/RoboTest/calvin/dataset/calvin_debug_dataset/validation", type=str)
-    parser.add_argument("--path_to_oracle", default="/home/richard/Documents/GitHub/RoboTest/calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml", type=str)
+    parser.add_argument("--path_to_env", default="../calvin/dataset/calvin_debug_dataset/validation", type=str)
+    parser.add_argument("--path_to_oracle", default="../calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml", type=str)
     parser.add_argument(
         "--tokenizer_path",
         default="anas-awadalla/mpt-1b-redpajama-200b-dolly",

@@ -16,8 +16,7 @@ import os
 from hydra import initialize, compose
 
 from agent import OracleAgent
-from protoenv import ProtoEnv
-from env_v1 import Env
+from env.protoenv import ProtoEnv
 from reasoning_llm import ReasoningLLM
 from data_utils import *
 
@@ -40,7 +39,7 @@ def main():
     parser = argparse.ArgumentParser(description='Script to collect data from the environment using the oracle agent')
 
     #Agent parameters
-    parser.add_argument('--checkpoint_path', default= '../RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
+    parser.add_argument('--checkpoint_path', default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
                         type=str, help='Path to the policy model')
     parser.add_argument('--reasoning_model', default= 'mistralai/Mixtral-8x7B-Instruct-v0.1', type=none_or_str, help='Path to the reasoning model')
     parser.add_argument('--task_llm', default= None, type=none_or_str, help='Path to the task planning model')
@@ -53,6 +52,8 @@ def main():
     parser.add_argument('--provide_feedback', action= 'store_true', help='Whether to provide feedback or not')
     parser.add_argument('--rollout_steps', default= 1000, type=int, help='Number of steps per meta_episode')
     parser.add_argument('--num_trials', default= 4, type=int, help='Number of trials per episode')
+    parser.add_argument('--eval', action= 'store_true', help='Generate evaluation data')
+    parser.add_argument('--num_objs', default=3, type=int, help='Number of relevant objects')
     parser.add_argument('--calvin_dataset_path', default= "../calvin/dataset/calvin_debug_dataset/validation",
                         type=str, help='Path to the calvin dataset to initialize the environment')
     parser.add_argument('--calvin_task_path', default= "../calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml",
@@ -87,8 +88,7 @@ def main():
     task_cfg = OmegaConf.load(args.calvin_task_path)
     task_oracle = hydra.utils.instantiate(task_cfg)
     env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials),
-                    instructions_per_trial=args.instructions_per_trial, no_op_steps=args.no_op_steps, provide_feedback=args.provide_feedback, 
-                    reset_robot_pos=args.reset_robot_pos, five_objs=args.five_objs, provide_train_feedback=True)
+                    provide_feedback=args.provide_feedback, reset_robot_pos=True, num_objs=args.num_objs, provide_train_feedback=True)
     print("Environment loaded")
 
     
@@ -147,13 +147,7 @@ def main():
 
     # Collect data
     collect_data(args, agent, env)
-    
 
 
 if __name__ == '__main__':
     main()
-
-
-
-
-   

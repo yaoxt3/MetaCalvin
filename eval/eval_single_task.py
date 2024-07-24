@@ -37,7 +37,7 @@ import cv2
 
 def rollout_single(args, task, task_instruction, feedback_state, environment_state, env, model, steps):
     model.reset()
-    obs, feedback, _ = env.episode_reset(feedback_state, environment_state, task, train=True)
+    obs, feedback, _, info = env.episode_reset(feedback_state, environment_state, task, train=True)
     current_trial = 0
     total_reward = 0
     episode_length = 0
@@ -65,7 +65,7 @@ def eval_single_tasks(args, env, model):
     all_tasks = env.train_tasks
 
     for task in all_tasks:
-        task = 'lift_red_block_table'
+        #task = 'lift_red_block_table'
         task_sucesses = 0
         task_episode_lengths = 0
         task_instruction = env.task_instruction_feedback[task]
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--window_size",
         type=int,
-        default=64,
+        default=12,
         help="window size for model"
     )
     parser.add_argument(
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     task_oracle = hydra.utils.instantiate(task_cfg)
 
 
-    base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps, instructions_per_trial=1, no_op_steps=0,
+    base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps,
                    provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=True, num_objs=args.num_objs)
         
     print('Environment loaded')

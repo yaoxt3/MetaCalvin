@@ -1,5 +1,14 @@
 import sys
-sys.path.append('../')
+sys.path.append("../calvin/calvin_models/")
+sys.path.append("../calvin/calvin_env/")
+sys.path.append("../calvin/calvin_env/tacto")
+sys.path.append("../calvin/calvin_models/calvin_agent/")
+sys.path.append("../open_flamingo/")
+sys.path.append("../robot_flamingo/")
+sys.path.append("../data/")
+sys.path.append("../agent/")
+sys.path.append("../")
+
 import torch
 import hydra
 import cv2
@@ -13,10 +22,9 @@ import pybullet as p
 
 from pathlib import Path
 
-from agent.agent import OracleAgent
 from env.protoenv import ProtoEnv
 from env.env_v1 import Env
-from agent.reasoning_llm import ReasoningLLM
+from reasoning_llm import ReasoningLLM
 
 
 from robot_flamingo.models.factory import create_model_and_transforms
@@ -35,21 +43,21 @@ import itertools
 import random
 import cv2
 
+from copy import deepcopy
+
 def rollout_single(args, task, task_instruction, feedback_state, environment_state, env, model, steps):
     model.reset()
     episode_data = []
     obs, feedback, environment_description, info = env.episode_reset(feedback_state, environment_state, task, train=True)
-    
+    robot = deepcopy(env.base_env.robot) # Copy the robot to avoid changing the original robot state for computing absolute actions
     total_reward = 0
     episode_length = 0
     for i in range(steps):
         episode_length += 1
         action = model.step(obs, task_instruction)
         action_save = action.copy()
-        abs_action = env.base_env.robot.relative_to_absolute(action_save)
+        abs_action = robot.relative_to_absolute(action_save.copy())
         step_dict = create_episode_dict(obs, action_save, abs_action, feedback, task_instruction, None, info, False, i)
-        print(step_dict.keys())
-        print(step_dict)
         episode_data.append(step_dict)
 
         obs, reward, _, _, trial_done, step_info = env.step(action)
@@ -96,6 +104,7 @@ def collect_data(args, env, model):
         # Sample state for the environment
         environment_state, feedback_state = get_env_states_for_task(args, task, env)
         task_instruction = env.task_instruction_feedback[task]
+        print(task_instruction)
         data = rollout_single(args, task, task_instruction, feedback_state, environment_state, env, model, args.trial_steps)
         if data is not None:
             collected_task_episodes[task] += 1
@@ -190,6 +199,7 @@ def get_env_states_for_task(args, task, env):
     
     return environment_state, feedback_state
 
+
 if __name__ == '__main__':
 
     def none_or_str(value):
@@ -213,7 +223,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--model_checkpoint", 
         type=str, 
-        default="../RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth",
+        default="/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth",
         help="Path to trained model checkpoint",
     )
 
@@ -303,10 +313,8 @@ if __name__ == '__main__':
     task_cfg = OmegaConf.load(Path(args.path_to_oracle))
     task_oracle = hydra.utils.instantiate(task_cfg)
 
-    base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps, instructions_per_trial=1, no_op_steps=0,
-            provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=False, num_objs=args.num_objs)
-    
-    base_env.episode_reset()
+    base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps,
+            provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=True, five_objs=args.num_objs)
         
     print('Environment loaded')
     # Load the model
@@ -341,3 +349,4 @@ if __name__ == '__main__':
 
     collect_data(args, base_env, policy_model)
     print('Data collected')
+
