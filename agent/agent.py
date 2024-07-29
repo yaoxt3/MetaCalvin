@@ -17,9 +17,8 @@ class OracleAgent():
 
     def step(self, obs, feedback=None, use_reasoning=True, annotation=None, env_description=None, instruction_step=False):
         '''Take a step in the environment'''
-        output = None
         if instruction_step:
-            self.instruction, output = self.get_instruction(feedback, use_reasoning, annotation, env_description)
+            self.instruction, self.output = self.get_instruction(feedback, use_reasoning, annotation, env_description)
             if self.task_llm is not None:
                 if self.subtask_instruction is None:
                     self.subtask_instruction = self.instruction
@@ -45,7 +44,7 @@ class OracleAgent():
         if self.policy_model.use_diff:
             self.policy_model.action_hist_queue.append(action)
         
-        return action, self.instruction, output
+        return action, self.instruction, self.output
 
 
     def get_instruction(self, feedback=None, use_reasoning=True, annotation=None, env_description=None):
@@ -66,7 +65,6 @@ class OracleAgent():
         if self.task_llm is not None:
             instruction = self.get_task_llm_output(instruction)
         
-        
         return instruction, output
 
     def get_reasoning_output(self, feedback, env_description, vlm_description=None):
@@ -81,6 +79,7 @@ class OracleAgent():
                 self.reasoning_hist = env_description
         else:
             self.reasoning_hist.append(feedback)
+        
         instruction, output = self.reasoning_llm.get_instruction(self.reasoning_hist)
         self.reasoning_hist.append(output)
         return instruction, output
@@ -100,5 +99,7 @@ class OracleAgent():
         self.subtask_instruction = None
         self.num_instruction_step = 0
         self.planned_actions = []
+        self.output = None
+        
         
 

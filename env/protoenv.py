@@ -32,7 +32,6 @@ class ProtoEnv():
         self.base_env = base_env
         self.task_oracle = task_oracle
         self.num_objs = num_objs
-
         if self.num_objs == 5:
             self.train_tasks = ['move_slider_left', 'move_slider_right', 'open_drawer', 'close_drawer', 'turn_on_lightbulb',
                             'turn_off_lightbulb', 'turn_on_led', 'turn_off_led', 'lift_red_block_table']
@@ -61,16 +60,11 @@ class ProtoEnv():
          
         self.all_tasks = self.train_tasks
 
-
         self.num_trials = num_trials
         self.trial_steps = trial_steps
         self.instructions_per_trial = instructions_per_trial
 
-        self.trial_count = 1
-        self.trial_step_count = 0
 
-        self.trial_done = False
-        self.last_reward = 0
 
         self.provide_feedback = provide_feedback
         self.provide_train_feedback = provide_train_feedback
@@ -132,8 +126,8 @@ class ProtoEnv():
             feedback = None
 
         self.task_success_dict = {task: False for task in self.all_tasks}
-        #if self.reset_robot_pos:
-        self.reset_robot_position()
+        if self.reset_robot_pos:
+           self.reset_robot_position()
         robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state)
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         observation = self.base_env.get_obs()
@@ -158,7 +152,6 @@ class ProtoEnv():
         feedback = None
         reward = 0
         self.trial_step_count += 1
-
         if not len(action) == 3:
             action = action.squeeze()
 
@@ -213,8 +206,8 @@ class ProtoEnv():
                 if self.trial_count == 0:
                     # Feedback for the first trial
                     if provide_lm_feedback:
-                        lm_feedback = {"role": "user", "content": "Beginning of trial 1: Please give an instruction for this trial. {0} Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>'." \
-                        "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(env_status)}
+                        lm_feedback = {"role": "user", "content": "Beginning of trial 1: Please give an instruction for this trial. {0} Remember to use the template: Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>'." \
+                        "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you.".format(env_status)}
                     if provide_train_feedback:
                         used_objects = ', '.join([obj.replace('_', ' ') for obj in self.used_objects])
                         train_feedback = 'first trial. episode objects: {0}'.format(used_objects)
@@ -225,14 +218,14 @@ class ProtoEnv():
                         assert instruction is not None, "Instruction is required for feedback"
                         completed_tasks = ''
                         for key, value in self.instruction_success_dict.items():
-                            reward_string = 'was rewarding' if bool(value['rew']) else ' was not rewarding'
-                            completed_tasks += key.replace('.', ' ') + reward_string + '; '
+                            reward_string = 'was rewarding' if bool(value['rew']) else 'was not rewarding'
+                            completed_tasks += key + reward_string + '; '
 
                         if not bool(self.instruction_success_dict):
                             completed_tasks = 'No tasks were completed.'
 
-                        lm_feedback = {"role": "user", "content": "Trial {0} completed. The following instructions were completed: {1}. Please give an instruction for the next trial. {2} Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>'." \
-                        "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(self.trial_count, completed_tasks, env_status)}
+                        lm_feedback = {"role": "user", "content": "Trial {0} completed. The following instructions were completed: {1}. Please give an instruction for the next trial. {2} You must adhere to the following template: Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>'." \
+                        "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember that you are strictly instructed to follow the guidelines given to you.".format(self.trial_count, completed_tasks, env_status)}
                     
                     if provide_train_feedback:
                     
@@ -279,13 +272,15 @@ class ProtoEnv():
                 last_action = self.task_instruction_feedback[last_action]
                 if self.last_reward:
                     if provide_lm_feedback:
-                        lm_feedback = {"role": "user", "content": instruction.replace('.', '_') + " was rewarding. {0} Give further instructions to find other rewarding tasks. Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>'." \
+                        print(instruction.replace('.', '_'))
+                        lm_feedback = {"role": "user", "content": instruction.replace('.', '_') + " was rewarding. {0} Give further instructions to find other rewarding tasks. Remember to use the template: Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>." \
                         "Keep your instructions clear, concise and short. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(env_status)}
                     if provide_train_feedback:
                         train_feedback = "Action {0} was rewarding.".format(last_action)
                 else:
                     if provide_lm_feedback:
-                        lm_feedback = {"role": "user", "content": instruction.replace('.', ' ') + " was not rewarding. {0} Give a new instruction for this trial. Remember to use the template: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>'." \
+                        print(instruction.replace('.', ' '))
+                        lm_feedback = {"role": "user", "content": instruction.replace('.', ' ') + " was not rewarding. {0} Give a new instruction for this trial. Remember to use the template: Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>." \
                         "Keep your instructions clear, concise and short. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(env_status)}
                     if provide_train_feedback:
                         train_feedback = "Action {0} was not rewarding.".format(last_action)
@@ -311,7 +306,7 @@ class ProtoEnv():
                 initial_state['led'] = 0
             else:
                 initial_state['led'] = random.choice([0, 1])
-            initial_state['led'] = 0
+            
 
             if self.num_objs == 7:
                 locations = ['table', 'slider_left', 'slider_right']
@@ -347,10 +342,10 @@ class ProtoEnv():
 
         object_descriptions = self.get_object_descriptions(used_objects, initial_state)
 
-        ENVIRONMENT_DESCRIPTION[0]['content'] = ENVIRONMENT_DESCRIPTION[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2])
-        environment_description = ENVIRONMENT_DESCRIPTION
+        environment_description_template = deepcopy(ENVIRONMENT_DESCRIPTION)
+        environment_description_template[0]['content'] = environment_description_template[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2])
         
-        return initial_state, meta_task, environment_description
+        return initial_state, meta_task, environment_description_template
     
     def get_object_descriptions(self, objects, initial_state):
         object_descriptions = []
@@ -458,6 +453,7 @@ class ProtoEnv():
         variance_z = np.random.randint(-5, 5) * 0.01
         
         new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
+        #new_position = base_position
         print(new_position)
         
         num_bodies = p.getNumBodies()
@@ -487,6 +483,7 @@ class ProtoEnv():
             0.55344928, # joint angles
             -1.0,       # gripper state
         ]
+
         )
         block_rot_z_range = (pi / 2 - pi / 8, pi / 2 + pi / 8)
         block_slider_left = np.array([-2.40851662e-01, 9.24044687e-02, 4.60990009e-01])
@@ -504,7 +501,7 @@ class ProtoEnv():
         if initial_condition["drawer"] == "open":
             scene_obs[1] = 0.22
         if initial_condition["lightbulb"] == 1:
-            scene_obs[3] = 0.07
+            scene_obs[3] = 0.07 + np.random.uniform(-0.008, 0.008)
         scene_obs[4] = initial_condition["lightbulb"]
         scene_obs[5] = initial_condition["led"]
         # red block
@@ -513,10 +510,10 @@ class ProtoEnv():
         elif initial_condition["red_block"] == "slider_left":
             scene_obs[6:9] = block_slider_left
         else:
-            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1],
+            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
                                block_table[0][2] + np.random.uniform(-0.005, 0.005)]
-        #rotate block by 90 degrees
-        scene_obs[11] = pi / 2 
+        
+        scene_obs[11] = np.random.uniform(*block_rot_z_range)
         # blue block
         if initial_condition["blue_block"] == "slider_right":
             scene_obs[12:15] = block_slider_right
@@ -526,7 +523,7 @@ class ProtoEnv():
             scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
                                 block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1],
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
                                block_table[0][2] + np.random.uniform(-0.005, 0.005)]
         scene_obs[17] = np.random.uniform(*block_rot_z_range)
         # pink block
@@ -538,7 +535,7 @@ class ProtoEnv():
             scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
                                 block_table[1][2] + np.random.uniform(-0.005, 0.005)]
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1],
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
                                block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
         scene_obs[23] = np.random.uniform(*block_rot_z_range)
 
@@ -593,6 +590,7 @@ class ProtoEnv():
             eval_combinations = all_combinations
 
         return train_combinations, eval_combinations
+
 
 
     

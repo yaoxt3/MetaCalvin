@@ -28,9 +28,9 @@ class ReasoningLLM():
         '''Detokenize the output of the LLM to get the instruction'''
         output = output[0]
         output = self.tokenizer.decode(output, skip_special_tokens=True)
-        assistant_output = output.split('[/INST]')[-1]
-        instruction = assistant_output.split('Instruction:')[-1]
-        #assistant_output_content = assistant_output.split('<|assistant|>')[-1]
-        assistant_output = {"role": "assistant", "content": assistant_output}
+        assistant_output = output.split('model')[-1]
+        instruction = assistant_output.split('Instruction:')[-1].replace('\n', '')
+        assistant_output = {"role": "assistant", "content": assistant_output.replace('\n', '')}
         return instruction, assistant_output
+        
         

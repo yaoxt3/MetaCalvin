@@ -40,7 +40,7 @@ from calvin_agent.datasets.utils.episode_utils import (
     process_rgb,
     process_state,
 )
-from sampler import SequenceSampler, DistributedSequenceSampler
+from sampler import SequenceSampler, DistributedSequenceSampler, DistributedRandomSampler
 
 import numpy as np
 from omegaconf import DictConfig
@@ -87,6 +87,7 @@ from omegaconf import DictConfig
 import pyhash
 import torch
 from torch.utils.data import Dataset
+from robot_flamingo.data.vl_dataset import CaptionDataset, VQADataset
 
 hasher = pyhash.fnv1_32()
 logger = logging.getLogger(__name__)
@@ -748,6 +749,7 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         skip_frames: Skip this amount of windows for language dataset.
         save_format: File format in datasets_dir (pkl or npz).
         pretrain: Set to True when pretraining.
+        feedback_type: Which type of feedback should be trained with.
     """
 
     def __init__(
@@ -757,6 +759,7 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         *args: Any,
         skip_frames: int = 1,
         save_format: str = "npz",
+        feedback_type: str = "train_feedback",
         pretrain: bool = False,
         partial_data=False,
         **kwargs: Any,
@@ -774,6 +777,7 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
             raise NotImplementedError
         self.pretrain = pretrain
         self.skip_frames = skip_frames
+        self.feedback_type = feedback_type
 
         self.episode_lookup, self.start_idx_lookup = self._build_file_indices(self.abs_datasets_dir)
 
@@ -870,6 +874,7 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         Returns:
             episode: Dict of numpy arrays containing the episode where keys are the names of modalities.
         """
+        
         keys = list(chain(*self.observation_space.values()))
         keys.remove("language")
         keys.append("scene_obs")
@@ -877,9 +882,8 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
             self.load_file(self._get_episode_name(file_idx))
             for file_idx in range(idx[0], idx[1])
         ]
-        episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key not in ["feedback", "alt_feedback", "env_feedback", "lm_output", "lm_instruction"]}
-        episode["feedback"] = [str(ep[self.feedback_type]) for ep in episodes]
-        
+        episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys if key not in ["train_feedback", "alt_feedback", "env_feedback", "lm_output", "lm_instruction", "abs_action"]}
+        episode["feedback"] = [str(ep[self.feedback_type]) for ep in episodes] #CHANGE LATER ONLY FOR SINGLE TRAINING !!!
         
         return episode
     
@@ -1490,7 +1494,7 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
         max_window_size=args.max_window_size,
         act_step=args.multi_step_action,
         partial_data=args.partial_data,
-        n_obs_steps=args.n_obs_steps,
+        #n_obs_steps=args.n_obs_steps,
         feedback_type=args.feedback_type,
     )
 

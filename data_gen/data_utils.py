@@ -1,56 +1,55 @@
 import sys
-sys.path.append("./calvin/calvin_models/")
-sys.path.append("./calvin/calvin_env/")
-sys.path.append("./calvin/calvin_env/tacto")
-sys.path.append("./calvin/calvin_models/calvin_agent/")
-sys.path.append("./open_flamingo/")
-sys.path.append("./robot_flamingo/")
-sys.path.append("../")
+sys.path.append('../')
 
 import numpy as np
 import torch
 import os
 import time
-from copy import deepcopy
 import gc
+import numpy as np
 from contextlib import contextmanager
 
+
 from typing import List, Dict, Any, Tuple
+from copy import deepcopy
 from env.env_utils import *
 
 
-
-def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_lmits, total_episodes, use_reasoning=False, eval=False, annotation=None):
+def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_limits, total_episodes, use_reasoning=False, eval=False, annotation=None):
     '''Perform rollout of oracle agent in env. Save episode if successful. Expects actions output by agent to be relative actions'''
     episode_data = []
     last_trial_reward = False
     switched = False
     meta_task_stats_episode = meta_task_stats.copy()
     exploration_stats_episode = exploration_stats.copy()
-    agent.reset()
     robot = deepcopy(env.base_env.robot) # Copy the robot to avoid changing the original robot state for computing absolute actions
     #make sure all meta task are sampled equally
     while True:
-        obs, feedback, environment_description, info = env.episode_reset(train= eval==False)
-        meta_task = env.meta_task
-        print(meta_task, 'Resampled')
-        if meta_task_stats[meta_task] <= round(total_episodes/len(env.train_tasks)):
+        meta_task = random.choice(list(meta_task_stats.keys()))
+        if meta_task_stats[meta_task] < round(total_episodes/len(env.train_tasks)):
+            print(meta_task)
+            environment_state, feedback_state = get_env_states_for_task(exploration_stats_episode, exploration_stats_limits, meta_task, env)
             meta_task_stats_episode[meta_task] += 1
             break
-
+    print(environment_state, feedback_state)
+    obs, feedback, environment_description, info = env.episode_reset(feedback_state, environment_state, meta_task, train=True)
     env_feedback = feedback['lm_feedback']
     current_trial = 0
     trials_before_reward = 0
     instruction_step = True
+
     for i in range(steps):
-        action, instruction, output = agent.step(obs, env_feedback, use_reasoning=use_reasoning, env_description=environment_description, annotation=annotation, instruction_step=instruction_step)
+        action, instruction, output = agent.step(obs, env_feedback, use_reasoning=use_reasoning, env_description=deepcopy(environment_description), annotation=annotation, instruction_step=instruction_step)
         
         # Copy rel and  absolute actions
         action_save = action.copy()
-        abs_action = robot.relative_to_absolute(action_save)
+        abs_action = robot.relative_to_absolute(action_save.copy())
         # Record step data
-        if not instruction_step or current_trial != 0:
-            environment_description = None
+        if not instruction_step: 
+            feedback['lm_feedback'] = None
+            output = None
+            if current_trial != 0:
+                environment_description = None
         step_dict = create_episode_dict(obs, action_save, abs_action, feedback, instruction, output, environment_description, current_trial, i)
         episode_data.append(step_dict)
 
@@ -96,10 +95,6 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
             
             # Break early if enought episodes sampled for this exploration. For trials before reward = 1 
             # we cant stop early because it could turn into trials before reward = 2
-            if trials_before_reward == 0 or trials_before_reward == 2:
-                if exploration_stats_episode[meta_task][str(trials_before_reward)] >= exploration_stats_lmits[meta_task][str(trials_before_reward)]:
-                    print('Break cause of exploration')
-                    break
 
             if step_info['task_completed'] is False:
                 break
@@ -119,16 +114,104 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     gc.collect()
     torch.cuda.empty_cache()  
     
-    if last_trial_reward and switched is False and exploration_stats_episode[meta_task][str(trials_before_reward)] < exploration_stats_lmits[meta_task][str(trials_before_reward)]:
+    if last_trial_reward and switched is False:
         #Update statistics
         meta_task_stats[meta_task] += 1
-        exploration_stats[meta_task][str(trials_before_reward)] += 1
+        if meta_task in exploration_stats.keys():
+            exploration_stats[meta_task][str(trials_before_reward)] += 1
+        else:
+            exploration_stats[trials_before_reward] += 1
         yield episode_data
         del episode_data
 
     else:
         yield None
         del episode_data
+
+def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, env):
+    # Sample state
+    objects = env.objects
+    drawer_states = ['open', 'closed']
+    slider_states = ['left', 'right']
+    lightbulb_states = [0, 1]
+    red_block_states = ['table']
+    states = drawer_states + slider_states + red_block_states + ['on', 'off']
+    state_dict = {"drawer": drawer_states, "slider": slider_states, "lightbulb": lightbulb_states, "led": lightbulb_states, "red_block": red_block_states}
+
+    meta_object_list = []
+    for obj in objects:
+        for subtask in task:
+            if obj in subtask:
+                meta_object_list.append(obj)
+
+
+    # To account for red block being on the table
+    meta_state_list = []
+    for state in states:
+        for subtask in task:
+            if state in task:
+                meta_state_list.append(state)
+    
+    environment_state = {"drawer":random.choice(drawer_states), "slider":random.choice(slider_states), "lightbulb":random.choice(lightbulb_states), "led":random.choice(lightbulb_states), 
+                         "red_block":"table", "pink_block":"slider_right", "blue_block":"slider_left"}
+    
+    for meta_object, meta_state in zip(meta_object_list, meta_state_list):
+        if meta_object in ["red_block", "pink_block", "blue_block"]:
+            environment_state[meta_object] = "table" # Change when we vary positions and colors of blocks
+        elif meta_object in ["lightbulb", "led"]:
+            # Get the oposite of the meta state
+            if meta_state == "off":
+                environment_state[meta_object] = 1
+            else:
+                environment_state[meta_object] = 0   
+        else:
+            # Get the oposite of the meta state
+            environment_state[meta_object] = [state for state in state_dict[meta_object] if state != meta_state][0]
+
+    # Get exploration stats below limit
+    # Feedback for simple env
+    if len(task) == 1:
+        task = task[0]
+        keys = []
+        for key in exploration_stats[task].keys():
+            if exploration_stats[task][key] < exploration_stats_limits[task][key]:
+                keys.append(key)
+        meta_object_idx = random.choice(keys)
+        # Sample feedback objects
+        if env.num_objs == 5:
+            feedback_state = random.sample([obj for obj in objects if obj != meta_object], 2)
+            feedback_state.insert(int(meta_object_idx), meta_object)
+        else:
+            feedback_state = objects
+            idx = feedback_state.index(meta_object)
+            feedback_state.pop(idx)
+            feedback_state.insert(int(meta_object_idx), meta_object)
+    # Feedback for multi env
+    else:
+        last_idx_list = []
+        for key in exploration_stats.keys():
+            if exploration_stats[key] < exploration_stats_limits[key]:
+                last_idx_list.append(key)
+        last_idx = int(random.choice(last_idx_list))
+        if last_idx == 0:
+            meta_object_one_idx = 0
+            meta_object_two_idx = 0
+        elif last_idx == 1:
+            meta_object_one_idx = random.choice([0, 1])
+            meta_object_two_idx = 0 if meta_object_one_idx == 1 else 1
+        else:
+            meta_object_one_idx = random.choice([0, 1, 2])
+            meta_object_two_idx = random.choice([0, 1]) if meta_object_one_idx == 2 else 2
+        
+        feedback_state = objects
+        feedback_state.pop(meta_object_one_idx)
+        feedback_state.insert(0, meta_object_list[0])
+        feedback_state.pop(meta_object_two_idx)
+        feedback_state.insert(1, meta_object_list[1])
+
+
+    
+    return environment_state, feedback_state
 
 
 def collect_data(args, agent, env):
@@ -140,9 +223,12 @@ def collect_data(args, agent, env):
     times = []
     meta_task_stats = {}
     exploration_stats = {} # Hardcoded for now to number of different tasks
-    for task in env.train_tasks:
-        meta_task_stats[task] = 0
-        exploration_stats[task] = {'0': 0, '1': 0, '2': 0}
+    if args.multi_env:
+        exploration_stats = {'0': 0, '1': 0, '2': 0}
+    else:
+        for task in env.train_tasks:
+            meta_task_stats[task] = 0
+            exploration_stats[task] = {'0': 0, '1': 0, '2': 0}
     
     # Create limits for exploration stats, should be heavily biased towards 2 trials before reward
     exploration_stats_limits = {}
@@ -170,12 +256,12 @@ def collect_data(args, agent, env):
 
     while saved_ep < args.data_episodes:
         start = time.time()
-        print(meta_task_stats)
-        print(exploration_stats)
+        agent.reset()
         episode_data = rollout(env, agent, args.rollout_steps, meta_task_stats, exploration_stats, exploration_stats_limits,
                                 total_episodes, args.use_reasoning, args.eval)
         episode_data = next(episode_data)
-
+        print(meta_task_stats)
+        print(exploration_stats)
         if episode_data is not None:
             save_obs_and_action(episode_data, args.save_dir, ep_start_id, meta_task_stats, exploration_stats)
             ep_start_id = ep_start_id + len(episode_data)
@@ -238,7 +324,8 @@ def create_episode_dict(obs, rel_actions, abs_actions, feedback, instruction, ou
             step_dict[k] = v
 
     # Collect feedback from env and LLM output/instruction
-    step_dict['feedback'] = feedback['train_feedback']
+    step_dict['train_feedback'] = feedback['train_feedback']
+    step_dict['alt_feedback'] = feedback['alt_feedback']
     step_dict['env_feedback'] = feedback['lm_feedback']
     step_dict['lm_output'] = output
     step_dict['lm_instruction'] = instruction
@@ -397,6 +484,7 @@ def get_data_statistics(dataset):
     percentage = dict(sorted(percentage.items(), key=lambda item: item[1], reverse=True))
     for key in percentage.keys():
         print(f"{key}: {percentage[key]}%")
+
     
 
 

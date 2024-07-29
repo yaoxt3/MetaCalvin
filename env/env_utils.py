@@ -1,5 +1,6 @@
 import random
 
+
 def get_feedback_template(used_objects, explored_tasks_episode, explored_tasks_trial, meta_task, trial_one=False):
     meta_task_string = meta_task.replace('_', ' ')
     explored_tasks_trial = [task.replace('_', ' ') for task in explored_tasks_trial]
@@ -82,6 +83,8 @@ ENVIRONMENT_DESCRIPTION = [{"role": "user", "content": "You are a helpfull assis
         "Because you are a helpfull assistant you will strictly follow these instructions and guide me on my mission to find the rewarding task and maximize my total reward. "},
         {"role": "assistant", "content": "I understand your instructions and will strictly follow them. I will use my reasoning skills to give useful instructions about which task" \
         "you should complete in order to maximize the total reward."}]
+
+
 
 
 
@@ -223,8 +226,11 @@ TASK_INSTRUCTIONS = {'move_slider_left': ['moving the door to the left', 'slidin
                     'turn_on_led': ['turning on the led', 'turning on the led by pushing the button', 'pressing on the button to turn on the led', 'pushing the button to turn on the led'], 
                     'turn_off_led': ['turning off the led', 'turning off the led by pushing the button', 'pressing on the button to turn off the led' 'pushing the button to turn off the led'],
                     'lift_red_block_table': ['lifting the red block from the table', 'lifting the red block from the table by grasping it', 'lifting the red block', 'picking up the red block from the table'],
-                    'lift_pink_block_table': ['lifting the pink block from the table', 'lifting the pink block from the table by grasping it', 'lifting the pink block', 'picking up the pink block from the table'],}
-
+                    'lift_pink_block_table': ['lifting the pink block from the table', 'lifting the pink block from the table by grasping it', 'lifting the pink block', 'picking up the pink block from the table'],
+                    'lift_blue_block_table': ['lifting the blue block from the table', 'lifting the blue block from the table by grasping it', 'lifting the blue block', 'picking up the blue block from the table'],
+                    'lift_red_block_slider': ['lifting the red block from the slider', 'lifting the red block from the slider by grasping it', 'lifting the red block', 'picking up the red block from the slider'],
+                    'lift_pink_block_slider': ['lifting the pink block from the slider', 'lifting the pink block from the slider by grasping it', 'lifting the pink block', 'picking up the pink block from the slider'],
+                    'lift_blue_block_slider': ['lifting the blue block from the slider', 'lifting the blue block from the slider by grasping it', 'lifting the blue block', 'picking up the blue block from the slider'],}
 
 TASK_INSTRUCTION_FEEDBACK = {'move the door to the left': 'move_slider_left', 'move the door to the right': 'move_slider_right',
                             'pull the handle to open the drawer': 'open_drawer', 'push the handle to close the drawer': 'close_drawer', 'turn on the lightbulb': 'turn_on_lightbulb',

@@ -15,19 +15,20 @@ import random
 
 from math import pi
 
-from env.env_utils import *
+from env.multi_env_utils import *
 
 from pathlib import Path
 from omegaconf import OmegaConf
 import pybullet as p
 
 import itertools
+from copy import deepcopy
 
 
-class ProtoEnv():
-    def __init__(self, base_env, task_oracle, num_trials, trial_steps,
+class MultiEnv():
+    def __init__(self, base_env, task_oracle, num_trials, trial_steps, num_instructions=2,
                 provide_feedback=True, provide_train_feedback=False, provide_lm_feedback=True, reset_robot_pos=True):
-        super(ProtoEnv, self).__init__()
+        super(MultiEnv, self).__init__()
 
         self.base_env = base_env
         self.task_oracle = task_oracle
@@ -39,8 +40,6 @@ class ProtoEnv():
         self.objects = self.static_objects
 
         self.train_tasks, self.eval_tasks = self.build_train_and_eval_tasks()
-        print(self.train_tasks, self.eval_tasks)
-        print(len(self.train_tasks))
 
         self.task_instruction_feedback = {'move_slider_left': 'move the door to the left', 'move_slider_right': 'move the door to the right',
                                             'open_drawer': 'pull the handle to open the drawer', 'close_drawer': 'push the handle to close the drawer', 'turn_on_lightbulb': 'turn on the lightbulb',
@@ -58,6 +57,7 @@ class ProtoEnv():
         self.trial_done = False
         self.last_reward = 0
 
+        self.num_instructions = num_instructions
         self.provide_feedback = provide_feedback
         self.provide_train_feedback = provide_train_feedback
         self.provide_lm_feedback = provide_lm_feedback
@@ -75,6 +75,11 @@ class ProtoEnv():
         self.subtask_success_dict = {task: False for task in self.all_subtasks}
         self.episode_completed_subtasks = []
 
+        # Sample alt feedback
+        self.first_trial_template = build_template_first_trial(False if train else True)
+        self.end_trial_template = build_template_further_trial(False if train else True)
+        self.completed_task_template = build_template_completed_task(False if train else True)
+
         # Sample which task to perform
         self.initial_state, self.meta_task, self.environment_description = self.create_dynamic_env(feedback_state, environment_state, meta_task)
 
@@ -84,6 +89,7 @@ class ProtoEnv():
         robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state)
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         self.start_info = self.base_env.get_info()
+        self.sampled_subtask_instructions = {key: random.choice(TASK_INSTRUCTIONS[key]) for key in TASK_INSTRUCTIONS.keys()} 
 
         # Get first feedback and observation
         if self.provide_feedback:
@@ -149,6 +155,8 @@ class ProtoEnv():
             check, updated = self.task_info_check(subtask, task_info)
             subtask_str = subtask.replace('_', ' ')
             if check and subtask_str not in self.episode_completed_subtasks:
+                if instruction is None:
+                    instruction = self.task_instruction_feedback[subtask]
                 # Add completed task to episode completed tasks
                 if subtask_str not in self.episode_completed_subtasks:
                     self.episode_completed_subtasks.append(subtask_str)
@@ -157,10 +165,10 @@ class ProtoEnv():
                 if subtask in self.meta_task:
 
                     if self.provide_feedback:
-                        self.instruction_success_dict[instruction] = {'inst': instruction, 'rew': 1}
+                        self.instruction_success_dict[subtask] = {'inst': instruction, 'rew': 1}
+                        feedback = self.get_feedback(instruction, info, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
                     reward += 1
                     print('meta subtask completed')
-                    feedback = self.get_feedback(instruction, info, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
                     if reward == 2:
                         reward = 4
                         self.trial_done = True
@@ -168,12 +176,11 @@ class ProtoEnv():
                 else:
                     if updated:
                         if self.provide_feedback and self.trial_done is False:
-                            self.instruction_success_dict[instruction] = {'inst': instruction, 'rew': 0}
+                            self.instruction_success_dict[subtask] = {'inst': instruction, 'rew': 0}
                             feedback = self.get_feedback(instruction, info, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
 
         num_completed = len(self.instruction_success_dict)
-
-        if self.trial_done or num_completed == 2:
+        if self.trial_done or num_completed == self.num_instructions:
             self.last_reward = reward
             self.trial_done = True
         
@@ -191,17 +198,70 @@ class ProtoEnv():
                 # Provide feedback for first trial
                 env_status = self.get_env_status(self.start_info)
                 if self.trial_count == 0:
-                    lm_feedback = 'start of training blabla'
-                    train_feedback = 'first trial'
+                    if provide_lm_feedback:
+                        lm_feedback = {"role": "user", "content": "Beginning of trial 1: Please give a first instruction for this trial. {0} Remember to use the template: Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>'. " \
+                            "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember to strictly follow the guidelines given to you.".format(env_status)}
+                    if provide_train_feedback:
+                        used_objects = ', '.join([obj.replace('_', ' ') for obj in self.used_objects])
+                        train_feedback = 'first trial. episode objects: {0}.'.format(used_objects)
+                        alt_feedback = self.first_trial_template.format(used_objects)
 
                 # Feedback for consecutive trials 
                 else:
-                    lm_feedback = 'continue training'
-                    train_feedback = 'second trial'
+                    completed_rewarding_tasks = ''
+                    alt_completed_rewarding_tasks = ''
+                    for key, value in self.instruction_success_dict.items():
+                        if bool(value['rew']):
+                            task = self.instruction_success_dict[key]['inst']
+                            alt_task = self.sampled_subtask_instructions[key]
+                            if completed_rewarding_tasks == '':
+                                completed_rewarding_tasks = task
+                                alt_completed_rewarding_tasks = alt_task
+                            else:
+                                completed_rewarding_tasks += '; '+task
+                                alt_completed_rewarding_tasks += '; '+alt_task
+                    
+                    if completed_rewarding_tasks == '':
+                        completed_rewarding_tasks = 'None.'
+                        alt_completed_rewarding_tasks = 'None.'
+                    
+                    completed_non_rewarding_tasks = ''
+                    alt_completed_non_rewarding_tasks = ''
+                    for key, value in self.instruction_success_dict.items():
+                        if not bool(value['rew']):
+                            task = self.instruction_success_dict[key]['inst']
+                            alt_task = self.sampled_subtask_instructions[key]
+                            if completed_non_rewarding_tasks == '':
+                                completed_non_rewarding_tasks = task
+                                alt_completed_non_rewarding_tasks = alt_task
+                            else:
+                                completed_non_rewarding_tasks += '; '+task
+                                alt_completed_non_rewarding_tasks += '; '+alt_task
+
+                    if not bool(self.instruction_success_dict):
+                        completed_non_rewarding_tasks = 'None.'
+                        alt_completed_non_rewarding_tasks = 'None.'
+
+                    if provide_lm_feedback:
+                        assert instruction is not None, "Instruction is required for feedback"
+
+                        lm_feedback = {"role": "user", "content": "Trial {0} completed. Completed rewarding tasks last trial: {1}. Completed unrewarding tasks last trial: {2}. Please give an instruction for the next trial. {3} You must adhere to the following template: Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>'. " \
+                        "Remember to keep your instructions clear, concise and short. If you found a rewarding instruction repeat it for all future trials. Remember that you are strictly instructed to follow the guidelines given to you.".format(self.trial_count, completed_rewarding_tasks, completed_non_rewarding_tasks, env_status)}
+                    
+                    if provide_train_feedback:
+                        used_objects = ', '.join([obj.replace('_', ' ') for obj in self.used_objects])
+                        train_feedback = "Trial {0} completed. Completed rewarding tasks last trial: {1}. Completed unrewarding tasks last trial: {2}. Episode objects: {3}".format(self.trial_count, completed_rewarding_tasks, completed_non_rewarding_tasks, used_objects)
+                        alt_feedback = self.end_trial_template.format(self.trial_count, alt_completed_rewarding_tasks, alt_completed_non_rewarding_tasks, used_objects)
+                        
             else:
-                # Feedback after first completed instruction in environment
-                lm_feedback = 'completed task'
-                train_feedback = 'completed instruction'
+                env_status = self.get_env_status(info)
+                if provide_lm_feedback:
+                    lm_feedback = {"role": "user", "content": "Completed instruction {0}. Give a new instruction for this trial. Remember to use the template: Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>." \
+                    "Keep your instructions clear, concise and short. Remember to strictly follow the guidelines given to you. Do not include anything else in your instruction besides the name of the object and the action. Do not include instructions for future trials.".format(instruction, env_status)}
+                if provide_train_feedback:
+                    used_objects = ', '.join([obj.replace('_', ' ') for obj in self.used_objects])
+                    train_feedback = "You completed a task. Episode objects: {0}".format(used_objects)
+                    alt_feedback = self.completed_task_template.format(used_objects)
         
         feedback = {'lm_feedback': lm_feedback, 'train_feedback': train_feedback, 'alt_feedback': alt_feedback}
 
@@ -224,6 +284,7 @@ class ProtoEnv():
             initial_state['pink_block'] = 'slider_right' 
             initial_state['blue_block'] = 'slider_left'
 
+            initial_state['slider'] = 'right'
             initial_state['drawer'] = 'closed'
             initial_state['lightbulb'] = 0
 
@@ -249,9 +310,10 @@ class ProtoEnv():
                 assert meta_task in self.sampled_subtasks, "Meta task must be possible for environment state"
 
         object_descriptions = self.get_object_descriptions(used_objects, initial_state)
-        environment_description = [ENVIRONMENT_DESCRIPTION[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2]), ENVIRONMENT_DESCRIPTION[1]]
-        
-        return initial_state, meta_task, environment_description
+        environment_description_template = deepcopy(ENVIRONMENT_DESCRIPTION)
+        environment_description_template[0]['content'] = environment_description_template[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2], object_descriptions[3])
+
+        return initial_state, meta_task, environment_description_template
     
     def build_train_and_eval_tasks(self):
         '''Create all possible combinations of two subtasks to create a meta task'''
@@ -369,26 +431,13 @@ class ProtoEnv():
     
     def reset_robot_position(self):
         '''reset robot initial position after each trial'''
-        base_position = [-0.34, -0.46, 0.24]
-        '''
-        variance_x = np.random.choice(np.arange(-0.05, 0.05, 0.001))
-        variance_y = np.random.choice(np.arange(-0.02, 0.02, 0.001))
-        variance_z = np.random.choice(np.arange(-0.02, 0.02, 0.001))
-        new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
-        
-        base_position = [-0.34, -0.46, 0.24]
-        if self.initial_state['drawer'] == 'open':
-            variance_x = np.random.randint(-15, 25) * 0.01
-        else:
-            variance_x = np.random.randint(-15, 25) * 0.01
-        variance_y = np.random.randint(-0, 5) * 0.01
+        base_position = [-0.34, -0.46, 0.29]
+        variance_x = np.random.randint(-15, 15) * 0.01
+        variance_y = np.random.randint(-2, 2) * 0.01
         variance_z = np.random.randint(-5, 5) * 0.01
-        '''
-        variance_x = np.random.randint(-15, 25) * 0.01
-        variance_y = np.random.randint(-8, 8) * 0.0125
-        variance_z = np.random.randint(-0, 12) * 0.0125
-        new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
         
+        new_position = [base_position[0] + variance_x, base_position[1] + variance_y, base_position[2] + variance_z]
+        #new_position = base_position
         print(new_position)
         
         num_bodies = p.getNumBodies()
@@ -418,6 +467,7 @@ class ProtoEnv():
             0.55344928, # joint angles
             -1.0,       # gripper state
         ]
+
         )
         block_rot_z_range = (pi / 2 - pi / 8, pi / 2 + pi / 8)
         block_slider_left = np.array([-2.40851662e-01, 9.24044687e-02, 4.60990009e-01])
@@ -444,8 +494,9 @@ class ProtoEnv():
         elif initial_condition["red_block"] == "slider_left":
             scene_obs[6:9] = block_slider_left
         else:
-            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1] + np.random.uniform(-0.005, 0.005),
-                              block_table[0][2]]
+            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
+                               block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+        
         scene_obs[11] = np.random.uniform(*block_rot_z_range)
         # blue block
         if initial_condition["blue_block"] == "slider_right":
@@ -453,10 +504,10 @@ class ProtoEnv():
         elif initial_condition["blue_block"] == "slider_left":
             scene_obs[12:15] = block_slider_left
         elif initial_condition["red_block"] == "table":
-            scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
                                 block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
                                block_table[0][2] + np.random.uniform(-0.005, 0.005)]
         scene_obs[17] = np.random.uniform(*block_rot_z_range)
         # pink block
@@ -465,10 +516,10 @@ class ProtoEnv():
         elif initial_condition["pink_block"] == "slider_left":
             scene_obs[18:21] = block_slider_left
         elif initial_condition["red_block"] == "table" or initial_condition['blue block'] == 'table':
-            scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
                                 block_table[1][2] + np.random.uniform(-0.005, 0.005)]
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.1), block_table[0][1] + np.random.uniform(-0.005, 0.005),
+            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
                                block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
         scene_obs[23] = np.random.uniform(*block_rot_z_range)
 

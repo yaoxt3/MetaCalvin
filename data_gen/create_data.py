@@ -18,8 +18,7 @@ from hydra import initialize, compose
 from agent import OracleAgent
 from env.protoenv import ProtoEnv
 from reasoning_llm import ReasoningLLM
-from data_utils import *
-
+from data_utils import collect_data
 from robot_flamingo.models.factory import create_model_and_transforms
 from robot_flamingo.eval.eval_utils import ModelWrapper
 
@@ -41,7 +40,8 @@ def main():
     #Agent parameters
     parser.add_argument('--checkpoint_path', default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
                         type=str, help='Path to the policy model')
-    parser.add_argument('--reasoning_model', default= 'mistralai/Mixtral-8x7B-Instruct-v0.1', type=none_or_str, help='Path to the reasoning model')
+    parser.add_argument('--reasoning_model', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
+    parser.add_argument('--tokenizer', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
     parser.add_argument('--task_llm', default= None, type=none_or_str, help='Path to the task planning model')
     parser.add_argument('--vlm', default= None, type=none_or_str, help='Path to the VLM model to describe the environment')
     parser.add_argument('--use_reasoning', action= 'store_true', help='Whether to use reasoning or not')
@@ -128,14 +128,14 @@ def main():
 
     if args.use_cuda_and_cpu:
         if args.reasoning_model is not None:
-            reasoning_llm = ReasoningLLM(args.reasoning_model, device_map='cpu', cache_dir='/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/huggingface_cache')
+            reasoning_llm = ReasoningLLM(args.reasoning_model, args.tokenizer, device_map='auto', cache_dir='/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/huggingface_cache')
         if args.task_llm is not None:
             task_llm = ReasoningLLM(args.task_llm, device_map='cpu')
         if args.vlm is not None:
             vlm = ReasoningLLM(args.vlm, device_map='cpu')
     else:
         if args.reasoning_model is not None:
-            reasoning_llm = ReasoningLLM(args.reasoning_model, cache_dir='/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/huggingface_cache', load_in_8bit=True)
+            reasoning_llm = ReasoningLLM(args.reasoning_model, args.tokenizer, cache_dir='/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/huggingface_cache', load_in_8bit=True)
         if args.task_llm is not None:
             task_llm = ReasoningLLM(args.task_llm)
         if args.vlm is not None:
