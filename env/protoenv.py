@@ -22,6 +22,7 @@ from omegaconf import OmegaConf
 import pybullet as p
 
 import itertools
+from copy import deepcopy
 
 
 class ProtoEnv():
@@ -56,7 +57,8 @@ class ProtoEnv():
         self.task_instruction_feedback = {'move_slider_left': 'move the door to the left', 'move_slider_right': 'move the door to the right',
                                             'open_drawer': 'pull the handle to open the drawer', 'close_drawer': 'push the handle to close the drawer', 'turn_on_lightbulb': 'turn on the lightbulb',
                                             'turn_off_lightbulb': 'turn off the lightbulb', 'turn_on_led': 'turn on the led', 'turn_off_led': 'turn off the led',
-                                            'lift_red_block_table': 'lift the red block from the table', 'lift_pink_block_table': 'lift the pink block from the table'}
+                                            'lift_red_block_table': 'lift the red block from the table', 'lift_pink_block_table': 'lift the pink block from the table',
+                                            'lift_blue_block_table': 'lift the blue block from the table', 'lift_red_block_slider': 'lift the red block from the slider',}
          
         self.all_tasks = self.train_tasks
 
@@ -329,6 +331,9 @@ class ProtoEnv():
             random.shuffle(used_objects)
             self.state_to_tasks(initial_state, used_objects)
             meta_task = random.choice(self.sampled_tasks)
+            print(meta_task)
+            print(self.sampled_tasks)
+            print(initial_state)
 
         else:
             assert feedback_state is not None, "Feedback state is required for environment state"
@@ -531,7 +536,7 @@ class ProtoEnv():
             scene_obs[18:21] = block_slider_right
         elif initial_condition["pink_block"] == "slider_left":
             scene_obs[18:21] = block_slider_left
-        elif initial_condition["red_block"] == "table" or initial_condition['blue block'] == 'table':
+        elif initial_condition["red_block"] == "table" or initial_condition['blue_block'] == 'table':
             scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
                                 block_table[1][2] + np.random.uniform(-0.005, 0.005)]
         else:

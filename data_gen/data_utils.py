@@ -15,7 +15,8 @@ from copy import deepcopy
 from env.env_utils import *
 
 
-def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_limits, total_episodes, use_reasoning=False, eval=False, annotation=None):
+def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_limits, total_episodes, 
+            use_reasoning=False, eval=False, render=False, annotation=None):
     '''Perform rollout of oracle agent in env. Save episode if successful. Expects actions output by agent to be relative actions'''
     episode_data = []
     last_trial_reward = False
@@ -26,10 +27,14 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     #make sure all meta task are sampled equally
     while True:
         meta_task = random.choice(list(meta_task_stats.keys()))
-        if meta_task_stats[meta_task] < round(total_episodes/len(env.train_tasks)):
+        if meta_task_stats[str(meta_task)] < round(total_episodes/len(env.train_tasks)):
             print(meta_task)
-            environment_state, feedback_state = get_env_states_for_task(exploration_stats_episode, exploration_stats_limits, meta_task, env)
-            meta_task_stats_episode[meta_task] += 1
+            if isinstance(meta_task, str):
+                meta_task_list = [meta_task]
+            else:
+                meta_task_list = meta_task
+            environment_state, feedback_state = get_env_states_for_task(exploration_stats_episode, exploration_stats_limits, meta_task_list, env)
+            meta_task_stats_episode[str(meta_task)] += 1
             break
     print(environment_state, feedback_state)
     obs, feedback, environment_description, info = env.episode_reset(feedback_state, environment_state, meta_task, train=True)
@@ -109,6 +114,11 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
             
             # Reset the agent model
             agent.policy_model.reset()
+        
+        if render:
+            rgb = env.render(mode="rgb_array")[:,:,::-1]
+            cv2.imshow('test',rgb)
+            cv2.waitKey(1)
     
     #Collect tensors and clear them from cuda memory
     gc.collect()
@@ -116,9 +126,9 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     
     if last_trial_reward and switched is False:
         #Update statistics
-        meta_task_stats[meta_task] += 1
-        if meta_task in exploration_stats.keys():
-            exploration_stats[meta_task][str(trials_before_reward)] += 1
+        meta_task_stats[str(meta_task)] += 1
+        if str(meta_task) in exploration_stats.keys():
+            exploration_stats[str(meta_task)][str(trials_before_reward)] += 1
         else:
             exploration_stats[trials_before_reward] += 1
         yield episode_data
@@ -131,12 +141,14 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
 def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, env):
     # Sample state
     objects = env.objects
-    drawer_states = ['open', 'closed']
+    drawer_states = ['open', 'close']
     slider_states = ['left', 'right']
     lightbulb_states = [0, 1]
-    red_block_states = ['table']
-    states = drawer_states + slider_states + red_block_states + ['on', 'off']
-    state_dict = {"drawer": drawer_states, "slider": slider_states, "lightbulb": lightbulb_states, "led": lightbulb_states, "red_block": red_block_states}
+    block_states = ['table', 'slider']
+    states = drawer_states + slider_states + block_states + ['on', 'off']
+    state_dict = {"drawer": drawer_states, "slider": slider_states, "lightbulb": lightbulb_states, "led": lightbulb_states, "red_block": block_states,
+                  "pink_block": block_states, "blue_block": block_states}
+    blocks = ['red_block', 'pink_block', 'blue_block']
 
     meta_object_list = []
     for obj in objects:
@@ -149,36 +161,86 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
     meta_state_list = []
     for state in states:
         for subtask in task:
-            if state in task:
+            if state in subtask:
                 meta_state_list.append(state)
     
-    environment_state = {"drawer":random.choice(drawer_states), "slider":random.choice(slider_states), "lightbulb":random.choice(lightbulb_states), "led":random.choice(lightbulb_states), 
-                         "red_block":"table", "pink_block":"slider_right", "blue_block":"slider_left"}
+    environment_state = {}
     
+    print(meta_object_list, meta_state_list)
+    print('TEST')
     for meta_object, meta_state in zip(meta_object_list, meta_state_list):
-        if meta_object in ["red_block", "pink_block", "blue_block"]:
-            environment_state[meta_object] = "table" # Change when we vary positions and colors of blocks
+        print('HERE!!!!!!!!!!!!!!!!!!!11')
+        if meta_object in blocks:
+            if meta_state == 'slider':
+                meta_state = random.choice(['slider_left', 'slider_right'])
+            else:
+                block_states.remove(meta_state)
+
+            environment_state[meta_object] = meta_state
+            random.shuffle(block_states)
+            blocks.remove(meta_object)
+            print(blocks)
+            for block in blocks:
+                print('ALARM')
+                state = random.choice(block_states)
+                print(state)
+                block_states.remove(state)
+                if state == 'slider':
+                    print('here')
+                    if 'slider' in meta_state:
+                        state = 'slider_right' if meta_state == 'slider_left' else 'slider_left'
+                        block_states.remove(state)
+                    else:
+                        state = random.choice(['slider_left', 'slider_right'])
+                else:
+                    block_states.remove(state)
+                environment_state[block] = state
+                
+            if 'slider' in meta_state:
+                environment_state['slider'] = 'right' if meta_state == 'slider_left' else 'left'
         elif meta_object in ["lightbulb", "led"]:
             # Get the oposite of the meta state
             if meta_state == "off":
                 environment_state[meta_object] = 1
             else:
                 environment_state[meta_object] = 0   
-        else:
+        elif meta_object == "drawer":
             # Get the oposite of the meta state
-            environment_state[meta_object] = [state for state in state_dict[meta_object] if state != meta_state][0]
+            environment_state[meta_object] = 'closed' if meta_state == 'open' else 'open'
+        else:
+            environment_state[meta_object] = 'left' if meta_state == 'right' else 'right'
+    
+    assigned_block_slider = []
+    for obj in objects:
+        if obj not in environment_state.keys():
+            if obj in blocks:
+                state = random.choice(block_states)
+                if state == 'slider' and len(assigned_block_slider) == 1:
+                    block_states.remove(state)
+                    state = 'slider_right' if 'slider_left' in assigned_block_slider else 'slider_left'
+                    assigned_block_slider.append(state)
+                elif state == 'slider':
+                    state = random.choice(['slider_left', 'slider_right'])
+                else:
+                    block_states.remove(state)
+                environment_state[obj] = state
+            elif obj == 'drawer':
+                environment_state[obj] = random.choice(['closed', 'open'])
+            else:  
+                environment_state[obj] = random.choice(state_dict[obj])
 
     # Get exploration stats below limit
     # Feedback for simple env
     if len(task) == 1:
         task = task[0]
+        meta_object = meta_object_list[0]
         keys = []
         for key in exploration_stats[task].keys():
             if exploration_stats[task][key] < exploration_stats_limits[task][key]:
                 keys.append(key)
         meta_object_idx = random.choice(keys)
         # Sample feedback objects
-        if env.num_objs == 5:
+        if env.num_objs == 5 or env.num_objs == 7:
             feedback_state = random.sample([obj for obj in objects if obj != meta_object], 2)
             feedback_state.insert(int(meta_object_idx), meta_object)
         else:
@@ -209,7 +271,7 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
         feedback_state.pop(meta_object_two_idx)
         feedback_state.insert(1, meta_object_list[1])
 
-
+    print(environment_state, feedback_state, task)
     
     return environment_state, feedback_state
 
@@ -227,7 +289,7 @@ def collect_data(args, agent, env):
         exploration_stats = {'0': 0, '1': 0, '2': 0}
     else:
         for task in env.train_tasks:
-            meta_task_stats[task] = 0
+            meta_task_stats[str(task)] = 0
             exploration_stats[task] = {'0': 0, '1': 0, '2': 0}
     
     # Create limits for exploration stats, should be heavily biased towards 2 trials before reward
@@ -258,7 +320,7 @@ def collect_data(args, agent, env):
         start = time.time()
         agent.reset()
         episode_data = rollout(env, agent, args.rollout_steps, meta_task_stats, exploration_stats, exploration_stats_limits,
-                                total_episodes, args.use_reasoning, args.eval)
+                                total_episodes, args.use_reasoning, args.render, args.eval)
         episode_data = next(episode_data)
         print(meta_task_stats)
         print(exploration_stats)

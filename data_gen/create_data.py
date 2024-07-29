@@ -38,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser(description='Script to collect data from the environment using the oracle agent')
 
     #Agent parameters
-    parser.add_argument('--checkpoint_path', default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
+    parser.add_argument('--checkpoint_path', default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/pretrained.pth', 
                         type=str, help='Path to the policy model')
     parser.add_argument('--reasoning_model', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
     parser.add_argument('--tokenizer', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
@@ -50,6 +50,9 @@ def main():
   
     #Environment parameters
     parser.add_argument('--provide_feedback', action= 'store_true', help='Whether to provide feedback or not')
+    parser.add_argument('--num_instructions', default= 2, type=int, help='Number of instructions to provide')
+    parser.add_argument('--reset_robot_pos', action= 'store_true', help='Whether to reset the robot position or not')
+    parser.add_argument('--multi_env', action= 'store_true', help='Whether to use the multi_env or not')
     parser.add_argument('--rollout_steps', default= 1000, type=int, help='Number of steps per meta_episode')
     parser.add_argument('--num_trials', default= 4, type=int, help='Number of trials per episode')
     parser.add_argument('--eval', action= 'store_true', help='Generate evaluation data')
@@ -68,6 +71,7 @@ def main():
     parser.add_argument('--save_dir', default= None, type=none_or_str, help='Path to save the collected data')
     parser.add_argument('--report_interval', default= 10, type=int, help='Interval to report the number of episodes collected')
     parser.add_argument('--seed', default=42, type=int)
+    parser.add_argument('--render', action= 'store_true', help='Whether to render the environment or not')
 
     
     args = parser.parse_args()
@@ -88,7 +92,8 @@ def main():
     task_cfg = OmegaConf.load(args.calvin_task_path)
     task_oracle = hydra.utils.instantiate(task_cfg)
     env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials),
-                    provide_feedback=args.provide_feedback, reset_robot_pos=True, num_objs=args.num_objs, provide_train_feedback=True)
+                    provide_feedback=args.provide_feedback, reset_robot_pos=args.reset_robot_pos, num_objs=args.num_objs, provide_train_feedback=True)
+    # TODO: Implement MultiEnv with get_env_function
     print("Environment loaded")
 
     
