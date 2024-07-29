@@ -166,10 +166,7 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
     
     environment_state = {}
     
-    print(meta_object_list, meta_state_list)
-    print('TEST')
     for meta_object, meta_state in zip(meta_object_list, meta_state_list):
-        print('HERE!!!!!!!!!!!!!!!!!!!11')
         if meta_object in blocks:
             if meta_state == 'slider':
                 meta_state = random.choice(['slider_left', 'slider_right'])
@@ -179,14 +176,9 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
             environment_state[meta_object] = meta_state
             random.shuffle(block_states)
             blocks.remove(meta_object)
-            print(blocks)
             for block in blocks:
-                print('ALARM')
                 state = random.choice(block_states)
-                print(state)
-                block_states.remove(state)
                 if state == 'slider':
-                    print('here')
                     if 'slider' in meta_state:
                         state = 'slider_right' if meta_state == 'slider_left' else 'slider_left'
                         block_states.remove(state)
