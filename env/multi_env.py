@@ -503,24 +503,26 @@ class MultiEnv():
             scene_obs[12:15] = block_slider_right
         elif initial_condition["blue_block"] == "slider_left":
             scene_obs[12:15] = block_slider_left
-        elif initial_condition["red_block"] == "table":
-            scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
-                                block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
-                               block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+            if initial_condition["red_block"] == "table":
+                scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
+                                block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
+            else:
+                scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
+                                block_table[0][2] + np.random.uniform(-0.005, 0.005)]
         scene_obs[17] = np.random.uniform(*block_rot_z_range)
         # pink block
         if initial_condition["pink_block"] == "slider_right":
             scene_obs[18:21] = block_slider_right
         elif initial_condition["pink_block"] == "slider_left":
             scene_obs[18:21] = block_slider_left
-        elif initial_condition["red_block"] == "table" or initial_condition['blue block'] == 'table':
-            scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
-                                block_table[1][2] + np.random.uniform(-0.005, 0.005)]
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
-                               block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
+            if initial_condition["red_block"] == "table" or initial_condition['blue_block'] == 'table':
+                scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
+                                    block_table[1][2] + np.random.uniform(-0.005, 0.005)]
+            else:
+                scene_obs[18:21] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
+                                block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
         scene_obs[23] = np.random.uniform(*block_rot_z_range)
 
         return robot_obs, scene_obs

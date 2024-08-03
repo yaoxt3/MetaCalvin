@@ -176,20 +176,23 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
             environment_state[meta_object] = meta_state
             random.shuffle(block_states)
             blocks.remove(meta_object)
+            slider_states = (['slider_left', 'slider_right'])
             for block in blocks:
                 state = random.choice(block_states)
                 if state == 'slider':
                     if 'slider' in meta_state:
                         state = 'slider_right' if meta_state == 'slider_left' else 'slider_left'
-                        block_states.remove(state)
+                        block_states.remove('slider')
                     else:
-                        state = random.choice(['slider_left', 'slider_right'])
+                        state = random.choice(slider_states)
+                        slider_states.remove(state)
                 else:
                     block_states.remove(state)
                 environment_state[block] = state
                 
             if 'slider' in meta_state:
                 environment_state['slider'] = 'right' if meta_state == 'slider_left' else 'left'
+
         elif meta_object in ["lightbulb", "led"]:
             # Get the oposite of the meta state
             if meta_state == "off":
@@ -210,9 +213,9 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
                 if state == 'slider' and len(assigned_block_slider) == 1:
                     block_states.remove(state)
                     state = 'slider_right' if 'slider_left' in assigned_block_slider else 'slider_left'
-                    assigned_block_slider.append(state)
-                elif state == 'slider':
+                elif state == 'slider' and len(assigned_block_slider) == 0:
                     state = random.choice(['slider_left', 'slider_right'])
+                    assigned_block_slider.append(state)
                 else:
                     block_states.remove(state)
                 environment_state[obj] = state
@@ -232,9 +235,23 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
                 keys.append(key)
         meta_object_idx = random.choice(keys)
         # Sample feedback objects
-        if env.num_objs == 5 or env.num_objs == 7:
+        if env.num_objs == 5:
             feedback_state = random.sample([obj for obj in objects if obj != meta_object], 2)
             feedback_state.insert(int(meta_object_idx), meta_object)
+        elif env.num_objs == 7:
+            possible_objects = deepcopy(env.static_objects)
+            # Ensure that block hidden by slider can not be used as a task object
+            for block in blocks:
+                block_state = environment_state[block]
+                if 'slider' in block_state:
+                    block_slider_position = block_state.split('_')[1]
+                    if block_slider_position != environment_state['slider']:
+                        possible_objects.append(block)
+                else:
+                    possible_objects.append(block)
+            feedback_state = random.sample([obj for obj in possible_objects if obj != meta_object], 2)
+            feedback_state.insert(int(meta_object_idx), meta_object)
+
         else:
             feedback_state = objects
             idx = feedback_state.index(meta_object)
@@ -543,8 +560,26 @@ def get_data_statistics(dataset):
 
 
 if __name__ == '__main__':
-    import numpy as np
-    import cv2
+    import hydra
+    from omegaconf import DictConfig, OmegaConf
+    from pathlib import Path
 
-    visualize_dataset('/home/richard/Data')
+    from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
+    from env.protoenv import ProtoEnv
+
+    base_env = get_env(Path("../calvin/dataset/calvin_debug_dataset/validation"), show_gui=False)
+    task_cfg = OmegaConf.load("../calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
+    task_oracle = hydra.utils.instantiate(task_cfg)
+    env = ProtoEnv(base_env, task_oracle, num_trials=2, trial_steps=1000, provide_feedback=True, num_objs=7)
+    exploration_stats = {}
+    exploration_stats_limits = {}
+    for task in env.train_tasks:
+        exploration_stats[task] = {'0': 0, '1': 0, '2': 0}
+        exploration_stats_limits[task] = {'0': 5, '1': 15, '2': 30}
+    for i in range(20):
+        meta_task = random.choice(list(env.train_tasks))
+        print(meta_task)
+        environment_state, feedback_state = get_env_states_for_task(exploration_stats, exploration_stats_limits, [meta_task], env)
+
+    
         

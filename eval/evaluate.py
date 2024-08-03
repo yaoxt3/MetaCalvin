@@ -15,8 +15,8 @@ from pathlib import Path
 
 from agent.agent import OracleAgent
 from env.protoenv import ProtoEnv
-from env.env_v1 import Env
 from agent.reasoning_llm import ReasoningLLM
+from agent.agent import OracleAgent
 
 
 from robot_flamingo.models.factory import create_model_and_transforms
@@ -156,6 +156,21 @@ def evaluate():
         default=None,
         help="path to results file if it exists",
     )
+    parser.add_argument(
+        "--eval_llm",
+        action="store_true",
+        help="evaluate the language model",
+    )
+    parser.add_argument('--reasoning_model', 
+        default= 'google/gemma-2-27b-it', 
+        type=none_or_str, 
+        help='Path to the reasoning model'
+    )
+    parser.add_argument('--tokenizer', 
+        default= 'google/gemma-2-27b-it', 
+        type=none_or_str, 
+        help='Path to the reasoning model'
+    )
     args = parser.parse_args()
     seed_everything(args.seed)
 
@@ -205,7 +220,16 @@ def evaluate():
     policy_model = ModelWrapper(model, tokenizer, image_processor, torch.float16, False)
     print('Model loaded')
 
-    eval_stats = eval(args, base_env, policy_model)
+    if args.eval_llm:
+        # Load the reasoning model
+        reasoning_llm = ReasoningLLM(args.reasoning_model, args.tokenizer)
+        agent = OracleAgent(reasoning_llm, policy_model)
+        print('Oracle Agent Loaded')
+    else:
+        agent = policy_model
+
+
+    eval_stats = eval(args, base_env, agent)
     
     # Save the evaluation stats first check if a results file exists
     if args.path_to_results is not None:

@@ -58,7 +58,8 @@ class ProtoEnv():
                                             'open_drawer': 'pull the handle to open the drawer', 'close_drawer': 'push the handle to close the drawer', 'turn_on_lightbulb': 'turn on the lightbulb',
                                             'turn_off_lightbulb': 'turn off the lightbulb', 'turn_on_led': 'turn on the led', 'turn_off_led': 'turn off the led',
                                             'lift_red_block_table': 'lift the red block from the table', 'lift_pink_block_table': 'lift the pink block from the table',
-                                            'lift_blue_block_table': 'lift the blue block from the table', 'lift_red_block_slider': 'lift the red block from the slider',}
+                                            'lift_blue_block_table': 'lift the blue block from the table', 'lift_red_block_slider': 'lift the red block from the slider',
+                                            'lift_pink_block_slider': 'lift the pink block from the slider', 'lift_blue_block_slider': 'lift the blue block from the slider'}
          
         self.all_tasks = self.train_tasks
 
@@ -324,8 +325,8 @@ class ProtoEnv():
                     locations.remove(sampled_location)
                     initial_state[block] = sampled_location
             else:
-                initial_state['red_block'] = 'table'
-                initial_state['pink_block'] = 'slider_right' 
+                initial_state['red_block'] = 'slider_right'
+                initial_state['pink_block'] = 'table' 
                 initial_state['blue_block'] = 'slider_left'
 
             random.shuffle(used_objects)
@@ -524,24 +525,26 @@ class ProtoEnv():
             scene_obs[12:15] = block_slider_right
         elif initial_condition["blue_block"] == "slider_left":
             scene_obs[12:15] = block_slider_left
-        elif initial_condition["red_block"] == "table":
-            scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
-                                block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
-                               block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+            if initial_condition["red_block"] == "table":
+                scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
+                                block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
+            else:
+                scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
+                                block_table[0][2] + np.random.uniform(-0.005, 0.005)]
         scene_obs[17] = np.random.uniform(*block_rot_z_range)
         # pink block
         if initial_condition["pink_block"] == "slider_right":
             scene_obs[18:21] = block_slider_right
         elif initial_condition["pink_block"] == "slider_left":
             scene_obs[18:21] = block_slider_left
-        elif initial_condition["red_block"] == "table" or initial_condition['blue_block'] == 'table':
-            scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
-                                block_table[1][2] + np.random.uniform(-0.005, 0.005)]
         else:
-            scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
-                               block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
+            if initial_condition["red_block"] == "table" or initial_condition['blue_block'] == 'table':
+                scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
+                                    block_table[1][2] + np.random.uniform(-0.005, 0.005)]
+            else:
+                scene_obs[18:21] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
+                                block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
         scene_obs[23] = np.random.uniform(*block_rot_z_range)
 
         return robot_obs, scene_obs
@@ -585,11 +588,14 @@ class ProtoEnv():
                 else:
                     train_combinations.append(combination)
         elif self.num_objs == 7:
-            for combination in all_combinations:
+            for combination in all_combinations:                
                 if 'slider' in combination and 'led' in combination or 'red block' in combination and 'blue block' in combination:
                     eval_combinations.append(combination)
                 else:
-                    train_combinations.append(combination)      
+                    if 'red_block' in combination and 'blue_block' in combination and 'pink_block' in combination:
+                        continue
+                    else:
+                        train_combinations.append(combination)    
         else:
             train_combinations = all_combinations
             eval_combinations = all_combinations
