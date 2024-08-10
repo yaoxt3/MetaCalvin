@@ -516,8 +516,8 @@ class ProtoEnv():
         elif initial_condition["red_block"] == "slider_left":
             scene_obs[6:9] = block_slider_left
         else:
-            scene_obs[6:9] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
-                               block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+            scene_obs[6:9] = [block_table[0][0], block_table[0][1],
+                               block_table[0][2]]
         
         scene_obs[11] = np.random.uniform(*block_rot_z_range)
         # blue block

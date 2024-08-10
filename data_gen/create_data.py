@@ -34,11 +34,37 @@ def none_or_str(value):
         return None
     return value
 
+import torch
+import hydra
+from pathlib import Path
+import os
+from hydra import initialize, compose
+
+from agent import OracleAgent
+from env.protoenv import ProtoEnv
+from env.multi_env import MultiEnv
+from reasoning_llm import ReasoningLLM
+from data_utils import collect_data
+from robot_flamingo.models.factory import create_model_and_transforms
+from robot_flamingo.eval.eval_utils import ModelWrapper
+
+from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
+from pytorch_lightning import seed_everything
+
+from omegaconf import DictConfig, OmegaConf
+
+import argparse
+
+def none_or_str(value):
+    if value == 'None':
+        return None
+    return value
+
 def main():
     parser = argparse.ArgumentParser(description='Script to collect data from the environment using the oracle agent')
 
     #Agent parameters
-    parser.add_argument('--checkpoint_path', default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/pretrained.pth', 
+    parser.add_argument('--checkpoint_path', default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
                         type=str, help='Path to the policy model')
     parser.add_argument('--reasoning_model', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
     parser.add_argument('--tokenizer', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
@@ -71,7 +97,6 @@ def main():
     parser.add_argument('--save_dir', default= None, type=none_or_str, help='Path to save the collected data')
     parser.add_argument('--report_interval', default= 10, type=int, help='Interval to report the number of episodes collected')
     parser.add_argument('--seed', default=42, type=int)
-    parser.add_argument('--render', action= 'store_true', help='Whether to render the environment or not')
 
     
     args = parser.parse_args()
@@ -91,9 +116,14 @@ def main():
     base_env = get_env(Path(args.calvin_dataset_path), show_gui=False)
     task_cfg = OmegaConf.load(args.calvin_task_path)
     task_oracle = hydra.utils.instantiate(task_cfg)
-    env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials),
+
+    if args.multi_env:
+        env = MultiEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials),
+                    provide_feedback=args.provide_feedback, reset_robot_pos=args.reset_robot_pos, provide_train_feedback=True)
+    else:
+        env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=int(args.rollout_steps/args.num_trials),
                     provide_feedback=args.provide_feedback, reset_robot_pos=args.reset_robot_pos, num_objs=args.num_objs, provide_train_feedback=True)
-    # TODO: Implement MultiEnv with get_env_function
+
     print("Environment loaded")
 
     
@@ -152,6 +182,7 @@ def main():
 
     # Collect data
     collect_data(args, agent, env)
+
 
 
 if __name__ == '__main__':

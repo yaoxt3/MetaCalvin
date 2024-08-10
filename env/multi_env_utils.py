@@ -35,9 +35,9 @@ ENVIRONMENT_DESCRIPTION = [{"role": "user", "content": "You are a helpful assist
 " 4) Keep your instructions clear, concise, and precise. Do not add any additional information. An example instruction can be: 'pick up the red block'. All instructions have to follow this format. " \
 " 5) Only use one action in your instruction. For example, do not say 'pick up the pink block and move it to the left'. Only use the available actions given to you. " \
 " 6) Use the information given to you to give instructions that explore the task space as efficiently as possible. Do not repeat instructions for tasks that were not rewarding. " \
-" 7) If you gave an instruction for a task but I did not complete it, you may repeat the instruction again. " \
-" 8) If you find a rewarding instruction, you must repeat it for all future trials. Do not give an instruction for a different task. " \
-" 9) Explore the objects in the order they are given to you. Explore the first object first. If it is not rewarding, explore the second object. If this is not rewarding, explore the third object, and so on. " \
+" 7) The goal is to find the two rewarding task as quickly as possible. Once they are found they should both be repeated once per trial." \
+" 8) Explore the objects in the order they are given to you. Explore the first object first. If it is not rewarding, explore the second object. If this is not rewarding, explore the third object, and so on. " \
+" 9) All objects can only be interacted with once per trial. Once you have moved an object in the trial you can not move it again. This rule also applies for rewarding objects. " \
 "Because you are a helpful assistant, you will strictly follow these instructions and guide me on my mission to find the rewarding tasks and maximize my total reward."}, \
 {"role": "assistant", "content": "I understand your instructions and will strictly follow them. I will use my reasoning skills to give useful instructions about which task " \
 "you should complete in order to maximize the total reward."}]
@@ -66,17 +66,17 @@ TEMPLATES_END_EVAL = ["Objects to be explored: {}.",
                     "The objects to explore are: {}.",
                     "Examine the following objects: {}.",]
 
-FURTHER_TRIAL_TEMPLATES_BEGINNINGS = ["Trial {} finished. Rewarding tasks completed in the last trial: {}",
-                                      "Trial {} concluded. Last trial's rewarding tasks: {}",
-                                      "Trial {} done. Rewarding tasks from the previous trial: {}",
-                                      "Trial {} wrapped up. Completed rewarding tasks in the previous trial: {}",
-                                      "Trial {} completed. Rewarding tasks achieved last trial: {}",]
+FURTHER_TRIAL_TEMPLATES_BEGINNINGS = ["Trial {} finished. Rewarding tasks completed in the last trial: {}.",
+                                      "Trial {} concluded. Last trial's rewarding tasks: {}.",
+                                      "Trial {} done. Rewarding tasks from the previous trial: {}.",
+                                      "Trial {} wrapped up. Completed rewarding tasks in the previous trial: {}.",
+                                      "Trial {} completed. Rewarding tasks achieved last trial: {}.",]
 
-FURTHER_TRIAL_TEMPLATES_BEGINNINGS_EVAL = ["Trial {} is over. The rewarding tasks completed in the previous trial were: {}",
-                                          "Trial {} has ended. Rewarding tasks from the last session: {}",
-                                          "Trial {} complete. Last trial's rewarding tasks accomplished: {}",
-                                          "Trial {} ended. Previous trial's rewarding tasks: {}",
-                                          "Trial {} is done. Rewarding tasks identified last trial: {}"]
+FURTHER_TRIAL_TEMPLATES_BEGINNINGS_EVAL = ["Trial {} is over. The rewarding tasks completed in the previous trial were: {}.",
+                                          "Trial {} has ended. Rewarding tasks from the last session: {}.",
+                                          "Trial {} complete. Last trial's rewarding tasks accomplished: {}.",
+                                          "Trial {} ended. Previous trial's rewarding tasks: {}.",
+                                          "Trial {} is done. Rewarding tasks identified last trial: {}."]
 
 FURTHER_TRIAL_MIDDLE = ["Completed non-rewarding tasks last trial: {}.",
                         "Unrewarding tasks finished in the previous trial: {}.",
@@ -110,12 +110,17 @@ TASK_INSTRUCTIONS = {'move_slider_left': ['moving the door to the left', 'slidin
                     'turn_on_lightbulb': ['turning on the lightbulb', 'turning on the lightbulb by pushing the handle', 'pushing the switch to turn on the lightbulb', 'toggling the switch to turn on the lightbulb'],
                     'turn_off_lightbulb': ['turning off the lightbulb', 'turning off the lightbulb by pushing the handle', 'pushing the switch to turn off the lightbulb', 'toggling the switch to turn off the lightbulb'], 
                     'turn_on_led': ['turning on the led', 'turning on the led by pushing the button', 'pressing on the button to turn on the led', 'pushing the button to turn on the led'], 
-                    'turn_off_led': ['turning off the led', 'turning off the led by pushing the button', 'pressing on the button to turn off the led' 'pushing the button to turn off the led'],
+                    'turn_off_led': ['turning off the led', 'turning off the led by pushing the button', 'pressing on the button to turn off the led', 'pushing the button to turn off the led'],
                     'lift_red_block_table': ['lifting the red block from the table', 'lifting the red block from the table by grasping it', 'lifting the red block', 'picking up the red block from the table'],
-                    'lift_pink_block_table': ['lifting the pink block from the table', 'lifting the pink block from the table by grasping it', 'lifting the pink block', 'picking up the pink block from the table'],}
+                    'lift_pink_block_table': ['lifting the pink block from the table', 'lifting the pink block from the table by grasping it', 'lifting the pink block', 'picking up the pink block from the table'],
+                    'lift_blue_block_table': ['lifting the blue block from the table', 'lifting the blue block from the table by grasping it', 'lifting the blue block', 'picking up the blue block from the table'],
+                    'lift_red_block_slider': ['lifting the red block from the slider', 'lifting the red block from the slider by grasping it', 'lifting the red block', 'picking up the red block from the slider'],
+                    'lift_pink_block_slider': ['lifting the pink block from the slider', 'lifting the pink block from the slider by grasping it', 'lifting the pink block', 'picking up the pink block from the slider'],
+                    'lift_blue_block_slider': ['lifting the blue block from the slider', 'lifting the blue block from the slider by grasping it', 'lifting the blue block', 'picking up the blue block from the slider'],}
 
 
 TASK_INSTRUCTION_FEEDBACK = {'move the door to the left': 'move_slider_left', 'move the door to the right': 'move_slider_right',
                             'pull the handle to open the drawer': 'open_drawer', 'push the handle to close the drawer': 'close_drawer', 'turn on the lightbulb': 'turn_on_lightbulb',
                             'turn off the lightbulb': 'turn_off_lightbulb', 'turn on the led': 'turn_on_led', 'turn off the led': 'turn_off_led',
                             'lift the red block from the table': 'lift_red_block_table', 'lift the pink block from the table': 'lift_pink_block_table'}
+

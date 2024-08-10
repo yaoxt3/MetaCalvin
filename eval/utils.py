@@ -2,9 +2,12 @@ import cv2
 import itertools
 import random
 
-def rollout_eval(args, feedback_state, environment_state, env, model, steps, feedback_type='train_feedback'):
+def rollout_eval(args, feedback_state, environment_state, env, model, steps, feedback_type='train_feedback', task=None):
     model.reset()
-    obs, feedback, _ = env.episode_reset(feedback_state, environment_state, train=True)
+    if task is not None:
+        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, task=task)
+    else:
+        obs, feedback, _, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True)
     train_feedback = feedback[feedback_type]
     print(train_feedback)
     current_trial = 0
@@ -24,7 +27,7 @@ def rollout_eval(args, feedback_state, environment_state, env, model, steps, fee
             total_reward += reward
             if current_trial >= env.num_trials:
                 break
-            obs, feedback, _ = env.trial_reset()
+            obs, feedback, _, _ = env.trial_reset()
             train_feedback = feedback[feedback_type]
             print(train_feedback)
             
@@ -37,9 +40,12 @@ def rollout_eval(args, feedback_state, environment_state, env, model, steps, fee
 
     return total_reward, episode_length
 
-def rollout_eval_llm(args, feedback_state, environment_state, env, agent, steps):
+def rollout_eval_llm(args, feedback_state, environment_state, env, agent, steps, task=None):
     agent.reset()
-    obs, feedback, environment_description, info = env.episode_reset(feedback_state, environment_state, train=True)
+    if task is not None:
+        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, task=task)
+    else:
+        obs, feedback, _, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True)
     env_feedback = feedback['lm_feedback']
     total_reward = 0
     current_trial = 0
@@ -102,7 +108,7 @@ def get_environment_states(args, combination):
         led_state = random.choice(led_states)
         environment_state = {'drawer': drawer_state, 'slider': slider_state, 'lightbulb': lightbulb_state, 'led': led_state,
                                     'red_block': 'table', 'pink_block': 'slider_right', 'blue_block': 'slider_left'}
-    if args.num_objects == 7:
+    elif args.num_objs == 7:
         drawer_state = random.choice(drawer_states)
         slider_state = random.choice(slider_states)
         lightbulb_state = random.choice(lightbulb_states)
@@ -110,13 +116,28 @@ def get_environment_states(args, combination):
         block_objects = ['red_block', 'pink_block', 'blue_block']
         block_states = ['slider_left', 'slider_right', 'table']
         environment_state = {}
+        
+        slider_sampled = False
+        for obj in combination:
+            if obj in block_objects:
+                if slider_sampled:
+                    block_state = 'table'
+                else:
+                    block_state = random.choice(block_states)
+                
+                if 'slider' in block_state:
+                    slider_state = 'left' if 'right' in block_state else 'right'
+                    slider_sampled = True
+                
+                block_objects.remove(obj)
+                block_states.remove(block_state)
+                environment_state[obj] = block_state
+
         for block in block_objects:
             block_state = random.choice(block_states)
             block_states.remove(block_state)
             environment_state[block] = block_state
-            if block in combination:
-                if 'slider' in block_state:
-                    slider_state = 'left' if 'right' in block_state else 'right'
+
         
         environment_state['drawer'] = drawer_state
         environment_state['lightbulb'] = lightbulb_state
@@ -124,13 +145,106 @@ def get_environment_states(args, combination):
         environment_state['slider'] = slider_state
     
     return environment_state
+
+def get_environment_states_for_task(args, task, env):
+    drawer_states = ['open', 'closed']
+    slider_states = ['left', 'right']
+    lamp_states = ['on', 'off']
+    states = drawer_states + slider_states + lamp_states
+    environment_state = {'blue_block': 'slider_left', 'pink_block': 'slider_right'}
+    
+    # Sample the environment state
+    meta_objs = []
+    for subtask in task:
+        for obj in env.objects:
+            if obj in subtask:
+                meta_obj = obj
+        meta_objs.append(meta_obj)
+        for state in states:
+            if state in subtask:
+                meta_state = state
+        
+        if meta_obj == 'drawer':
+            state = 'closed' if meta_state == 'open' else 'open'
+        elif meta_obj == 'slider':
+            state = 'left' if meta_state == 'right' else 'right'
+        elif meta_obj == 'lightbulb' or meta_obj == 'led':
+            state = 1 if meta_state == 'on' else 0
+        else:
+            state = 'table'
+        
+        environment_state[meta_obj] = state
+    
+    for obj in env.objects:
+        if obj not in environment_state:
+            if obj == 'led':
+                environment_state[obj] = random.choice([0, 1])
+            elif obj == 'lightbulb':
+                environment_state[obj] = random.choice([0, 1])
+            elif obj == 'slider':
+                environment_state[obj] = random.choice(['left', 'right'])
+            elif obj == 'drawer':
+                environment_state[obj] = random.choice(['open', 'closed'])
+            else:
+                environment_state[obj] = 'table'
+            
+    # Sample feedback state
+    feedback_state = random.sample([obj for obj in env.objects if obj not in meta_objs], 2)
+    feedback_state = feedback_state + meta_objs
+    random.shuffle(feedback_state)
+
+    return environment_state, feedback_state
+
+
+
+
+def eval_combi_explore(args, base_env, agent):
+    num_steps = base_env.trial_steps * base_env.num_trials
+
+    train_tasks, eval_tasks = base_env.train_tasks, base_env.eval_tasks
+    if args.eval:
+        tasks = eval_tasks
+    else:
+        tasks = train_tasks
+
+    total_reward = 0
+    total_steps = 0
+    stats = {}
+    for task in tasks:
+        task_reward = 0
+        task_steps = 0
+        for reset in range(args.num_resets):
+            print("################New Episode#################")
+            environment_state, feedback_state = get_environment_states_for_task(args, task, base_env)
+            print(environment_state)
+            if args.eval_llm:
+                reward, episode_length = rollout_eval_llm(args, feedback_state, environment_state, base_env, agent, num_steps, task)
+            else:
+                reward, episode_length = rollout_eval(args, feedback_state, environment_state, base_env, agent, num_steps, args.feedback, task)
+            task_reward += reward
+            task_steps += episode_length
+            total_reward += reward
+            total_steps += episode_length
+        
+        task_str = ' '.join(task)
+        stats[task_str] = {'total_reward': task_reward, 'average_reward': task_reward / args.num_resets, \
+                           'episode_length': task_steps / args.num_resets}
+        
+        print(f"Task: {task_str}, Reward: {task_reward}, Steps: {task_steps / args.num_resets}")
+    
+    stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / (len(tasks) * args.num_resets), \
+                                 'episode_length': total_steps / (len(tasks) * args.num_resets)}
+    
+    return stats
+
+
         
        
 
-def eval(args, base_env, agent):
+def eval_explore(args, base_env, agent):
     num_steps = base_env.trial_steps * base_env.num_trials
     # Get all possible environment states
-    train_combinations, eval_combinations = base_env.get_object_combinations(args.num_objects)
+    train_combinations, eval_combinations = base_env.get_object_combinations()
     if args.eval:
         combinations = eval_combinations
     else:
@@ -146,6 +260,7 @@ def eval(args, base_env, agent):
             print("################New Episode#################")
             random.shuffle(combination)
             state = get_environment_states(args, combination)
+            print(state)
             if args.eval_llm:
                 reward, episode_length = rollout_eval_llm(args, combination, state, base_env, agent, num_steps)
             else:
@@ -155,12 +270,12 @@ def eval(args, base_env, agent):
             total_reward += reward
             total_steps += episode_length
 
-        print(f"Feedback state: {combination}, Reward: {feedback_reward}, Steps: {feedback_steps / (len(combination) * args.num_resets)}")
+        print(f"Feedback state: {combination}, Reward: {feedback_reward}, Steps: {feedback_steps /  args.num_resets}")
         feedback_state_str = ' '.join(combination)
-        stats[feedback_state_str] = {'total_reward': feedback_reward, 'average_reward': feedback_reward / (len(combination) * args.num_resets), \
-                                     'episode_length': feedback_steps / (len(combination) * args.num_resets)}
+        stats[feedback_state_str] = {'total_reward': feedback_reward, 'average_reward': feedback_reward / args.num_resets, \
+                                     'episode_length': feedback_steps / args.num_resets}
     
-    stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / (len(combinations) * len(combination) * args.num_resets), \
-                               'episode_length': total_steps / (len(combinations) * len(combination) * args.num_resets)}
+    stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / ( len(combination) * args.num_resets), \
+                               'episode_length': total_steps / (len(combination) * args.num_resets)}
 
     return stats 

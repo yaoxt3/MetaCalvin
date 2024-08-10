@@ -15,6 +15,7 @@ from pathlib import Path
 
 from agent.agent import OracleAgent
 from env.protoenv import ProtoEnv
+from env.multi_env import MultiEnv
 from agent.reasoning_llm import ReasoningLLM
 from agent.agent import OracleAgent
 
@@ -134,14 +135,14 @@ def evaluate():
         help="number of runs per environment state",
     )
     parser.add_argument(
-        "--eval_performance",
+        "--eval",
         action="store_true",
         help="evaluate on train performance",
     )
     parser.add_argument(
         "--window_size",
         type=int,
-        default=64,
+        default=12,
         help="window size for model"
     )
     parser.add_argument(
@@ -171,6 +172,13 @@ def evaluate():
         type=none_or_str, 
         help='Path to the reasoning model'
     )
+    parser.add_argument('--path_to_hf_cache',
+        default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/huggingface_cache',
+        type=str,
+        help='Path to the hugginface model cache')
+    parser.add_argument('--combi_explore',
+                        action="store_true",
+        help='Evaluate the Combi Explore setting')
     args = parser.parse_args()
     seed_everything(args.seed)
 
@@ -186,8 +194,15 @@ def evaluate():
     task_cfg = OmegaConf.load(Path(args.path_to_oracle))
     task_oracle = hydra.utils.instantiate(task_cfg)
 
-    base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps, instructions_per_trial=1, no_op_steps=0,
-                provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=False, reset_robot_pos=False, five_objs=args.num_objs == 5)
+    if args.combi_explore:
+        assert args.num_objs == 5, 'Combi Explore setting requires 5 objects'
+        base_env = MultiEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps,
+                provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=True if args.eval_llm else False,
+                reset_robot_pos=False)
+    else:
+        base_env = ProtoEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps,
+                provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=True if args.eval_llm else False,
+                reset_robot_pos=False, num_objs=args.num_objs)
 
     print('Environment loaded')
     # Load the model
@@ -222,8 +237,8 @@ def evaluate():
 
     if args.eval_llm:
         # Load the reasoning model
-        reasoning_llm = ReasoningLLM(args.reasoning_model, args.tokenizer)
-        agent = OracleAgent(reasoning_llm, policy_model)
+        reasoning_llm = ReasoningLLM(args.reasoning_model, args.tokenizer,  cache_dir=args.path_to_hf_cache)
+        agent = OracleAgent(policy_model, reasoning_llm)
         print('Oracle Agent Loaded')
     else:
         agent = policy_model
@@ -234,27 +249,22 @@ def evaluate():
     # Save the evaluation stats first check if a results file exists
     if args.path_to_results is not None:
         results_file = Path(args.path_to_results)
-        if results_file.exists():
-            with open(results_file, 'a') as file:
-                writer = csv.writer(file)
-                writer.writerow([run_name] + [eval_stats[key] for key in eval_stats.keys()])
-        else:
-            with open(results_file, 'w') as file:
-                writer = csv.writer(file)
-                columns = ['run_name'] + list(eval_stats.keys())
-                writer.writerow(columns)
-                writer.writerow([run_name] + [eval_stats[key] for key in eval_stats.keys()])
     else:
         results_file = Path(f'./results/results.csv')
-        if not results_file.exists():
-            os.makedirs(results_file.parent, exist_ok=True)
-        with open(results_file, 'w') as file:
+
+    if not results_file.exists():
+        # Ensure the parent directory exists
+        os.makedirs(results_file.parent, exist_ok=True)
+        with open(results_file, 'w', newline='') as file:
             writer = csv.writer(file)
+            # Write header
             columns = ['run_name'] + list(eval_stats.keys())
             writer.writerow(columns)
-            writer.writerow([run_name] + [eval_stats[key] for key in eval_stats.keys()])
 
-
+    # Append the new row
+    with open(results_file, 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([run_name] + [eval_stats[key] for key in eval_stats.keys()])
 
 
 if __name__ == '__main__':

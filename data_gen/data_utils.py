@@ -21,27 +21,30 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     episode_data = []
     last_trial_reward = False
     switched = False
+    repeated_task = False
     meta_task_stats_episode = meta_task_stats.copy()
     exploration_stats_episode = exploration_stats.copy()
     robot = deepcopy(env.base_env.robot) # Copy the robot to avoid changing the original robot state for computing absolute actions
     #make sure all meta task are sampled equally
     while True:
         meta_task = random.choice(list(meta_task_stats.keys()))
-        if meta_task_stats[str(meta_task)] < round(total_episodes/len(env.train_tasks)):
-            print(meta_task)
-            if isinstance(meta_task, str):
-                meta_task_list = [meta_task]
-            else:
-                meta_task_list = meta_task
+        if meta_task_stats[meta_task] < round(total_episodes/len(env.train_tasks)):
+            #meta_task_list = env.train_tasks_dict[meta_task] # TODO: Fix this
+            #else:
+            #    meta_task_list = [meta_task]
+            meta_task_list = [meta_task]
+            print(meta_task_list, 'HERE')
             environment_state, feedback_state = get_env_states_for_task(exploration_stats_episode, exploration_stats_limits, meta_task_list, env)
-            meta_task_stats_episode[str(meta_task)] += 1
+            meta_task_stats_episode[meta_task] += 1
             break
     print(environment_state, feedback_state)
     obs, feedback, environment_description, info = env.episode_reset(feedback_state, environment_state, meta_task, train=True)
     env_feedback = feedback['lm_feedback']
+    print(feedback['train_feedback'])
     current_trial = 0
     trials_before_reward = 0
     instruction_step = True
+    no_task_completed = False
 
     for i in range(steps):
         action, instruction, output = agent.step(obs, env_feedback, use_reasoning=use_reasoning, env_description=deepcopy(environment_description), annotation=annotation, instruction_step=instruction_step)
@@ -71,16 +74,7 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
             instruction_step = True
             feedback = feedback_new
             env_feedback = feedback['lm_feedback']
-
-            if trial_done is False:
-                if reward:
-                    last_trial_reward = True
-                else:
-                    trials_before_reward += 1
-                    if last_trial_reward:
-                        switched = True
-                        last_trial_reward = False
-                        break
+            print(env_feedback)
 
         if trial_done:
             current_trial += 1
@@ -92,17 +86,22 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
                 if last_trial_reward:
                     switched = True
                     last_trial_reward = False
+                    print('HERE')
                     break
 
-                # Hardcoded for now, since there are 3 tasks sampled, the reward should be found in the third trial at the latest
-                if current_trial == 3:
+                if current_trial == int(env.num_trials - 1):
                     break
             
-            # Break early if enought episodes sampled for this exploration. For trials before reward = 1 
-            # we cant stop early because it could turn into trials before reward = 2
 
+            # Check that atleast one task has been completed and no task has been repeated
             if step_info['task_completed'] is False:
+                no_task_completed = True
                 break
+            
+            if 'repeated_task' in step_info.keys():
+                if step_info['repeated_task']:
+                    repeated_task =  True
+                    break
 
             if current_trial >= env.num_trials:
                 break
@@ -110,6 +109,7 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
 
             obs, feedback, environment_description, info = env.trial_reset(instruction)
             env_feedback = feedback['lm_feedback']
+            print(env_feedback)
             instruction_step = True
             
             # Reset the agent model
@@ -123,14 +123,14 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     #Collect tensors and clear them from cuda memory
     gc.collect()
     torch.cuda.empty_cache()  
-    
-    if last_trial_reward and switched is False:
+    print(trials_before_reward)
+    if last_trial_reward and switched is False and no_task_completed is False and repeated_task is False:
         #Update statistics
-        meta_task_stats[str(meta_task)] += 1
-        if str(meta_task) in exploration_stats.keys():
-            exploration_stats[str(meta_task)][str(trials_before_reward)] += 1
+        meta_task_stats[meta_task] += 1
+        if meta_task in exploration_stats.keys():
+            exploration_stats[meta_task][str(trials_before_reward)] += 1
         else:
-            exploration_stats[trials_before_reward] += 1
+            exploration_stats[str(trials_before_reward)] += 1
         yield episode_data
         del episode_data
 
@@ -148,23 +148,37 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
     states = drawer_states + slider_states + block_states + ['on', 'off']
     state_dict = {"drawer": drawer_states, "slider": slider_states, "lightbulb": lightbulb_states, "led": lightbulb_states, "red_block": block_states,
                   "pink_block": block_states, "blue_block": block_states}
+    if env.num_objs == 7:
+        environment_state = {}
+    elif env.num_objs == 5:
+        environment_state = {'pink_block': 'slider_right', 'blue_block': 'slider_left'}
+    elif env.num_objs == 4:
+        environment_state = {'pink_block': 'slider_right', 'blue_block': 'slider_left', 'red_block': 'table'}
+    else:
+        environment_state = {'pink_block': 'slider_right', 'blue_block': 'slider_left', 'red_block': 'table', 'led': 0}
     blocks = ['red_block', 'pink_block', 'blue_block']
 
     meta_object_list = []
-    for obj in objects:
-        for subtask in task:
-            if obj in subtask:
-                meta_object_list.append(obj)
-
-
-    # To account for red block being on the table
     meta_state_list = []
-    for state in states:
-        for subtask in task:
+    # Get meta object and its state from the meta task. Handle slider, which can be both state and object
+    for subtask in task:
+        for state in states:
             if state in subtask:
-                meta_state_list.append(state)
-    
-    environment_state = {}
+                if state == 'slider': 
+                    if any(block in subtask for block in blocks):
+                        meta_state_list.append(state)
+                    else:
+                        continue
+                else:
+                    meta_state_list.append(state)
+
+        for obj in objects:
+            if obj in subtask:
+                if obj not in meta_state_list:
+                    meta_object_list.append(obj)
+                else:
+                    continue
+
     
     for meta_object, meta_state in zip(meta_object_list, meta_state_list):
         if meta_object in blocks:
@@ -204,6 +218,7 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
             environment_state[meta_object] = 'closed' if meta_state == 'open' else 'open'
         else:
             environment_state[meta_object] = 'left' if meta_state == 'right' else 'right'
+        
     
     assigned_block_slider = []
     for obj in objects:
@@ -249,7 +264,7 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
                         possible_objects.append(block)
                 else:
                     possible_objects.append(block)
-            feedback_state = random.sample([obj for obj in possible_objects if obj != meta_object], 2)
+            feedback_state = random.sample([obj for obj in possible_objects if obj != meta_object], 3)
             feedback_state.insert(int(meta_object_idx), meta_object)
 
         else:
@@ -260,30 +275,42 @@ def get_env_states_for_task(exploration_stats, exploration_stats_limits, task, e
     # Feedback for multi env
     else:
         last_idx_list = []
+        # Adjust feedback state to reflect the expected order of completion to control specific number of trials before reward
         for key in exploration_stats.keys():
-            if exploration_stats[key] < exploration_stats_limits[key]:
+            if exploration_stats[str(key)] < exploration_stats_limits[str(key)]:
                 last_idx_list.append(key)
         last_idx = int(random.choice(last_idx_list))
+        print(last_idx)
         if last_idx == 0:
-            meta_object_one_idx = 0
-            meta_object_two_idx = 0
-        elif last_idx == 1:
             meta_object_one_idx = random.choice([0, 1])
-            meta_object_two_idx = 0 if meta_object_one_idx == 1 else 1
-        else:
+            meta_object_two_idx = 0 if meta_object_one_idx == 1 else 0
+        elif last_idx == 1:
             meta_object_one_idx = random.choice([0, 1, 2])
             meta_object_two_idx = random.choice([0, 1]) if meta_object_one_idx == 2 else 2
-        
-        feedback_state = objects
-        feedback_state.pop(meta_object_one_idx)
-        feedback_state.insert(0, meta_object_list[0])
-        feedback_state.pop(meta_object_two_idx)
-        feedback_state.insert(1, meta_object_list[1])
+        else:
+            meta_object_one_idx = random.choice([0, 1])
+            meta_object_two_idx = 3
+        meta_idxs = [meta_object_one_idx, meta_object_two_idx]
 
-    print(environment_state, feedback_state, task)
+        feedback_state = random.sample([obj for obj in objects if obj not in meta_object_list], 4 - len(meta_object_list))
+        feedback_state = feedback_state + meta_object_list
+
+        original_positions = [feedback_state.index(obj) for obj in meta_object_list]
+        new_positions = [meta_idxs[i] for i in range(len(meta_object_list))]
+
+        adjusted_positions = sorted(zip(original_positions, new_positions), key=lambda x: x[0])
+
+        for original_position, new_position in reversed(adjusted_positions):
+            feedback_state.pop(original_position)
+
+        for _, new_position in adjusted_positions:
+            obj = meta_object_list.pop(0)
+            feedback_state.insert(new_position, obj)
+
+        # Now feedback_state should have the elements in the correct positions
+        print(feedback_state)
     
     return environment_state, feedback_state
-
 
 def collect_data(args, agent, env):
     '''Collect data from env using agent. Save successful episodes.'''

@@ -33,13 +33,14 @@ class MultiEnv():
         self.base_env = base_env
         self.task_oracle = task_oracle
 
-        
-        self.all_subtasks = ['move_slider_left', 'move_slider_right', 'open_drawer', 'close_drawer', 'turn_on_lightbulb',
-                        'turn_off_lightbulb', 'turn_on_led', 'turn_off_led']
-        self.static_objects = ['slider', 'drawer', 'led', 'lightbulb']
-        self.objects = self.static_objects
 
-        self.train_tasks, self.eval_tasks = self.build_train_and_eval_tasks()
+        self.all_subtasks = ['move_slider_left', 'move_slider_right', 'open_drawer', 'close_drawer', 'turn_on_lightbulb',
+                        'turn_off_lightbulb', 'turn_on_led', 'turn_off_led', 'lift_red_block_table']
+        self.static_objects = ['slider', 'drawer', 'led', 'lightbulb']
+        self.block_objects = ['red_block']
+        self.objects = self.static_objects + self.block_objects
+        self.num_objects = len(self.objects)
+        self.train_tasks_dict, self.eva_tasks_dict, self.train_tasks, self.eval_tasks = self.build_train_and_eval_tasks()
 
         self.task_instruction_feedback = {'move_slider_left': 'move the door to the left', 'move_slider_right': 'move the door to the right',
                                             'open_drawer': 'pull the handle to open the drawer', 'close_drawer': 'push the handle to close the drawer', 'turn_on_lightbulb': 'turn on the lightbulb',
@@ -68,12 +69,13 @@ class MultiEnv():
         self.trial_count = 0
         self.trial_step_count = 0
         self.completed_instructions = 0
+        self.trial_completed_instructions = []
         self.trial_done = False
         self.last_reward = 0
+        self.reward = 0
 
         # Reset subtask tracking
         self.subtask_success_dict = {task: False for task in self.all_subtasks}
-        self.episode_completed_subtasks = []
 
         # Sample alt feedback
         self.first_trial_template = build_template_first_trial(False if train else True)
@@ -106,8 +108,10 @@ class MultiEnv():
         self.trial_count += 1
         self.trial_step_count = 0
         self.completed_instructions = 0
+        self.trial_completed_instructions = []
         self.trial_done = False
         self.last_reward = 0
+        self.reward = 0
 
         if self.provide_feedback:
             feedback = self.get_feedback(instruction, trial_end=True, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
@@ -140,8 +144,8 @@ class MultiEnv():
                 - gripper_action (1): binary (close = -1, open = 1)
         '''
         feedback = None
-        reward = 0
         self.trial_step_count += 1
+        repeated_task = False
 
         if not len(action) == 3:
             action = action.squeeze()
@@ -150,41 +154,49 @@ class MultiEnv():
             self.trial_done = True
 
         observation, _, _, info = self.base_env.step(action)
-        task_info = [list(self.task_oracle.get_task_info_for_set(self.start_info, info, {task})) for task in self.all_subtasks]
-        for subtask in self.all_subtasks:
+        task_info = [list(self.task_oracle.get_task_info_for_set(self.start_info, info, {task})) for task in self.sampled_subtasks]
+        for subtask in self.sampled_subtasks:
             check, updated = self.task_info_check(subtask, task_info)
             subtask_str = subtask.replace('_', ' ')
-            if check and subtask_str not in self.episode_completed_subtasks:
-                if instruction is None:
-                    instruction = self.task_instruction_feedback[subtask]
-                # Add completed task to episode completed tasks
-                if subtask_str not in self.episode_completed_subtasks:
-                    self.episode_completed_subtasks.append(subtask_str)
-                
-                # If meta task, track reward and end trial if second meta task is completed
-                if subtask in self.meta_task:
-
-                    if self.provide_feedback:
-                        self.instruction_success_dict[subtask] = {'inst': instruction, 'rew': 1}
-                        feedback = self.get_feedback(instruction, info, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
-                    reward += 1
-                    print('meta subtask completed')
-                    if reward == 2:
-                        reward = 4
-                        self.trial_done = True
-                # Else, track reward and provide feedback
+            if check:
+                if subtask_str in self.trial_completed_instructions:
+                    continue
                 else:
-                    if updated:
-                        if self.provide_feedback and self.trial_done is False:
-                            self.instruction_success_dict[subtask] = {'inst': instruction, 'rew': 0}
-                            feedback = self.get_feedback(instruction, info, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
+                    self.trial_completed_instructions.append(subtask_str)
+                    self.completed_instructions += 1
+                    if instruction is None:
+                        instruction = self.task_instruction_feedback[subtask]
+                    # Add completed task to episode completed tasks
+                    
+                    # If meta task, track reward and end trial if second meta task is completed
+                    if subtask in self.meta_task:
 
-        num_completed = len(self.instruction_success_dict)
-        if self.trial_done or num_completed == self.num_instructions:
-            self.last_reward = reward
+                        if self.provide_feedback:
+                            self.instruction_success_dict[subtask] = {'inst': instruction, 'rew': 1}
+                            feedback = self.get_feedback(instruction, info, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
+                        self.reward += 1
+                        print('meta subtask completed')
+                        if self.reward == 2:
+                            self.reward = 4
+                            print('META TASK COMPLETED')
+                            self.trial_done = True
+                    # Else, track reward and provide feedback
+                    else:
+                        if updated:
+                            if self.provide_feedback and self.trial_done is False:
+                                self.instruction_success_dict[subtask] = {'inst': instruction, 'rew': 0}
+                                feedback = self.get_feedback(instruction, info, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
+
+    
+        if self.trial_done or self.completed_instructions == self.num_instructions:
+            self.last_reward = self.reward
             self.trial_done = True
         
-        step_info = {'info': info, 'task_completed': True if len(self.instruction_success_dict) > 0 else False}
+        step_info = {'info': info, 'repeated_task': repeated_task, 'task_completed': True if self.completed_instructions == self.num_instructions else False}
+        if self.reward == 4: #TODO: Make this more elegant for the different rewards and data creation
+            reward = 1
+        else:
+            reward = 0
         return observation, reward, feedback, self.trial_count, self.trial_done, step_info
 
     
@@ -222,8 +234,8 @@ class MultiEnv():
                                 alt_completed_rewarding_tasks += '; '+alt_task
                     
                     if completed_rewarding_tasks == '':
-                        completed_rewarding_tasks = 'None.'
-                        alt_completed_rewarding_tasks = 'None.'
+                        completed_rewarding_tasks = 'None '
+                        alt_completed_rewarding_tasks = 'None '
                     
                     completed_non_rewarding_tasks = ''
                     alt_completed_non_rewarding_tasks = ''
@@ -238,9 +250,9 @@ class MultiEnv():
                                 completed_non_rewarding_tasks += '; '+task
                                 alt_completed_non_rewarding_tasks += '; '+alt_task
 
-                    if not bool(self.instruction_success_dict):
-                        completed_non_rewarding_tasks = 'None.'
-                        alt_completed_non_rewarding_tasks = 'None.'
+                    if completed_non_rewarding_tasks == '':
+                        completed_non_rewarding_tasks = 'None '
+                        alt_completed_non_rewarding_tasks = 'None '
 
                     if provide_lm_feedback:
                         assert instruction is not None, "Instruction is required for feedback"
@@ -268,6 +280,7 @@ class MultiEnv():
         return feedback
     
     def create_dynamic_env(self, feedback_state=None, environment_state=None, meta_task=None):
+        #used_objects = random.sample(self.objects, 4)
         used_objects = self.static_objects
         if environment_state is None:
             initial_state = {}
@@ -283,10 +296,6 @@ class MultiEnv():
             initial_state['red_block'] = 'table'
             initial_state['pink_block'] = 'slider_right' 
             initial_state['blue_block'] = 'slider_left'
-
-            initial_state['slider'] = 'right'
-            initial_state['drawer'] = 'closed'
-            initial_state['lightbulb'] = 0
 
             random.shuffle(used_objects)
             self.state_to_tasks(initial_state, used_objects)
@@ -307,7 +316,8 @@ class MultiEnv():
                     if meta_task not in self.eval_tasks:
                         break
             else:
-                assert meta_task in self.sampled_subtasks, "Meta task must be possible for environment state"
+                for subtask in meta_task:
+                    assert subtask in self.sampled_subtasks, "Meta task must be possible for environment state"
 
         object_descriptions = self.get_object_descriptions(used_objects, initial_state)
         environment_description_template = deepcopy(ENVIRONMENT_DESCRIPTION)
@@ -329,7 +339,16 @@ class MultiEnv():
         eval_tasks = [['move_slider_right', 'turn_off_led'], ['close_drawer', 'turn_on_lightbulb'], ['turn_on_led', 'turn_off_lightbulb'],
                       ['move_slider_left', 'open_drawer']]
         train_tasks = [task for task in all_tasks if task not in eval_tasks]
-        return train_tasks, eval_tasks
+        print(len(train_tasks), len(eval_tasks))
+        train_tasks_dict = {}
+        eval_tasks_dict = {}
+        for task in train_tasks:
+            task_str = task[0] + '_' + task[1]
+            train_tasks_dict[task_str] = task
+        for task in eval_tasks:
+            task_str = task[0] + '_' + task[1]
+            eval_tasks_dict[task_str] = task
+        return train_tasks_dict, eval_tasks_dict, train_tasks, eval_tasks
     
     def get_object_descriptions(self, objects, initial_state):
         object_descriptions = []
@@ -386,7 +405,8 @@ class MultiEnv():
                 obj_status = '{0} is currently {1} '.format(obj, location)
             object_status_list.append(obj_status)
         
-        env_status_string = 'The current status of the environment: {0}; {1}; {2}.'.format(object_status_list[0], object_status_list[1], object_status_list[2])
+        env_status_string = 'The current status of the environment: {0}; {1}; {2}; {3}.'.format(object_status_list[0], object_status_list[1], 
+                                                                                                object_status_list[2], object_status_list[3])
         return env_status_string
     
     def task_info_check(self, task, task_info):
