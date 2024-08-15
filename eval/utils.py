@@ -147,7 +147,7 @@ def get_environment_states(args, combination):
     return environment_state
 
 def get_environment_states_for_task(args, task, env):
-    drawer_states = ['open', 'closed']
+    drawer_states = ['open', 'close']
     slider_states = ['left', 'right']
     lamp_states = ['on', 'off']
     states = drawer_states + slider_states + lamp_states
