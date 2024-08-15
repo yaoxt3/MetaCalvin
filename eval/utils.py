@@ -2,10 +2,10 @@ import cv2
 import itertools
 import random
 
-def rollout_eval(args, feedback_state, environment_state, env, model, steps, feedback_type='train_feedback', task=None):
+def rollout_eval(args, feedback_state, environment_state, env, model, steps, feedback_type='train_feedback', meta_task=None):
     model.reset()
-    if task is not None:
-        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, task=task)
+    if meta_task is not None:
+        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, meta_task=meta_task)
     else:
         obs, feedback, _, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True)
     train_feedback = feedback[feedback_type]
@@ -40,10 +40,10 @@ def rollout_eval(args, feedback_state, environment_state, env, model, steps, fee
 
     return total_reward, episode_length
 
-def rollout_eval_llm(args, feedback_state, environment_state, env, agent, steps, task=None):
+def rollout_eval_llm(args, feedback_state, environment_state, env, agent, steps, meta_task=None):
     agent.reset()
-    if task is not None:
-        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, task=task)
+    if meta_task is not None:
+        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, meta_task=meta_task)
     else:
         obs, feedback, _, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True)
     env_feedback = feedback['lm_feedback']
@@ -151,7 +151,7 @@ def get_environment_states_for_task(args, task, env):
     slider_states = ['left', 'right']
     lamp_states = ['on', 'off']
     states = drawer_states + slider_states + lamp_states
-    environment_state = {'blue_block': 'slider_left', 'pink_block': 'slider_right'}
+    environment_state = {'blue_block': 'slider_left', 'pink_block': 'slider_right', 'red_block': 'table'}
     
     # Sample the environment state
     meta_objs = []
@@ -169,7 +169,7 @@ def get_environment_states_for_task(args, task, env):
         elif meta_obj == 'slider':
             state = 'left' if meta_state == 'right' else 'right'
         elif meta_obj == 'lightbulb' or meta_obj == 'led':
-            state = 1 if meta_state == 'on' else 0
+            state = 1 if meta_state == 'off' else 0
         else:
             state = 'table'
         
@@ -192,7 +192,7 @@ def get_environment_states_for_task(args, task, env):
     feedback_state = random.sample([obj for obj in env.objects if obj not in meta_objs], 2)
     feedback_state = feedback_state + meta_objs
     random.shuffle(feedback_state)
-
+    print(feedback_state)
     return environment_state, feedback_state
 
 
@@ -275,7 +275,7 @@ def eval_explore(args, base_env, agent):
         stats[feedback_state_str] = {'total_reward': feedback_reward, 'average_reward': feedback_reward / args.num_resets, \
                                      'episode_length': feedback_steps / args.num_resets}
     
-    stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / ( len(combination) * args.num_resets), \
-                               'episode_length': total_steps / (len(combination) * args.num_resets)}
+    stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / ( len(combinations) * args.num_resets), \
+                               'episode_length': total_steps / (len(combinations) * args.num_resets)}
 
     return stats 

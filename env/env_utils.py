@@ -1,6 +1,8 @@
 import random
 
 
+import random
+
 def get_feedback_template(used_objects, explored_tasks_episode, explored_tasks_trial, meta_task, trial_one=False):
     meta_task_string = meta_task.replace('_', ' ')
     explored_tasks_trial = [task.replace('_', ' ') for task in explored_tasks_trial]
@@ -36,55 +38,80 @@ def get_feedback_template(used_objects, explored_tasks_episode, explored_tasks_t
     
     return reward_template
 
-def build_template_first_trial():
-    beginning = random.choice(FIRST_TRIAL_TEMPLATES_BEGINNINGS)
-    middle = random.choice(TEMPLATES_MIDDLE)
-    ending = random.choice(FIRST_TRIAL_TEMPLATES_ENDINGS)
+def build_template_first_trial(eval=False):
+    if eval:
+        beginning = random.choice(FIRST_TRIAL_TEMPLATES_BEGINNINGS_EVAL)
+        middle = random.choice(TEMPLATES_MIDDLE_EVAL)
+        ending = random.choice(FIRST_TRIAL_TEMPLATES_ENDINGS_EVAL)
+    else:
+        beginning = random.choice(FIRST_TRIAL_TEMPLATES_BEGINNINGS)
+        middle = random.choice(TEMPLATES_MIDDLE)
+        ending = random.choice(FIRST_TRIAL_TEMPLATES_ENDINGS)
     return beginning + ' ' + middle + ' ' + ending
 
-def build_template_further_trial():
-    beginning = random.choice(FURTHER_TRIAL_BEGINNINGS)
-    middle = random.choice(TEMPLATES_MIDDLE)
-    ending = random.choice(FURTHER_TRIAL_ENDINGS)
+def build_template_further_trial(eval=False):
+    if eval:
+        beginning = random.choice(FURTHER_TRIAL_BEGINNINGS_EVAL)
+        middle = random.choice(TEMPLATES_MIDDLE_EVAL)
+        ending = random.choice(FURTHER_TRIAL_ENDINGS_EVAL)
+    else:
+        beginning = random.choice(FURTHER_TRIAL_BEGINNINGS)
+        middle = random.choice(TEMPLATES_MIDDLE)
+        ending = random.choice(FURTHER_TRIAL_ENDINGS)
     return beginning + ' ' + middle + ' ' + ending
 
-def build_template_further_no_explored():
-    beginning = random.choice(FURTHER_TRIAL_BEGINNINGS)
-    middle = random.choice(TEMPLATES_MIDDLE)
-    ending = random.choice(FIRST_TRIAL_TEMPLATES_ENDINGS)
+def build_template_further_no_explored(eval=False):
+    if eval:
+        beginning = random.choice(FURTHER_TRIAL_BEGINNINGS_EVAL)
+        middle = random.choice(TEMPLATES_MIDDLE_EVAL)
+        ending = random.choice(FIRST_TRIAL_TEMPLATES_ENDINGS_EVAL)
+    else:
+        beginning = random.choice(FURTHER_TRIAL_BEGINNINGS)
+        middle = random.choice(TEMPLATES_MIDDLE)
+        ending = random.choice(FIRST_TRIAL_TEMPLATES_ENDINGS)
     return beginning + ' ' + middle + ' ' + ending
 
-def build_template_further_no_meta():
-    beginning = random.choice(FURTHER_TRIAL_BEGINNINGS)
-    middle = random.choice(TEMPLATES_MIDDLE)
-    ending = random.choice(FURTHER_TRIAL_NO_EXPLORED_ENDINGS)
+def build_template_further_no_meta(eval=False):
+    if eval:
+        beginning = random.choice(FURTHER_TRIAL_BEGINNINGS_EVAL)
+        middle = random.choice(TEMPLATES_MIDDLE_EVAL)
+        ending = random.choice(FURTHER_TRIAL_NO_EXPLORED_ENDINGS_EVAL)
+    else:
+        beginning = random.choice(FURTHER_TRIAL_BEGINNINGS)
+        middle = random.choice(TEMPLATES_MIDDLE)
+        ending = random.choice(FURTHER_TRIAL_NO_EXPLORED_ENDINGS)
     return beginning + ' ' + middle + ' ' + ending
 
 
-ENVIRONMENT_DESCRIPTION = [{"role": "user", "content": "You are a helpfull assistant that gives me instructions on which tasks I should complete, given a set of " \
+def create_environment_description(objects):
+    if len(objects) not in [3, 4]:
+        raise ValueError("The number of objects must be either 3 or 4.")
+    
+    object_descriptions = "".join([f" {i+1}) {obj}" for i, obj in enumerate(objects)])
+    
+    environment_description = [
+        {"role": "user", "content": "You are a helpful assistant that gives me instructions on which tasks I should complete, given a set of " \
         "objects that I can interact with. It is not known which task is rewarding, so I need to explore the task space to find the rewarding task as efficiently and quickly " \
-        "as possible. Once I find the rewarding task I should exploit my knowledge and keep repeating this task. Following objects are present in the environment:"
-        " 1) {0}" \
-        " 2) {1}" \
-        " 3) {2}" \
-        "The objects can only be manipulated in the ways that are described above. There are no hidden features or functions " \
+        "as possible. Once I find the rewarding task I should exploit my knowledge and keep repeating this task. Following objects are present in the environment:" + \
+        object_descriptions + \
+        " The objects can only be manipulated in the ways that are described above. There are no hidden features or functions " \
         "I have multiple trials to find the rewarding task. The rewarding task stays " \
-        "the same throughout the trials but all the objects are put back to their initial states at the beiginning of each trial. After the completion of a task you get feedback if the task was rewarding or not. Additionally at the end of each trial you will get " \
-        "information about all completed task in the trial and their reward. In order to be as helpful as possible to me you have to follow these guidelines:" \
+        "the same throughout the trials but all the objects are put back to their initial states at the beginning of each trial. After the completion of a task you get feedback if the task was rewarding or not. Additionally at the end of each trial you will get " \
+        "information about all completed tasks in the trial and their reward. In order to be as helpful as possible to me you have to follow these guidelines:" \
         " 1) You should act as a mentor and guide me to the next task based on the current environment state and information gathered from previous trials about completed tasks. " \
-        " 2) You have to adhere to the following template when giving instructions: 'Explanation: <your explanation> Notes: <your notes> Instruction: <your instruction>' If you have any explanations or notes than you have to add them in the specified format " \
+        " 2) You have to adhere to the following template when giving instructions: 'Explanation: <your explanation>  Notes: <your notes>  Instruction: <your instruction>' If you have any explanations or notes then you have to add them in the specified format " \
         " 3) Do not give instructions that include other forms of manipulation for the objects besides the ones mentioned in the object descriptions. You have to adjust your instructions to the current environment state. For example the instruction 'open the drawer' does not make sense if the drawer is currently open " \
-        " 4) Keep your instructions clear, concise and precise. Do not add any additional information. An example instruction can be: 'pick up the red block'. All instructions have to follow this format. " \
-        " 5) Only use one action in your instruction. For example do not say 'pick up the bink block and move it to the left'. Only use the available actions given to you "
+        " 4) Keep your instructions clear, concise, and precise. Do not add any additional information. An example instruction can be: 'pick up the red block'. All instructions have to follow this format. " \
+        " 5) Only use one action in your instruction. For example, do not say 'pick up the pink block and move it to the left'. Only use the available actions given to you " \
         " 6) Use the information given to you to give instructions that explore the task space as efficiently as possible. Do not repeat instructions for tasks which were not rewarding. " \
         " 7) If you gave an instruction for a task but I did not complete it, you may repeat the instruction again." \
         " 8) If you find a rewarding instruction you must repeat it for all future trials. Do not give an instruction for a different task" \
         " 9) Explore the objects in the order they are given to you. Explore the first object first. If it is not rewarding, explore the second object. If this is not rewarding explore the third object" \
-        "Because you are a helpfull assistant you will strictly follow these instructions and guide me on my mission to find the rewarding task and maximize my total reward. "},
-        {"role": "assistant", "content": "I understand your instructions and will strictly follow them. I will use my reasoning skills to give useful instructions about which task" \
+        "Because you are a helpful assistant you will strictly follow these instructions and guide me on my mission to find the rewarding task and maximize my total reward. "},
+        {"role": "assistant", "content": "I understand your instructions and will strictly follow them. I will use my reasoning skills to give useful instructions about which task " \
         "you should complete in order to maximize the total reward."}]
-
-
+    
+    return environment_description
 
 
 

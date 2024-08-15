@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from typing import List, Dict, Any, Tuple
 from copy import deepcopy
 from env.env_utils import *
+import cv2
 
 
 def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_stats_limits, total_episodes, 
@@ -583,30 +584,26 @@ def get_data_statistics(dataset):
     for key in percentage.keys():
         print(f"{key}: {percentage[key]}%")
 
+def visualize_dataset(dataset):
+    ep_start_end_ids = np.load(dataset + "/ep_start_end_ids.npy")
+    len_dataset = ep_start_end_ids[-1][1] + 1
+    possible_objects = ['red block', 'pink block', 'slider', 'drawer', 'led', 'lightbulb']
+    used_objects = []
+    for i in range(len_dataset):
+        episode = np.load(dataset + f"/episode_{i:06}.npz", allow_pickle=True)
+        episode = dict(episode)
+        feedback = np.array2string(episode['train_feedback'])
+        action = episode['rel_actions']
+        rgb = episode['rgb_static']
+        print(feedback)
+        cv2.imshow('test',rgb[:,:,::-1])
+        cv2.waitKey(60)
+
     
 
 
 if __name__ == '__main__':
-    import hydra
-    from omegaconf import DictConfig, OmegaConf
-    from pathlib import Path
-
-    from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
-    from env.protoenv import ProtoEnv
-
-    base_env = get_env(Path("../calvin/dataset/calvin_debug_dataset/validation"), show_gui=False)
-    task_cfg = OmegaConf.load("../calvin/calvin_models/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml")
-    task_oracle = hydra.utils.instantiate(task_cfg)
-    env = ProtoEnv(base_env, task_oracle, num_trials=2, trial_steps=1000, provide_feedback=True, num_objs=7)
-    exploration_stats = {}
-    exploration_stats_limits = {}
-    for task in env.train_tasks:
-        exploration_stats[task] = {'0': 0, '1': 0, '2': 0}
-        exploration_stats_limits[task] = {'0': 5, '1': 15, '2': 30}
-    for i in range(20):
-        meta_task = random.choice(list(env.train_tasks))
-        print(meta_task)
-        environment_state, feedback_state = get_env_states_for_task(exploration_stats, exploration_stats_limits, [meta_task], env)
+    visualize_dataset('/home/richard/Documents/GitHub/RoboTest/data/test')
 
     
         

@@ -30,7 +30,7 @@ from omegaconf import DictConfig, OmegaConf
 import time
 
 from pytorch_lightning import seed_everything
-from eval.utils import eval
+from eval.utils import eval_explore, eval_combi_explore
 import csv
 import os
 
@@ -183,7 +183,8 @@ def evaluate():
     seed_everything(args.seed)
 
     if args.run_name is None:
-        run_name = f"eval_{args.model_checkpoint.split('/')[-1].split('.')[0]}_{args.num_objs}_{args.feedback}"
+        explore_setting = 'combi' if args.combi_explore else 'standard'
+        run_name = f"eval__{explore_setting}_{args.model_checkpoint.split('/')[-1].split('.')[0]}_{args.num_objs}_{args.feedback}"
     else:
         run_name = args.run_name
     
@@ -243,8 +244,10 @@ def evaluate():
     else:
         agent = policy_model
 
-
-    eval_stats = eval(args, base_env, agent)
+    if args.combi_explore:
+        eval_stats = eval_combi_explore(args, base_env, agent)
+    else:
+        eval_stats = eval_explore(args, base_env, agent)
     
     # Save the evaluation stats first check if a results file exists
     if args.path_to_results is not None:

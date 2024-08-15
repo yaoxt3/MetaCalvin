@@ -906,7 +906,7 @@ def preprocess_text_calvin(sample, tokenizer):
     ]
     text = tokenizer(
         sample,
-        max_length=32,
+        max_length=64,
         padding="longest",
         truncation="only_first",
         return_tensors="pt",

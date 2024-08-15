@@ -80,6 +80,7 @@ class ProtoEnv():
         self.completed_instructions = 0
         self.trial_done = False
         self.last_reward = 0
+        noise = False
 
         if train:
             combinations = self.train_combinations
@@ -94,14 +95,21 @@ class ProtoEnv():
 
         if self.reset_robot_pos:
             self.reset_robot_position()
-        robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state)
+            noise = True
+
+        robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state, noise)
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         self.start_info = self.base_env.get_info()
 
         # Sample templates for feedback for the tasks for variable alternative feedback
-        self.first_trial_template = build_template_first_trial()
-        self.further_trial_template = build_template_further_trial()
-        self.reward_template = random.choice(REWARD_TEMPLATES)
+        # Sample templates for feedback for the tasks for variable alternative feedback
+        self.first_trial_template = build_template_first_trial(False if train else True)
+        self.further_trial_template = build_template_further_trial(False if train else True)
+        
+        if train:
+            self.reward_template = random.choice(REWARD_TEMPLATES)
+        else:
+            self.reward_template = random.choice(REWARD_TEMPLATES_EVAL)
 
         self.sampled_task_instructions = {key: random.choice(TASK_INSTRUCTIONS[key]) for key in TASK_INSTRUCTIONS.keys()} 
         
@@ -121,6 +129,7 @@ class ProtoEnv():
         self.completed_instructions = 0
         self.trial_done = False
         self.last_reward = 0
+        noise = False
 
         if self.provide_feedback:
             feedback = self.get_feedback(instruction, trial_end=True, provide_train_feedback=self.provide_train_feedback, provide_lm_feedback=self.provide_lm_feedback)
@@ -131,7 +140,8 @@ class ProtoEnv():
         self.task_success_dict = {task: False for task in self.all_tasks}
         if self.reset_robot_pos:
            self.reset_robot_position()
-        robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state)
+           noise = True
+        robot_obs, scene_obs = self.get_env_state_for_initial_condition(self.initial_state, noise)
         self.base_env.reset(robot_obs=robot_obs, scene_obs=scene_obs)
         observation = self.base_env.get_obs()
         info = self.base_env.get_info()
@@ -325,16 +335,13 @@ class ProtoEnv():
                     locations.remove(sampled_location)
                     initial_state[block] = sampled_location
             else:
-                initial_state['red_block'] = 'slider_right'
-                initial_state['pink_block'] = 'table' 
+                initial_state['red_block'] = 'table'
+                initial_state['pink_block'] = 'slider_right' 
                 initial_state['blue_block'] = 'slider_left'
 
             random.shuffle(used_objects)
             self.state_to_tasks(initial_state, used_objects)
             meta_task = random.choice(self.sampled_tasks)
-            print(meta_task)
-            print(self.sampled_tasks)
-            print(initial_state)
 
         else:
             assert feedback_state is not None, "Feedback state is required for environment state"
@@ -348,10 +355,9 @@ class ProtoEnv():
 
         object_descriptions = self.get_object_descriptions(used_objects, initial_state)
 
-        environment_description_template = deepcopy(ENVIRONMENT_DESCRIPTION)
-        environment_description_template[0]['content'] = environment_description_template[0]['content'].format(object_descriptions[0], object_descriptions[1], object_descriptions[2])
+        environment_description = create_environment_description(object_descriptions)
         
-        return initial_state, meta_task, environment_description_template
+        return initial_state, meta_task, environment_description
     
     def get_object_descriptions(self, objects, initial_state):
         object_descriptions = []
@@ -397,7 +403,7 @@ class ProtoEnv():
                     obj_status = 'The lightbulb is currently {0}'.format('on' if light_status else 'off')
                 elif obj == 'drawer':
                     obj_status = 'The drawer is currently {0}'.format(drawer_status)
-                elif obj == 'slider':
+                else:
                     obj_status = 'The slider door is currently at the {0}'.format(slider_status)
             else:
                 location = self.initial_state[obj]
@@ -408,7 +414,16 @@ class ProtoEnv():
                 obj_status = '{0} is currently {1} '.format(obj, location)
             object_status_list.append(obj_status)
         
-        env_status_string = 'The current status of the environment: {0}; {1}; {2}.'.format(object_status_list[0], object_status_list[1], object_status_list[2])
+        # Generate string containing the status of the environment to ground the LLM
+        if len(object_status_list) == 3:
+            env_status_string = 'The current status of the environment: {0}; {1}; {2}.'.format(
+                object_status_list[0], object_status_list[1], object_status_list[2]
+            )
+        else:
+            env_status_string = 'The current status of the environment: {0}; {1}; {2}; {3}.'.format(
+                object_status_list[0], object_status_list[1], object_status_list[2], object_status_list[3]
+            )
+            
         return env_status_string
     
     def task_info_check(self, task, task_info):
@@ -470,7 +485,7 @@ class ProtoEnv():
             if body_name == 'panda':
                 p.resetBasePositionAndOrientation(body_id, new_position, [0.0, 0.0, 0.0, 1.0])
     
-    def get_env_state_for_initial_condition(self, initial_condition):
+    def get_env_state_for_initial_condition(self, initial_condition, noise):
         robot_obs = np.array(
         [
             0.02586889,
@@ -499,7 +514,11 @@ class ProtoEnv():
             np.array([2.29995412e-01, -1.19995140e-01, 4.59990010e-01]),
         ]
 
-        
+        # Whether to randomly sample block positions or not
+        if noise:
+            block_noise = [np.random.uniform(0.0, 0.15), np.random.uniform(-0.005, 0.005)]
+        else:
+            block_noise = [0.0, 0.0]
 
         scene_obs = np.zeros(24)
         if initial_condition["slider"] == "left":
@@ -516,8 +535,8 @@ class ProtoEnv():
         elif initial_condition["red_block"] == "slider_left":
             scene_obs[6:9] = block_slider_left
         else:
-            scene_obs[6:9] = [block_table[0][0], block_table[0][1],
-                               block_table[0][2]]
+            scene_obs[6:9] = [block_table[0][0] + block_noise[0], block_table[0][1],
+                            block_table[0][2] + block_noise[1]]
         
         scene_obs[11] = np.random.uniform(*block_rot_z_range)
         # blue block
@@ -527,11 +546,11 @@ class ProtoEnv():
             scene_obs[12:15] = block_slider_left
         else:
             if initial_condition["red_block"] == "table":
-                scene_obs[12:15] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
-                                block_table[1][2] + np.random.uniform(-0.005, 0.005)] 
+                scene_obs[12:15] = [block_table[1] + block_noise[0], block_table[1][1],
+                                block_table[1][2] + block_noise[1]] 
             else:
-                scene_obs[12:15] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
-                                block_table[0][2] + np.random.uniform(-0.005, 0.005)]
+                scene_obs[12:15] = [block_table[0][0] + block_noise[0], block_table[0][1],
+                                block_table[0][2] + block_noise[1]]
         scene_obs[17] = np.random.uniform(*block_rot_z_range)
         # pink block
         if initial_condition["pink_block"] == "slider_right":
@@ -540,14 +559,16 @@ class ProtoEnv():
             scene_obs[18:21] = block_slider_left
         else:
             if initial_condition["red_block"] == "table" or initial_condition['blue_block'] == 'table':
-                scene_obs[18:21] = [block_table[1] + np.random.uniform(-0.05, 0.0), block_table[1][1],
-                                    block_table[1][2] + np.random.uniform(-0.005, 0.005)]
+                scene_obs[18:21] = [block_table[1] + block_noise[0], block_table[1][1],
+                                    block_table[1][2] + block_noise[1]]
             else:
-                scene_obs[18:21] = [block_table[0][0] + np.random.uniform(0.0, 0.15), block_table[0][1],
-                                block_table[0][2] + np.random.uniform(-0.005, 0.005)] 
+                scene_obs[18:21] = [block_table[0][0] + block_noise[0], block_table[0][1],
+                                block_table[0][2] + block_noise[1]] 
+                                
         scene_obs[23] = np.random.uniform(*block_rot_z_range)
 
         return robot_obs, scene_obs
+
     
     def state_to_tasks(self, initial_state, objects):
         self.sampled_tasks = []
@@ -559,7 +580,7 @@ class ProtoEnv():
                 if 'slider' in state:
                     slider_location = state.split('_')[1]
                     if slider_location != initial_state['slider']:
-                        self.sampled_tasks.append('lift_{0}_{1}'.format(obj, state))
+                        self.sampled_tasks.append('lift_{0}_slider'.format(obj))
                 else:
                     self.sampled_tasks.append('lift_{0}_{1}'.format(obj, state))
             elif obj in ['slider']:
@@ -577,7 +598,8 @@ class ProtoEnv():
         eval_combinations = []
 
         all_combinations = []
-        all_combinations.extend(list(itertools.combinations(self.objects, 3)))
+        num_sampled = 4 if self.num_objs == 7 else 3
+        all_combinations.extend(list(itertools.combinations(self.objects, num_sampled)))
         all_combinations = [list(combination) for combination in all_combinations]
 
         if self.num_objs == 5:
@@ -588,19 +610,21 @@ class ProtoEnv():
                 else:
                     train_combinations.append(combination)
         elif self.num_objs == 7:
-            for combination in all_combinations:                
+            for combination in all_combinations:
                 if 'slider' in combination and 'led' in combination or 'red block' in combination and 'blue block' in combination:
                     eval_combinations.append(combination)
                 else:
                     if 'red_block' in combination and 'blue_block' in combination and 'pink_block' in combination:
                         continue
                     else:
-                        train_combinations.append(combination)    
+                        train_combinations.append(combination)
+                
         else:
             train_combinations = all_combinations
             eval_combinations = all_combinations
-
+        print(len(train_combinations), len(eval_combinations))
         return train_combinations, eval_combinations
+
 
 
 
