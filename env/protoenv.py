@@ -340,14 +340,14 @@ class ProtoEnv():
                 initial_state['blue_block'] = 'slider_left'
 
             random.shuffle(used_objects)
-            self.state_to_tasks(initial_state, used_objects)
+            self.sampled_tasks = self.state_to_tasks(initial_state, used_objects)
             meta_task = random.choice(self.sampled_tasks)
 
         else:
             assert feedback_state is not None, "Feedback state is required for environment state"
             initial_state = environment_state
             used_objects = feedback_state
-            self.state_to_tasks(initial_state, used_objects)
+            self.sampled_tasks = self.state_to_tasks(initial_state, used_objects)
             if meta_task is None:
                 meta_task = random.choice(self.sampled_tasks)
             else:
@@ -571,7 +571,7 @@ class ProtoEnv():
 
     
     def state_to_tasks(self, initial_state, objects):
-        self.sampled_tasks = []
+        sampled_tasks = []
         self.sampled_tasks_completed = []
         for obj in objects:
             state = initial_state[obj]
@@ -580,18 +580,20 @@ class ProtoEnv():
                 if 'slider' in state:
                     slider_location = state.split('_')[1]
                     if slider_location != initial_state['slider']:
-                        self.sampled_tasks.append('lift_{0}_slider'.format(obj))
+                        sampled_tasks.append('lift_{0}_slider'.format(obj))
                 else:
-                    self.sampled_tasks.append('lift_{0}_{1}'.format(obj, state))
+                    sampled_tasks.append('lift_{0}_{1}'.format(obj, state))
             elif obj in ['slider']:
                 obj_state = 'left' if state == 'right' else 'right'
-                self.sampled_tasks.append('move_slider_{0}'.format(obj_state))
+                sampled_tasks.append('move_slider_{0}'.format(obj_state))
             elif obj in ['drawer']:
                 obj_state = 'open' if state == 'closed' else 'close'
-                self.sampled_tasks.append('{0}_drawer'.format(obj_state))
+                sampled_tasks.append('{0}_drawer'.format(obj_state))
             elif obj in ['led', 'lightbulb']:
                 obj_state = 'on' if state == 0 else 'off'
-                self.sampled_tasks.append('turn_{0}_{1}'.format(obj_state, obj))
+                sampled_tasks.append('turn_{0}_{1}'.format(obj_state, obj))
+        
+        return sampled_tasks
     
     def get_object_combinations(self):
         train_combinations = []

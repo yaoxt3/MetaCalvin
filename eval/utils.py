@@ -4,10 +4,7 @@ import random
 
 def rollout_eval(args, feedback_state, environment_state, env, model, steps, feedback_type='train_feedback', meta_task=None):
     model.reset()
-    if meta_task is not None:
-        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, meta_task=meta_task)
-    else:
-        obs, feedback, _, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True)
+    obs, feedback, _, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, meta_task=meta_task)
     train_feedback = feedback[feedback_type]
     print(train_feedback)
     current_trial = 0
@@ -20,6 +17,7 @@ def rollout_eval(args, feedback_state, environment_state, env, model, steps, fee
         
         if feedback is not None:
             train_feedback = feedback[feedback_type]
+            print(train_feedback)
 
         if trial_done:
             print('trial done')
@@ -42,10 +40,7 @@ def rollout_eval(args, feedback_state, environment_state, env, model, steps, fee
 
 def rollout_eval_llm(args, feedback_state, environment_state, env, agent, steps, meta_task=None):
     agent.reset()
-    if meta_task is not None:
-        obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, meta_task=meta_task)
-    else:
-        obs, feedback, _, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True)
+    obs, feedback, environment_description, _ = env.episode_reset(feedback_state, environment_state, train=False if args.eval else True, meta_task=meta_task)
     env_feedback = feedback['lm_feedback']
     total_reward = 0
     current_trial = 0
@@ -88,7 +83,7 @@ def rollout_eval_llm(args, feedback_state, environment_state, env, agent, steps,
     return total_reward, episode_length
 
 
-def get_environment_states(args, combination):
+def get_environment_states(args, env, combination, exploration_limits):
     drawer_states = ['open', 'closed']
     slider_states = ['left', 'right']
     lightbulb_states = [0, 1]
@@ -144,7 +139,23 @@ def get_environment_states(args, combination):
         environment_state['led'] = led_state
         environment_state['slider'] = slider_state
     
-    return environment_state
+    # Generate Feedback
+    limit = args.num_resets // (args.num_trials -1 ) + 1
+    idxs = []
+    for key in exploration_limits.keys():
+            if exploration_limits[key] < limit:
+                idxs.append(key)
+    
+    # Sample position for meta-object in feedback
+    idx = random.choice(idxs)
+    exploration_limits[idx] += 1
+    random.shuffle(combination)
+    sampled_tasks = env.state_to_tasks(environment_state, combination)
+    print(sampled_tasks)
+    meta_task = sampled_tasks[idx]
+    print(environment_state, meta_task)
+    
+    return environment_state, meta_task
 
 def get_environment_states_for_task(args, task, env):
     drawer_states = ['open', 'close']
@@ -192,7 +203,7 @@ def get_environment_states_for_task(args, task, env):
     feedback_state = random.sample([obj for obj in env.objects if obj not in meta_objs], 2)
     feedback_state = feedback_state + meta_objs
     random.shuffle(feedback_state)
-    print(feedback_state)
+
     return environment_state, feedback_state
 
 
@@ -209,10 +220,12 @@ def eval_combi_explore(args, base_env, agent):
 
     total_reward = 0
     total_steps = 0
+    total_episode_reward_found = 0
     stats = {}
     for task in tasks:
         task_reward = 0
         task_steps = 0
+        task_episode_reward_found = 0
         for reset in range(args.num_resets):
             print("################New Episode#################")
             environment_state, feedback_state = get_environment_states_for_task(args, task, base_env)
@@ -223,17 +236,19 @@ def eval_combi_explore(args, base_env, agent):
                 reward, episode_length = rollout_eval(args, feedback_state, environment_state, base_env, agent, num_steps, args.feedback, task)
             task_reward += reward
             task_steps += episode_length
+            task_episode_reward_found += 1 if reward > 0 else 0
             total_reward += reward
             total_steps += episode_length
+            total_episode_reward_found += 1 if reward > 0 else 0
         
         task_str = ' '.join(task)
         stats[task_str] = {'total_reward': task_reward, 'average_reward': task_reward / args.num_resets, \
-                           'episode_length': task_steps / args.num_resets}
+                           'ratio_reward_found': task_episode_reward_found / args.num_resets, 'episode_length': task_steps / args.num_resets}
         
-        print(f"Task: {task_str}, Reward: {task_reward}, Steps: {task_steps / args.num_resets}")
+        print(f"Task: {task_str}, Reward: {task_reward}, Ratio Reward Found: {task_episode_reward_found / args.num_resets}, Steps: {task_steps / args.num_resets}")
     
     stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / (len(tasks) * args.num_resets), \
-                                 'episode_length': total_steps / (len(tasks) * args.num_resets)}
+                                'ratio_reward_found': total_episode_reward_found / (len(tasks) * args.num_resets), 'episode_length': total_steps / (len(tasks) * args.num_resets)}
     
     return stats
 
@@ -251,31 +266,39 @@ def eval_explore(args, base_env, agent):
         combinations = train_combinations
     total_reward = 0
     total_steps = 0
+    total_episode_reward_found = 0
     stats = {}
     for combination in combinations:
         feedback_reward = 0
         feedback_steps = 0
+        feedback_episode_reward_found = 0
+        exploration_limits = {i: 0 for i in range(args.num_trials - 1)}
         for reset in range(args.num_resets):
             #base_env.base_env.seed(args.seed + reset)
             print("################New Episode#################")
             random.shuffle(combination)
-            state = get_environment_states(args, combination)
+            print(exploration_limits)
+            state, meta_task = get_environment_states(args, base_env, combination, exploration_limits)
+            print(exploration_limits)
             print(state)
             if args.eval_llm:
-                reward, episode_length = rollout_eval_llm(args, combination, state, base_env, agent, num_steps)
+                reward, episode_length = rollout_eval_llm(args, combination, state, base_env, agent, num_steps, meta_task)
             else:
-                reward, episode_length= rollout_eval(args, combination, state, base_env, agent, num_steps, args.feedback)
+                reward, episode_length= rollout_eval(args, combination, state, base_env, agent, num_steps, args.feedback, meta_task)
             feedback_reward += reward
-            feedback_steps += episode_length 
+            feedback_steps += episode_length
+            feedback_episode_reward_found += 1 if reward > 0 else 0
             total_reward += reward
             total_steps += episode_length
+            total_episode_reward_found += 1 if reward > 0 else 0
 
-        print(f"Feedback state: {combination}, Reward: {feedback_reward}, Steps: {feedback_steps /  args.num_resets}")
+        print(f"Feedback state: {combination}, Reward: {feedback_reward}, Ratio Reward Found: {feedback_episode_reward_found / args.num_resets}, \
+                Steps: {feedback_steps /  args.num_resets}")
         feedback_state_str = ' '.join(combination)
         stats[feedback_state_str] = {'total_reward': feedback_reward, 'average_reward': feedback_reward / args.num_resets, \
-                                     'episode_length': feedback_steps / args.num_resets}
+                                     'ratio_reward_found': feedback_episode_reward_found / args.num_resets, 'episode_length': feedback_steps / args.num_resets}
     
     stats['overall_reward'] = {'total_reward': total_reward, 'average_reward': total_reward / ( len(combinations) * args.num_resets), \
-                               'episode_length': total_steps / (len(combinations) * args.num_resets)}
+                               'ratio_reward_found':  total_episode_reward_found / (len(combinations) * args.num_resets), 'episode_length': total_steps / (len(combinations) * args.num_resets)}
 
     return stats 

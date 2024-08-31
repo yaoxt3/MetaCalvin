@@ -35,10 +35,11 @@ class MultiEnv():
 
 
         self.all_subtasks = ['move_slider_left', 'move_slider_right', 'open_drawer', 'close_drawer', 'turn_on_lightbulb',
-                        'turn_off_lightbulb', 'turn_on_led', 'turn_off_led', 'lift_red_block_table']
+                        'turn_off_lightbulb', 'turn_on_led', 'turn_off_led']
         self.static_objects = ['slider', 'drawer', 'led', 'lightbulb']
-        self.block_objects = ['red_block']
-        self.objects = self.static_objects + self.block_objects
+
+        self.objects = self.static_objects
+
         self.num_objects = len(self.objects)
         self.train_tasks_dict, self.eva_tasks_dict, self.train_tasks, self.eval_tasks = self.build_train_and_eval_tasks()
 
@@ -280,8 +281,7 @@ class MultiEnv():
         return feedback
     
     def create_dynamic_env(self, feedback_state=None, environment_state=None, meta_task=None):
-        #used_objects = random.sample(self.objects, 4)
-        used_objects = self.static_objects
+        used_objects = self.objects
         if environment_state is None:
             initial_state = {}
             for static_object in self.static_objects:
@@ -303,7 +303,7 @@ class MultiEnv():
                 meta_task = random.sample(self.sampled_subtasks, 2)
                 if meta_task not in self.eval_tasks:
                     break
-            print(meta_task)
+            
 
         else:
             assert feedback_state is not None, "Feedback state is required for environment state"
@@ -339,7 +339,6 @@ class MultiEnv():
         eval_tasks = [['move_slider_right', 'turn_off_led'], ['close_drawer', 'turn_on_lightbulb'], ['turn_on_led', 'turn_off_lightbulb'],
                       ['move_slider_left', 'open_drawer']]
         train_tasks = [task for task in all_tasks if task not in eval_tasks]
-        print(len(train_tasks), len(eval_tasks))
         train_tasks_dict = {}
         eval_tasks_dict = {}
         for task in train_tasks:

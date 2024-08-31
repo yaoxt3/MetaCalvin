@@ -196,7 +196,7 @@ def evaluate():
     task_oracle = hydra.utils.instantiate(task_cfg)
 
     if args.combi_explore:
-        assert args.num_objs == 5, 'Combi Explore setting requires 5 objects'
+        args.num_objs = 4
         base_env = MultiEnv(base_env, task_oracle, num_trials=args.num_trials, trial_steps=args.trial_steps,
                 provide_feedback=True, provide_train_feedback=True, provide_lm_feedback=True if args.eval_llm else False,
                 reset_robot_pos=False)
