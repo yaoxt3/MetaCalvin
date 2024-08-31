@@ -3,9 +3,7 @@ from logging import debug
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 import open_clip
 from typing import Optional
-from robot_flamingo.models.flamingo_bc import BCFlamingo
-from robot_flamingo.models.flamingo_mpt import MPTFlamingo
-from robot_flamingo.models.flamingo_mpt_seq import MPTFlamingoSeq
+from models.flamingo_mpt_seq import MPTFlamingoSeq
 from open_flamingo.src.flamingo_lm import FlamingoLMMixin
 from open_flamingo.src.utils import extend_instance
 from open_flamingo.src.factory import _infer_decoder_layers_attr_name
@@ -49,16 +47,6 @@ mpt_dict = {
     }
 }
 
-
-UNEXPLORED_TOKENS = {'move_slider_left':'<|slider_left|>','move_slider_right': '<|slider_right|>', 'open_drawer':'<|open_drawer|>',
-                                'close_drawer':'<|close_drawer|>', 'turn_on_lightbulb':'<|lightbulb_on|>', 'turn_off_lightbulb':'<|lightbulb_off|>',
-                                'turn_on_led':'<|led_on|>', 'turn_off_led':'<|led_off|>', 'lift_red_block_table':'<|red_block_table|>', 
-                                'lift_pink_block_table':'<|pink_block_table|>'}
-
-EXPLORED_TOKENS = {'move_slider_left':'<|slider_left_done|>', 'move_slider_right': '<|slider_right_done|>', 'open_drawer':'<|open_drawer_done|>',
-                                'close_drawer':'<|close_drawer_done|>', 'turn_on_lightbulb':'<|lightbulb_on_done|>', 'turn_off_lightbulb':'<|lightbulb_off_done|>',
-                                'turn_on_led':'<|led_on_done|>', 'turn_off_led':'<|led_off_done|>', 'lift_red_block_table':'<|red_block_table_done|>',
-                                'lift_pink_block_table':'<|pink_block_table_done|>'}
 
 
 
@@ -153,10 +141,7 @@ def create_model_and_transforms(
         tokenizer_path, local_files_only=use_local_files
     )
     # add Flamingo special tokens to the tokenizer
-    if action_tokens:
-        additional_token_list = ["<|endofchunk|>", "<image>"] + ['<|rewarding|>', '<|no_reward|>'] + [val for val in UNEXPLORED_TOKENS.values()] + [val for val in EXPLORED_TOKENS.values()]
-    else:
-        additional_token_list = ["<|endofchunk|>", "<image>"]
+    additional_token_list = ["<|endofchunk|>", "<image>"]
     text_tokenizer.add_special_tokens(
         {"additional_special_tokens": additional_token_list}
     )
@@ -195,9 +180,7 @@ def create_model_and_transforms(
     # print(getattr(lang_encoder, lang_encoder.base_model_prefix, lang_encoder))
     # print(lang_encoder)
     lang_encoder.resize_token_embeddings(len(text_tokenizer))
-    if 'llama' in llm_name:
-        Model_fn = BCFlamingo
-    elif 'mpt' in llm_name:
+    if 'mpt' in llm_name:
         Model_fn = MPTFlamingoSeq     
     else:
         raise NotImplementedError

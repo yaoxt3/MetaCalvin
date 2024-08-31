@@ -1,43 +1,24 @@
 import sys
 sys.path.append('../')
 
-import ast
-from cgitb import text
 import functools
-import io
 import json
 import logging
 import math
-import os
-import random
 import sys
-import tarfile
 from dataclasses import dataclass
 from multiprocessing import Value
-import zipfile
 
-import braceexpand
 import torch
-import torchvision
-import webdataset as wds
 import numpy as np
 from PIL import Image
-from torch.utils.data import DataLoader, IterableDataset, get_worker_info, Dataset
+from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
-from webdataset.filters import _shuffle
-from webdataset.tariterators import (
-    base_plus_ext,
-    tar_file_expander,
-    url_opener,
-    valid_sample,
-)
 
 from calvin_agent.datasets.utils.episode_utils import (
     get_state_info_dict,
     process_actions,
     process_depth,
-    process_language,
-    process_rgb,
     process_state,
 )
 from sampler import SequenceSampler, DistributedSequenceSampler, DistributedRandomSampler
@@ -1554,7 +1535,7 @@ def load_partial_traj_data():
     return data
 
 if __name__=='__main__':
-    from robot_flamingo.models.factory import create_model_and_transforms
+    from models.factory import create_model_and_transforms
     import time
     import cv2
 

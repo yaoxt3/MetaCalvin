@@ -19,8 +19,8 @@ from env.env_v1 import Env
 from agent.reasoning_llm import ReasoningLLM
 
 
-from robot_flamingo.models.factory import create_model_and_transforms
-from robot_flamingo.eval.eval_utils import ModelWrapper
+from models.factory import create_model_and_transforms
+from models.agent_model import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
 

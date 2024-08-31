@@ -34,7 +34,7 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
-from robot_flamingo.models.factory import create_model_and_transforms, mpt_dict
+from models.factory import create_model_and_transforms, mpt_dict
 
 
 def random_seed(seed=42, rank=0):

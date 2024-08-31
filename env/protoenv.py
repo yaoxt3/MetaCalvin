@@ -7,9 +7,6 @@ sys.path.append("./open_flamingo/")
 sys.path.append("./robot_flamingo/")
 
 import numpy as np
-import torch
-import time
-import re
 import hydra
 import random
 
@@ -22,7 +19,6 @@ from omegaconf import OmegaConf
 import pybullet as p
 
 import itertools
-from copy import deepcopy
 
 
 class ProtoEnv():

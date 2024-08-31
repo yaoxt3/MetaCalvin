@@ -1,13 +1,16 @@
+#Adapted from original RobotFlamingo by Richard Bornemann
+
 import torch
 from einops import rearrange, repeat
 from torch import nn
 import copy
 from open_flamingo.src.helpers import PerceiverResampler
-from robot_flamingo.models.action_head import DeterministicDecoder, DiffusionDecoder, FCDecoder, GPTDecoder
+from models.action_head import DeterministicDecoder
+from models.action_head_seq import DeterministicDecoderSeq
 from collections import namedtuple
 
-
-class BCFlamingo(nn.Module):
+"""Code adapted for seq training from https://github.com/RoboFlamingo/RoboFlamingo/blob/main/robot_flamingo/models/flamingo_mpt.py"""
+class MPTFlamingoSeq(nn.Module):
     def __init__(
         self,
         vision_encoder: nn.Module,
@@ -35,7 +38,7 @@ class BCFlamingo(nn.Module):
         multi_step_action=1,
         sep_lm_head=False,
         return_feature = False,
-        llm='llama_9b',
+        llm='llama',
         pooling='max',
         residual=False,
         tcp_rel=False,
@@ -44,6 +47,8 @@ class BCFlamingo(nn.Module):
         hidden_size=None,
         fwd_pred=False,
         fwd_pred_hand=False,
+        global_latent=10,
+        no_image_patch=False,
         refresh=-1
     ):
         """
@@ -58,6 +63,7 @@ class BCFlamingo(nn.Module):
             use_media_placement_augmentation (bool, optional): Whether to randomly assign images to the preceding or following text in training. Defaults to False.
         """
         super().__init__()
+
         self.use_gripper = use_gripper
         self.use_state = use_state
         self.fusion_mode = fusion_mode
@@ -83,11 +89,8 @@ class BCFlamingo(nn.Module):
             self.lang_dim = lang_encoder.config.d_model  # mpt uses d_model
         else:
             self.lang_dim = lang_encoder.config.hidden_size
-        
-        # print(self.vis_dim, self.lang_dim)
-        
-        self.residual = residual
 
+        self.residual = residual
         if not debug:
             if 'llama' in llm:
                 self.lang_encoder.init_flamingo(
@@ -113,7 +116,7 @@ class BCFlamingo(nn.Module):
             self.state_fc = nn.Linear(state_dim, self.vis_dim)
         if use_hist:
             self.frame_embs = nn.Parameter(torch.randn(self.window_size, self.vis_dim))
-        # To-do: nn archiecture for actor
+        
         self.llm = llm
         if llm=='llama':
             in_features = lang_encoder.lm_head.in_features
@@ -125,33 +128,14 @@ class BCFlamingo(nn.Module):
             lm_head = DeterministicDecoder(in_features, self.window_size, 
             use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, use_state=use_state, return_feature=return_feature, multi_step_action=multi_step_action, pooling=pooling)
             self.lang_encoder.lm_head = lm_head
-        elif decoder_type == 'fc':
-            if use_hist:
-                self.lang_encoder.lm_head = self.action_head = FCDecoder(in_features, self.window_size, 
-                use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, use_state=use_state, return_feature=return_feature, multi_step_action=multi_step_action)
-            elif 'vit_concat' in fusion_mode:
-                self.lang_encoder.lm_head = self.action_head = FCDecoder(in_features, self.window_size, 
-                use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, use_state=use_state, return_feature=return_feature, multi_step_action=multi_step_action)
-            else:
-                raise NotImplementedError
-        elif decoder_type == 'diffusion':
-            if use_diff:
-                self.diffusion_model = DiffusionDecoder(
-                    self.action_head.hidden_size, 
-                    self.window_size,
-                    input_dim=self.action_head.out_features+1,
-                    n_timesteps=n_timesteps,
-                    horizon=diff_horizon,
-                    predict_epsilon=predict_epsilon,
-                )
-            else:
-                raise NotImplementedError
-        elif decoder_type=='gpt':
-            lm_head = GPTDecoder(in_features, self.window_size, use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, multi_step_action=multi_step_action, pooling=pooling, hidden_size=hidden_size)
-            self.lang_encoder.lm_head = self.action_head = lm_head
+        elif decoder_type == 'lstm_seq':
+            lm_head = DeterministicDecoderSeq(in_features, self.window_size, 
+            use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, use_state=use_state, return_feature=return_feature, multi_step_action=multi_step_action, pooling=pooling)
+            self.lang_encoder.lm_head = lm_head
         else:
             raise NotImplementedError
-
+        
+        sep_lm_head = True
         self.sep_lm_head = sep_lm_head
         if sep_lm_head:
             self.lm_head = self.lang_encoder.lm_head
@@ -162,6 +146,7 @@ class BCFlamingo(nn.Module):
         vision_x: torch.Tensor,
         lang_x: torch.Tensor,
         attention_mask: torch.Tensor = None,
+        hidden_state_mask: torch.Tensor = None,
         labels: torch.Tensor = None,
         use_cached_vision_x: bool = False,
         clear_conditioned_layers: bool = True,
@@ -211,109 +196,33 @@ class BCFlamingo(nn.Module):
         else:
             # Case: do not use caching (i.e. this is a standard forward pass);
             if self.use_hist:
-                self._encode_history_vision_post_fusion(vision_x, vision_gripper, state_tensor)
+                self._encode_history_vision_post_fusion(vision_x, vision_gripper)
             else:
                 if not self.use_gripper or self.fusion_mode == 'two_way':
                     vision_x = self._encode_vision_x(vision_x=vision_x)
                 else:
                     if self.fusion_mode == 'pre':
-                        self._encode_multi_vision_pre_fusion(vision_x, vision_gripper, state_tensor)
+                        self._encode_multi_vision_pre_fusion(vision_x, vision_gripper)
                     elif self.fusion_mode == 'post':
-                        self._encode_multi_vision_post_fusion(vision_x, vision_gripper, state_tensor)
+                        self._encode_multi_vision_post_fusion(vision_x, vision_gripper)
                     elif self.fusion_mode == 'vit_concat':
-                        self._encode_history_vision_fc_post(vision_x, vision_gripper, state_tensor)
+                        self._encode_history_vision_fc_post(vision_x, vision_gripper)
         
-        if 'llama' in self.llm:
-            output = self.lang_encoder(
-                input_ids=lang_x,
-                attention_mask=attention_mask,
-                # labels=labels,  # 不输入label，程序就不会计算loss
-                past_key_values=past_key_values,
-                use_cache=use_cache,
-            )
-        else:
-            output = self.lang_encoder(
-                input_ids=lang_x,
-                attention_mask=attention_mask
-            )
-        
-        if self.sep_lm_head:
-            output_llm = output.logits
-            output_lm_head = self.lm_head(output_llm, state_tensor=state_tensor, return_feature=return_feature)
-            output.logits = output_lm_head
-        
-        if clear_conditioned_layers:
-            self.lang_encoder.clear_conditioned_layers()
-
-        # action_seq = self.action_head(vision_x)
-        return output
-
-    # Generate function with actor for text time adpatation
-    def generate(
-        self,
-        vision_x: torch.Tensor,
-        lang_x: torch.Tensor,
-        attention_mask: torch.Tensor = None,
-        num_beams=1,
-        max_new_tokens=None,
-        temperature=1.0,
-        top_k=0,
-        top_p=1.0,
-        no_repeat_ngram_size=0,
-        prefix_allowed_tokens_fn=None,
-        length_penalty=1.0,
-        num_return_sequences=1,
-        do_sample=False,
-        early_stopping=False,
-    ):
-        """
-        Generate text conditioned on vision and language inputs.
-
-        Args:
-            vision_x (torch.Tensor): Vision input
-                shape (B, T_img, F, C, H, W)
-                images in the same chunk are collated along T_img, and frames are collated along F
-                currently only F=1 is supported (single-frame videos)
-            lang_x (torch.Tensor): Language input
-                shape (B, T_txt)
-            max_length (int, optional): Maximum length of the output. Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            num_beams (int, optional): Number of beams. Defaults to 1.
-            max_new_tokens (int, optional): Maximum new tokens. Defaults to None.
-            temperature (float, optional): Temperature. Defaults to 1.0.
-            top_k (int, optional): Top k. Defaults to 0.
-            top_p (float, optional): Top p. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): No repeat ngram size. Defaults to 0.
-            length_penalty (float, optional): Length penalty. Defaults to 1.0.
-            num_return_sequences (int, optional): Number of return sequences. Defaults to 1.
-            do_sample (bool, optional): Do sample. Defaults to False.
-            early_stopping (bool, optional): Early stopping. Defaults to False.
-        Returns:
-            torch.Tensor: lang_x with generated tokens appended to it
-        """
-        if num_beams > 1:
-            vision_x = vision_x.repeat_interleave(num_beams, dim=0)
-
-        self._encode_vision_x(vision_x=vision_x)
-
-        output = self.lang_encoder.generate(
-            lang_x,
-            attention_mask=attention_mask,
-            eos_token_id=self.eoc_token_id,
-            num_beams=num_beams,
-            max_new_tokens=max_new_tokens,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
-            prefix_allowed_tokens_fn=prefix_allowed_tokens_fn,
-            no_repeat_ngram_size=no_repeat_ngram_size,
-            length_penalty=length_penalty,
-            num_return_sequences=num_return_sequences,
-            do_sample=do_sample,
-            early_stopping=early_stopping,
+        output = self.lang_encoder(
+            input_ids=lang_x,
+            attention_mask=attention_mask.bool(),
+            past_key_values=past_key_values,
+            use_cache=use_cache,
+            output_hidden_states=True
         )
 
-        self.lang_encoder.clear_conditioned_layers()
+        output_hs = output.hidden_states[-1]
+        if hidden_state_mask is None:
+            output_hs = self.lm_head(output_hs, state_tensor=state_tensor, return_feature=return_feature)
+        else:
+            output_hs = self.lm_head(output_hs, hidden_state_mask, state_tensor=state_tensor, return_feature=return_feature)
+
+        output.logits = output_hs
         return output
 
     def _encode_vision_x(self, vision_x: torch.Tensor):
@@ -413,7 +322,6 @@ class BCFlamingo(nn.Module):
 
         vision_x = torch.cat([vision_rgb, vision_gripper], dim=2)  # reshapes to (b, T, 2*n, d)
         if self.use_state and state_tensor is not None:
-            # state_tensor = state_tensor.double()
             state_tensor = self.state_fc(state_tensor)
             vision_x = torch.cat([vision_x, state_tensor], dim=2)  # reshapes to (b, T, 2*n+1, d)
         for layer in self.lang_encoder._get_decoder_layers():

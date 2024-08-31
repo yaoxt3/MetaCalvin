@@ -13,14 +13,13 @@ import torch
 import hydra
 from pathlib import Path
 import os
-from hydra import initialize, compose
 
 from agent import OracleAgent
 from env.protoenv import ProtoEnv
 from reasoning_llm import ReasoningLLM
 from data_utils import collect_data
-from robot_flamingo.models.factory import create_model_and_transforms
-from robot_flamingo.eval.eval_utils import ModelWrapper
+from models.factory import create_model_and_transforms
+from models.agent_model import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
 from pytorch_lightning import seed_everything
@@ -45,7 +44,7 @@ from env.protoenv import ProtoEnv
 from env.multi_env import MultiEnv
 from reasoning_llm import ReasoningLLM
 from data_utils import collect_data
-from robot_flamingo.models.factory import create_model_and_transforms
+from models.factory import create_model_and_transforms
 from robot_flamingo.eval.eval_utils import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env

@@ -77,8 +77,3 @@ def tcp_to_world_frame(action, robot_obs):
             action_w = action_w.view(b, s, -1, action_w.shape[-1])
         assert not torch.any(action_w.isnan())
     return action_w
-
-if __name__ == "__main__":
-    action = torch.randn((4, 5, 3, 7))
-    robot_obs = torch.randn((4, 5, 3, 7))
-    print(world_to_tcp_frame(action, robot_obs))

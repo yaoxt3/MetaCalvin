@@ -7,18 +7,12 @@ sys.path.append("./open_flamingo/")
 sys.path.append("./robot_flamingo/")
 
 import numpy as np
-import torch
-import time
-import re
-import hydra
 import random
 
 from math import pi
 
 from env.multi_env_utils import *
 
-from pathlib import Path
-from omegaconf import OmegaConf
 import pybullet as p
 
 import itertools

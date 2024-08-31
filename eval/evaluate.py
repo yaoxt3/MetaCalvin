@@ -2,9 +2,7 @@ import sys
 sys.path.append('../')
 import torch
 import hydra
-import cv2
 from pathlib import Path
-from hydra import initialize, compose
 import numpy as np
 import re
 import argparse
@@ -20,8 +18,8 @@ from agent.reasoning_llm import ReasoningLLM
 from agent.agent import OracleAgent
 
 
-from robot_flamingo.models.factory import create_model_and_transforms
-from robot_flamingo.eval.eval_utils import ModelWrapper
+from models.factory import create_model_and_transforms
+from models.agent_model import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
 

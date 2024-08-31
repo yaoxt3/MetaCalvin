@@ -13,7 +13,6 @@ import torch
 import hydra
 import cv2
 from pathlib import Path
-from hydra import initialize, compose
 import numpy as np
 import re
 import argparse
@@ -23,23 +22,18 @@ import pybullet as p
 from pathlib import Path
 
 from env.protoenv import ProtoEnv
-from env.env_v1 import Env
-from reasoning_llm import ReasoningLLM
 
 
-from robot_flamingo.models.factory import create_model_and_transforms
-from robot_flamingo.eval.eval_utils import ModelWrapper
+from models.factory import create_model_and_transforms
+from models.agent_model import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
 
 from omegaconf import DictConfig, OmegaConf
 
-import time
 
 from pytorch_lightning import seed_everything
-import csv
 import os
-import itertools
 import random
 import cv2
 
