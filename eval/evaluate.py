@@ -1,5 +1,13 @@
 import sys
-sys.path.append('../')
+sys.path.append("../calvin/calvin_models/")
+sys.path.append("../calvin/calvin_env/")
+sys.path.append("../calvin/calvin_env/tacto")
+sys.path.append("../calvin/calvin_models/calvin_agent/")
+sys.path.append("../open_flamingo/")
+sys.path.append("../models/")
+sys.path.append("../")
+
+
 import torch
 import hydra
 from pathlib import Path
@@ -18,8 +26,8 @@ from agent.reasoning_llm import ReasoningLLM
 from agent.agent import OracleAgent
 
 
-from models.factory import create_model_and_transforms
-from models.agent_model import ModelWrapper
+from factory import create_model_and_transforms
+from agent_model import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
 

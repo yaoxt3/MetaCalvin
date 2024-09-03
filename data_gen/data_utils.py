@@ -30,11 +30,7 @@ def rollout(env, agent, steps, meta_task_stats, exploration_stats, exploration_s
     while True:
         meta_task = random.choice(list(meta_task_stats.keys()))
         if meta_task_stats[meta_task] < round(total_episodes/len(env.train_tasks)):
-            #meta_task_list = env.train_tasks_dict[meta_task] # TODO: Fix this
-            #else:
-            #    meta_task_list = [meta_task]
             meta_task_list = [meta_task]
-            print(meta_task_list, 'HERE')
             environment_state, feedback_state = get_env_states_for_task(exploration_stats_episode, exploration_stats_limits, meta_task_list, env)
             meta_task_stats_episode[meta_task] += 1
             break

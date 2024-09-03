@@ -5,10 +5,9 @@ sys.path.append("../calvin/calvin_env/")
 sys.path.append("../calvin/calvin_env/tacto")
 sys.path.append("../calvin/calvin_models/calvin_agent/")
 sys.path.append("../open_flamingo/")
-sys.path.append("../robot_flamingo/")
-sys.path.append("../data/")
-sys.path.append("../agent/")
+sys.path.append("../models/")
 sys.path.append("../")
+
 
 
 import argparse
@@ -24,7 +23,7 @@ from huggingface_hub import hf_hub_download
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from data import get_data
+from data.data import get_data
 from open_flamingo.train.distributed import init_distributed_device, world_info_from_env
 from train.utils import get_checkpoint, train_one_epoch, train_one_epoch_diff, get_ckpt_name, get_ckpt_name_pattern
 from torch.distributed.elastic.multiprocessing.errors import record
@@ -34,7 +33,7 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
-from models.factory import create_model_and_transforms, mpt_dict
+from factory import create_model_and_transforms, mpt_dict
 
 
 def random_seed(seed=42, rank=0):
@@ -79,12 +78,12 @@ def main():
     parser.add_argument("--use_media_placement_augmentation", action="store_true")
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--num_epochs", type=int, default=1)
-    parser.add_argument("--window_size", type=int, default=32)
+    parser.add_argument("--window_size", type=int, default=12)
     parser.add_argument(
         "--logging_steps", type=int, default=100, help="log loss every n steps"
     )
     # Sum of gradient optimization batch size
-    parser.add_argument("--batch_size_calvin", type=int, default=1)
+    parser.add_argument("--batch_size_calvin", type=int, default=12)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
     parser.add_argument(
         "--resume_from_checkpoint",
@@ -126,7 +125,7 @@ def main():
     parser.add_argument(
         "--precision",
         choices=["amp_bf16", "amp_bfloat16", "bf16", "fp16", "fp32"],
-        default="fp16",
+        default="fp32",
         help="Floating point precision.",
     )
     # data args

@@ -5,8 +5,8 @@ from einops import rearrange, repeat
 from torch import nn
 import copy
 from open_flamingo.src.helpers import PerceiverResampler
-from models.action_head import DeterministicDecoder
-from models.action_head_seq import DeterministicDecoderSeq
+from action_head import DeterministicDecoder
+from action_head_seq import DeterministicDecoderSeq
 from collections import namedtuple
 
 """Code adapted for seq training from https://github.com/RoboFlamingo/RoboFlamingo/blob/main/robot_flamingo/models/flamingo_mpt.py"""

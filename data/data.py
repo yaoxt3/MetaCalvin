@@ -15,20 +15,19 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 
-from calvin_agent.datasets.utils.episode_utils import (
+from calvin.calvin_models.calvin_agent.datasets.utils.episode_utils import (
     get_state_info_dict,
     process_actions,
     process_depth,
     process_state,
 )
-from sampler import SequenceSampler, DistributedSequenceSampler, DistributedRandomSampler
+from data.sampler import SequenceSampler, DistributedSequenceSampler, DistributedRandomSampler
 
 import numpy as np
 from omegaconf import DictConfig
 import pyhash
 import torch
 from torch.utils.data import Dataset
-from robot_flamingo.data.real_dataset_hdf5 import RealDatasetHDF5
 
 Image.MAX_IMAGE_PIXELS = 1000000000
 MAX_NUM_TOKENS = 256
@@ -55,20 +54,6 @@ import logging
 from pathlib import Path
 from typing import Dict, Tuple, Union
 
-from calvin_agent.datasets.utils.episode_utils import (
-    get_state_info_dict,
-    process_actions,
-    process_depth,
-    # process_language,
-    # process_rgb,
-    process_state,
-)
-import numpy as np
-from omegaconf import DictConfig
-import pyhash
-import torch
-from torch.utils.data import Dataset
-from robot_flamingo.data.vl_dataset import CaptionDataset, VQADataset
 
 hasher = pyhash.fnv1_32()
 logger = logging.getLogger(__name__)
@@ -114,7 +99,7 @@ def get_validation_window_size(
 
 from typing import Any, Dict, List, Tuple, Callable
 from itertools import chain
-from calvin_agent.datasets.utils.episode_utils import lookup_naming_pattern
+from calvin.calvin_models.calvin_agent.datasets.utils.episode_utils import lookup_naming_pattern
 import pickle
 import torch.nn as nn
 import torch.nn.functional as F

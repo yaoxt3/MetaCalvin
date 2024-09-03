@@ -2,7 +2,6 @@ from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
-from open_flamingo.src.helpers import PerceiverResampler
 import copy
 
 def lstm_decoder(

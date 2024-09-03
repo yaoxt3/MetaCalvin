@@ -6,7 +6,7 @@ import sys
 import PIL.Image as Image
 from collections import deque
 # This is for using the locally installed repo clone when using slurm
-from calvin_agent.models.calvin_base_model import CalvinBaseModel
+from calvin.calvin_models.calvin_agent.models.calvin_base_model import CalvinBaseModel
 sys.path.insert(0, Path(__file__).absolute().parents[2].as_posix())
 
 import numpy as np
@@ -14,8 +14,8 @@ import torch
 from torch.nn.parallel import DistributedDataParallel
 from tqdm.auto import tqdm
 
-from calvin_env.envs.play_table_env import get_env
-from data.data import preprocess_image, preprocess_text_calvin
+from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
+from data.data import preprocess_image
 from data.utils import world_to_tcp_frame, tcp_to_world_frame
 import functools
 os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
@@ -34,48 +34,21 @@ def get_cast_dtype(precision: str):
         cast_dtype = torch.float16
     return cast_dtype
 
-
-def make_env(dataset_path):
-    val_folder = Path(dataset_path) / "validation"
-    env = get_env(val_folder, show_gui=False)
-
-    # insert your own env wrapper
-    # env = Wrapper(env)
-    return env
-
-class DebugEnv():
-    
-    def __init__(self) -> None:
-        pass
-    
-    def get_random_obs(self):
-        obs = {}
-        obs['rgb_obs'] = {}
-        obs['rgb_obs']['rgb_static'] = np.ones((200, 200, 3), dtype=np.uint8)
-        obs['rgb_obs']['rgb_gripper'] = np.ones((84, 84, 3), dtype=np.uint8)
-        obs['robot_obs'] = np.ones(15, dtype=np.float32)
-        return obs
-    
-    def get_obs(self):
-        return self.get_random_obs()
-    
-    def step(self, action):
-        return self.get_random_obs()
-
-    def reset(self, **kwargs):
-        return
-
-    def get_info(self):
-        return
-
-
-def make_env_debug(dataset_path):
-    val_folder = Path(dataset_path) / "validation"
-    env = get_env(val_folder, show_gui=False)
-
-    # insert your own env wrapper
-    # env = Wrapper(env)
-    return env
+def preprocess_text_calvin(sample, tokenizer):
+    tokenizer.padding_side = "right"
+    sample = [
+        # (f"{s.strip()}{tokenizer.eos_token}")
+        # for s in sample
+        (f"<image>{s.strip()}<|endofchunk|>{tokenizer.eos_token}") for s in sample
+    ]
+    text = tokenizer(
+        sample,
+        max_length=64,
+        padding="longest",
+        truncation="only_first",
+        return_tensors="pt",
+    )
+    return text["input_ids"], text["attention_mask"]
 
 
 class ModelWrapper(CalvinBaseModel):

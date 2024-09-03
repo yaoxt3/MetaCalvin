@@ -3,7 +3,7 @@ from logging import debug
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 import open_clip
 from typing import Optional
-from models.flamingo_mpt_seq import MPTFlamingoSeq
+from flamingo_mpt_seq import MPTFlamingoSeq
 from open_flamingo.src.flamingo_lm import FlamingoLMMixin
 from open_flamingo.src.utils import extend_instance
 from open_flamingo.src.factory import _infer_decoder_layers_attr_name
