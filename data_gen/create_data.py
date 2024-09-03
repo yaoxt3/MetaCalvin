@@ -4,8 +4,7 @@ sys.path.append("../calvin/calvin_env/")
 sys.path.append("../calvin/calvin_env/tacto")
 sys.path.append("../calvin/calvin_models/calvin_agent/")
 sys.path.append("../open_flamingo/")
-sys.path.append("../robot_flamingo/")
-sys.path.append("../agent/")
+sys.path.append("../models/")
 sys.path.append("../")
 
 
@@ -14,38 +13,13 @@ import hydra
 from pathlib import Path
 import os
 
-from agent import OracleAgent
-from env.protoenv import ProtoEnv
-from reasoning_llm import ReasoningLLM
-from data_utils import collect_data
-from models.factory import create_model_and_transforms
-from models.agent_model import ModelWrapper
-
-from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
-from pytorch_lightning import seed_everything
-
-from omegaconf import DictConfig, OmegaConf
-
-import argparse
-
-def none_or_str(value):
-    if value == 'None':
-        return None
-    return value
-
-import torch
-import hydra
-from pathlib import Path
-import os
-from hydra import initialize, compose
-
-from agent import OracleAgent
+from agent.agent import OracleAgent
 from env.protoenv import ProtoEnv
 from env.multi_env import MultiEnv
-from reasoning_llm import ReasoningLLM
+from agent.reasoning_llm import ReasoningLLM
 from data_utils import collect_data
-from models.factory import create_model_and_transforms
-from robot_flamingo.eval.eval_utils import ModelWrapper
+from factory import create_model_and_transforms
+from agent_model import ModelWrapper
 
 from calvin.calvin_env.calvin_env.envs.play_table_env import get_env
 from pytorch_lightning import seed_everything
@@ -63,7 +37,7 @@ def main():
     parser = argparse.ArgumentParser(description='Script to collect data from the environment using the oracle agent')
 
     #Agent parameters
-    parser.add_argument('--checkpoint_path', default= '/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
+    parser.add_argument('--checkpoint_path', default= '../RoboCheckpoint/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth', 
                         type=str, help='Path to the policy model')
     parser.add_argument('--reasoning_model', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
     parser.add_argument('--tokenizer', default= 'google/gemma-2-27b-it', type=none_or_str, help='Path to the reasoning model')
@@ -96,6 +70,7 @@ def main():
     parser.add_argument('--save_dir', default= None, type=none_or_str, help='Path to save the collected data')
     parser.add_argument('--report_interval', default= 10, type=int, help='Interval to report the number of episodes collected')
     parser.add_argument('--seed', default=42, type=int)
+    parser.add_argument('--render', action= 'store_true', help='Whether to render the environment or not')
 
     
     args = parser.parse_args()
