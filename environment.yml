@@ -1,4 +1,4 @@
-name: test
+name: meta-calvin
 channels:
   - defaults
 dependencies:
@@ -180,4 +180,4 @@ dependencies:
       - yarl==1.9.4
       - zarr==2.16.1
       - zipp==3.17.0
-prefix: /dss/dsshome1/0F/ge26wuh2/anaconda3/envs/test
+prefix: /dss/dsshome1/0F/ge26wuh2/anaconda3/envs/meta-calvin
