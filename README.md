@@ -14,13 +14,16 @@ The required models are already downloaded on the LRZ account in the huggingface
 If you want to install all required models for training from scratch do the following:
 
 ### 1)
+Clone the [CALVIN](https://github.com/mees/calvin) repo
+
+### 2)
 Download the released [OpenFlamingo](https://github.com/mlfoundations/open_flamingo) models:
 
 |# params|Language model|Vision encoder|Xattn interval*|COCO 4-shot CIDEr|VQAv2 4-shot Accuracy|Avg Len|Weights|
 |------------|--------------|--------------|----------|-----------|-------|-----|----|
 |3B| anas-awadalla/mpt-1b-redpajama-200b-dolly | openai CLIP ViT-L/14 | 1 | 82.7 | 45.7 | 4.09 | [Link](https://huggingface.co/openflamingo/OpenFlamingo-3B-vitl-mpt1b-langinstruct)|
 
-### 2)
+### 3)
 Download the RoboFlamingo [checkpoint](https://huggingface.co/roboflamingo/RoboFlamingo/blob/main/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_2.pth)
 
 All other required Hugginface models should install automatically if they are not already in the local Huggingface Hub.
