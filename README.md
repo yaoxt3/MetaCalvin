@@ -1,17 +1,11 @@
 # Installation Guide and Examples for Running Data Creation, Training and Evaluation
-This guide is mainly for the current datasets stored on the LRZ account and the already downloaded foundation models.
-Branch cleanup is most up to date and should work the best!
+Datasets and trained models will be released here!
 
 ## Installation
 To create the venv meta-calvin run:
 ```
 conda env create -f environment.yml
 ```
-
-The required models are already downloaded on the LRZ account in the huggingface hub and the RoboCheckpoint folder\
-**/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint**
-
-If you want to install all required models for training from scratch do the following:
 
 ### 1)
 Clone the [CALVIN](https://github.com/mees/calvin) repo
@@ -57,7 +51,7 @@ python -u create_data.py
     --rollout_steps 1200 
     --num_trials 5  
     --data_episodes 1120
-    --save_dir /dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/training_7_example_data # Path to store dataset
+    --save_dir # Path to store dataset
     --report_interval 2 
     --one_trial_limit 15
     --two_trial_limit 30 
@@ -75,8 +69,8 @@ To train the model on e.g. the 7 objs Explore dataset on a single GPU run:
 
 ```
 torchrun --nnodes=1 --nproc_per_node=1 --master_port=6043 train_meta_calvin.py  
-    --calvin_dataset /dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/training_7_objs_pos_4
-    --run_name /dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/7_objs_non_seq_example 
+    --calvin_dataset #Path to dataset
+    --run_name #Run name 
     --rgb_pad 10 
     --gripper_pad 4 
     --use_gripper 
@@ -89,7 +83,7 @@ torchrun --nnodes=1 --nproc_per_node=1 --master_port=6043 train_meta_calvin.py
     --precision fp32
     --num_epochs 3
     --decoder_type lstm 
-    --checkpoint_path_foundation /dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint/open_flamingo_checkpoint.pt
+    --checkpoint_path_foundation #Path to OpenFlamingo or pretrained RoboFlamingo model
     --warmup_steps 1000 
     --learning_rate 1e-5 
     --save_every_iter 1000
@@ -100,14 +94,14 @@ torchrun --nnodes=1 --nproc_per_node=1 --master_port=6043 train_meta_calvin.py
 Example script of evaluating a trained model on the 7 objs Explore dataset:
 ```
 python -u evaluate.py \
-    --model_checkpoint /dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/7_objs_non_seq_pos_4/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_dolly_3b_13000.pth13000_iter.pth \
+    --model_checkpoint #Path to checkpoint \
     --decoder_type lstm \
     --window_size 12 \
     --num_objs 7 \
     --num_trials 5 \
     --num_resets 15 \
-    --run_name NonSeqScratch_7_Objs_13000 \
-    --path_to_results /dss/dsshome1/0F/ge26wuh2/workspace/RoboTest/eval/results/results_7_objs.csv \
+    --run_name #Run name \
+    --path_to_results #Path to results csv \
     --eval \
     --seed 1 \
 ```
