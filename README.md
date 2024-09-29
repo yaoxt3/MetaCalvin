@@ -24,7 +24,7 @@ All other required Hugginface models should install automatically if they are no
 I case of manual installation they can be found here:\
 Gemma-2-27b [huggingface](https://huggingface.co/google/gemma-2-27b-it)\
 CLIP Vit-L/14 [huggingface](https://huggingface.co/openai/clip-vit-large-patch14)\
-MPT [huggingface](https://huggingface.co/mosaicml/mpt-1b-redpajama-200b-dolly)\
+MPT [huggingface](https://huggingface.co/mosaicml/mpt-1b-redpajama-200b-dolly)
 
 
 To instantiate the base RoboFlamingo model:
