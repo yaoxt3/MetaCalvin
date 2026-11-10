@@ -1,5 +1,5 @@
 # Installation Guide and Examples for Running Data Creation, Training and Evaluation
-This repostory is the implementation of MetaCALVIN, which was accepted by IEEE Robotics and Automation Letters (RA-L) Nov. 2026.
+This repostory is the implementation of **MetaCALVIN: Feedback-Conditioned Behavioral Distillation for Long-Horizon Manipulation**, which was accepted by IEEE Robotics and Automation Letters (RA-L) Nov. 2026.
 
 The required dataset and checkpoints are avaliable on [MetaCALVIN-dataset](https://huggingface.co/datasets/ele-xiaotong13/metaCalvin_dataset) and [checkpoints](https://huggingface.co/datasets/ele-xiaotong13/meta-checkpoints)
 
