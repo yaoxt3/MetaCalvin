@@ -8,8 +8,7 @@ To create the venv meta-calvin run:
 conda env create -f environment.yml
 ```
 
-The required models are already downloaded on the LRZ account in the huggingface hub and the RoboCheckpoint folder\
-**/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint**
+The required dataset and checkpoints are avaliable on [MetaCALVIN-dataset](https://huggingface.co/datasets/ele-xiaotong13/metaCalvin_dataset) and [checkpoints](https://huggingface.co/datasets/ele-xiaotong13/meta-checkpoints)
 
 If you want to install all required models for training from scratch do the following:
 
@@ -68,7 +67,7 @@ python -u create_data.py
 ```
 The actual batch scripts used to create the datasets can be found in the data gen folder
 
-Can download the completed dataset via [MetaCALVIN-dataset](https://huggingface.co/datasets/ele-xiaotong13/metaCalvin_dataset)
+
 
 ## Training
 Scripts assume the current paths to the dataset on the specific path!
