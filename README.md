@@ -1,14 +1,13 @@
 # Installation Guide and Examples for Running Data Creation, Training and Evaluation
-This guide is mainly for the current datasets stored on the LRZ account and the already downloaded foundation models.
-Branch cleanup is most up to date and should work the best!
+This is the guidance to setup MetaCALVIN.
+
+The required dataset and checkpoints are avaliable on [MetaCALVIN-dataset](https://huggingface.co/datasets/ele-xiaotong13/metaCalvin_dataset) and [checkpoints](https://huggingface.co/datasets/ele-xiaotong13/meta-checkpoints)
 
 ## Installation
 To create the venv meta-calvin run:
 ```
 conda env create -f environment.yml
 ```
-
-The required dataset and checkpoints are avaliable on [MetaCALVIN-dataset](https://huggingface.co/datasets/ele-xiaotong13/metaCalvin_dataset) and [checkpoints](https://huggingface.co/datasets/ele-xiaotong13/meta-checkpoints)
 
 If you want to install all required models for training from scratch do the following:
 
