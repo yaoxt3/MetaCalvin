@@ -1,6 +1,9 @@
 import time
 from contextlib import suppress
 import glob
+import json
+import os
+from datetime import datetime, timezone
 
 import torch
 from torch import nn
@@ -24,13 +27,73 @@ def get_cast_dtype(precision: str):
 
 def get_autocast(precision):
     if precision == "amp":
-        return torch.cuda.amp.autocast
+        return lambda: torch.amp.autocast("cuda")
     elif precision == "amp_bfloat16" or precision == "amp_bf16":
         # amp_bfloat16 is more stable than amp float16 for clip training
-        return lambda: torch.cuda.amp.autocast(dtype=torch.bfloat16)
+        return lambda: torch.amp.autocast("cuda", dtype=torch.bfloat16)
     else:
         return suppress
-    
+
+
+def _format_duration(seconds):
+    seconds = max(0, int(seconds))
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if hours:
+        return f"{hours}h {minutes:02d}m {seconds:02d}s"
+    if minutes:
+        return f"{minutes}m {seconds:02d}s"
+    return f"{seconds}s"
+
+
+def _append_metric(args, record):
+    if args.rank != 0:
+        return
+    os.makedirs(args.run_name, exist_ok=True)
+    record = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "experiment_id": getattr(args, "experiment_id", "unregistered"),
+        "training_seed": args.seed,
+        **record,
+    }
+    with open(os.path.join(args.run_name, "metrics.jsonl"), "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+
+def periodic_checkpoint_steps(args, total_steps):
+    """Return one-indexed completed batches at which periodic checkpoints save."""
+    steps = set()
+    if args.save_every_iter > 0:
+        steps.update(range(args.save_every_iter, total_steps + 1, args.save_every_iter))
+    if args.dense_save_every_iter > 0:
+        dense_end = min(args.dense_save_end, total_steps)
+        if args.dense_save_start <= dense_end:
+            steps.update(
+                range(
+                    args.dense_save_start,
+                    dense_end + 1,
+                    args.dense_save_every_iter,
+                )
+            )
+    return sorted(steps)
+
+
+def should_save_periodic_checkpoint(args, completed_step):
+    """Check the base and optional dense checkpoint schedules."""
+    base_due = (
+        args.save_every_iter > 0
+        and completed_step % args.save_every_iter == 0
+    )
+    dense_due = (
+        args.dense_save_every_iter > 0
+        and args.dense_save_start <= completed_step <= args.dense_save_end
+        and (completed_step - args.dense_save_start)
+        % args.dense_save_every_iter
+        == 0
+    )
+    return base_due or dense_due
+
+
 def get_checkpoint(model):
     state_dict = model.state_dict()
 
@@ -192,10 +255,13 @@ def train_one_epoch(
     device_id,
     wandb,
     best_val_loss,
+    resume_batch_offset=0,
 ):
     num_batches_per_epoch_calvin = calvin_loader.num_batches
 
     num_batches_per_epoch = num_batches_per_epoch_calvin
+    if args.max_steps > 0:
+        num_batches_per_epoch = min(num_batches_per_epoch, args.max_steps)
     total_training_steps = num_batches_per_epoch * args.num_epochs
 
     autocast = get_autocast(args.precision)
@@ -216,17 +282,47 @@ def train_one_epoch(
         AverageMeter()
     )  # avg time to load one batch of both calvin (= 1 batch regardless of gradient accum)
     end = time.time()
+    epoch_start_time = end
+
+    sampler_skips_resume_batches = False
+    batch_sampler = getattr(calvin_loader, "batch_sampler", None)
+    if hasattr(batch_sampler, "set_start_batch"):
+        batch_sampler.set_start_batch(resume_batch_offset)
+        sampler_skips_resume_batches = bool(resume_batch_offset)
 
     # loop through dataloader
+    iterator_start = resume_batch_offset if sampler_skips_resume_batches else 0
     t = tqdm(
-        enumerate(calvin_loader),
+        enumerate(calvin_loader, start=iterator_start),
         disable=args.rank != 0,
         total=total_training_steps,
-        initial=(epoch * num_batches_per_epoch),
+        initial=(epoch * num_batches_per_epoch + iterator_start),
     )
     t.set_description(f"epoch {epoch+1}/{args.num_epochs}")
     mv_avg_loss = []
+    if resume_batch_offset:
+        if not 0 <= resume_batch_offset < num_batches_per_epoch:
+            raise ValueError(
+                f"Invalid resume batch offset {resume_batch_offset} for "
+                f"{num_batches_per_epoch} batches."
+            )
+        if args.rank == 0:
+            if sampler_skips_resume_batches:
+                print(
+                    f"Sampler fast-forwarded to batch {resume_batch_offset}; "
+                    "skipped batches will not be read from disk."
+                )
+            else:
+                print(
+                    f"Replaying and skipping the first {resume_batch_offset} "
+                    "batches to restore deterministic sampler state."
+                )
     for num_steps, batch_calvin in t:
+        if args.max_steps > 0 and num_steps >= args.max_steps:
+            break
+        if num_steps < resume_batch_offset:
+            end = time.time()
+            continue
         data_time_m.update(time.time() - end)
         global_step = num_steps + epoch * num_batches_per_epoch
         
@@ -282,8 +378,11 @@ def train_one_epoch(
         # compute loss
         num_actions, bin_actions = output.logits[0], output.logits[1]
         
-        print(labels[0].shape)
-        print(num_actions.shape)
+        if num_steps == resume_batch_offset and args.rank == 0:
+            print(
+                f"Action tensor shapes: target={tuple(labels[0].shape)}, "
+                f"prediction={tuple(num_actions.shape)}"
+            )
         # reshape for loss calculation
         if args.multi_step_action != 1:
             bs, seq_len = num_actions.shape[:2]
@@ -366,30 +465,111 @@ def train_one_epoch(
                 )
 
 
-        # Log loss to console
-        if ((num_steps + 1) % args.logging_steps == 0) and args.rank == 0:
+        # Log loss and a wall-clock ETA. The first estimate is available after
+        # one batch and becomes more stable as additional batches complete.
+        should_log = (
+            num_steps == resume_batch_offset
+            or ((num_steps + 1) % args.logging_steps == 0)
+        )
+        if should_log and args.rank == 0:
+            completed_this_epoch = num_steps + 1
+            completed_total = global_step + 1
+            completed_since_resume = num_steps - resume_batch_offset + 1
+            average_step_seconds = (
+                time.time() - epoch_start_time
+            ) / completed_since_resume
+            remaining_steps = max(0, total_training_steps - completed_total)
+            eta_seconds = average_step_seconds * remaining_steps
+            eta = _format_duration(eta_seconds)
             print(
-                f"Step {num_steps+1}/{num_batches_per_epoch} of epoch {epoch+1}/{args.num_epochs} complete. Loss: (all){loss_calvin.item():.3f} (mse){loss_calvin_num.item():.3f} (bce){loss_calvin_bin.item():.3f}"
+                f"Step {num_steps+1}/{num_batches_per_epoch} of epoch "
+                f"{epoch+1}/{args.num_epochs} complete. "
+                f"Estimated remaining time: {eta}. "
+                f"Loss: (all){loss_calvin.item():.3f} "
+                f"(mse){loss_calvin_num.item():.3f} "
+                f"(bce){loss_calvin_bin.item():.3f}"
+            )
+            _append_metric(
+                args,
+                {
+                    "event": "train_step",
+                    "epoch": epoch,
+                    "batch_in_epoch": completed_this_epoch,
+                    "global_batch": completed_total,
+                    "total_batches": total_training_steps,
+                    "eta_seconds": eta_seconds,
+                    "average_batch_seconds": average_step_seconds,
+                    "loss": loss_calvin.item(),
+                    "continuous_action_loss": loss_calvin_num.item(),
+                    "gripper_bce": loss_calvin_bin.item(),
+                    "learning_rate": optimizer.param_groups[0]["lr"],
+                    "peak_gpu_memory_bytes": (
+                        torch.cuda.max_memory_allocated(device_id)
+                        if torch.cuda.is_available()
+                        else None
+                    ),
+                },
             )
         avg_horizon = min(100, len(mv_avg_loss))
         t.set_postfix({"avg loss": sum(mv_avg_loss[-avg_horizon:]) / avg_horizon, "loss": loss_calvin.item(), "Lnum": loss_calvin_num.item(), "Lbin": loss_calvin_bin.item()})
         
-        if calvin_val_loader is not None and global_step % args.validate_every_iter == 0 and global_step > 0:
+        validate_on_interval = (
+            args.validate_every_iter > 0
+            and (global_step + 1) % args.validate_every_iter == 0
+        )
+        validate_at_epoch_end = num_steps == num_batches_per_epoch - 1
+        if calvin_val_loader is not None and (
+            validate_on_interval or validate_at_epoch_end
+        ):
             mv_avg_loss_val, saved_hidden_state = validate(args, model, epoch, calvin_val_loader, tokenizer, device_id, wandb)
             if best_val_loss is None:
                 best_val_loss = mv_avg_loss_val
-                save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step)
+                if not args.skip_checkpoint_saves:
+                    save_checkpoint(
+                        args,
+                        model,
+                        optimizer,
+                        lr_scheduler,
+                        epoch,
+                        global_step,
+                        checkpoint_label="best_validation",
+                        validation_loss=mv_avg_loss_val,
+                        epoch_complete=validate_at_epoch_end,
+                    )
     
             elif mv_avg_loss_val < best_val_loss:
                 best_val_loss = mv_avg_loss_val
-                save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step)
+                if not args.skip_checkpoint_saves:
+                    save_checkpoint(
+                        args,
+                        model,
+                        optimizer,
+                        lr_scheduler,
+                        epoch,
+                        global_step,
+                        checkpoint_label="best_validation",
+                        validation_loss=mv_avg_loss_val,
+                        epoch_complete=validate_at_epoch_end,
+                    )
 
             model.train()
             model.lm_head.hidden_state = saved_hidden_state
 
-        elif calvin_val_loader is None:
-            if args.save_every_iter != -1 and global_step % args.save_every_iter == 0 and global_step > 0:
-                save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step)
+        completed_step = global_step + 1
+        if (
+            should_save_periodic_checkpoint(args, completed_step)
+            and not args.skip_checkpoint_saves
+        ):
+            save_checkpoint(
+                args,
+                model,
+                optimizer,
+                lr_scheduler,
+                epoch,
+                global_step,
+                checkpoint_label=f"step_{completed_step:06d}",
+                epoch_complete=validate_at_epoch_end,
+            )
                 
 
 
@@ -406,7 +586,11 @@ def validate(
     num_batches_per_epoch_calvin = val_calvin_loader.num_batches
 
     num_batches_per_epoch = num_batches_per_epoch_calvin
-    total_training_steps = num_batches_per_epoch * args.num_epochs
+    if args.max_validation_steps > 0:
+        num_batches_per_epoch = min(
+            num_batches_per_epoch, args.max_validation_steps
+        )
+    total_training_steps = num_batches_per_epoch
 
     autocast = get_autocast(args.precision)
     cast_dtype = get_cast_dtype(args.precision)
@@ -433,15 +617,18 @@ def validate(
         enumerate(val_calvin_loader),
         disable=args.rank != 0,
         total=total_training_steps,
-        initial=(epoch * num_batches_per_epoch),
+        initial=0,
     )
     t.set_description(f"epoch {epoch+1}/{args.num_epochs}")
     mv_avg_loss = []
-    mean_loss = 0
-    mean_loss_num = 0
-    mean_loss_bin = 0
+    mean_loss = 0.0
+    mean_loss_num = 0.0
+    mean_loss_bin = 0.0
+    sample_count = 0
 
     for num_steps, batch_calvin in t:
+        if args.max_validation_steps > 0 and num_steps >= args.max_validation_steps:
+            break
         data_time_m.update(time.time() - end)
         global_step = num_steps + epoch * num_batches_per_epoch
         
@@ -484,15 +671,16 @@ def validate(
             labels = labels[:, -1]
         labels = [labels[..., :6], (labels[..., 6:] + 1) // 2]
 
-        with autocast():
-            output = model(
-                vision_x=images,
-                lang_x=input_ids,
-                attention_mask=attention_mask,
-                hidden_state_mask= hidden_state_mask if args.seq_training else None,
-                vision_gripper=gripper,
-                state_tensor=state_tensor if (args.use_state or args.sep_lm_head) else None
-            )
+        with torch.no_grad():
+            with autocast():
+                output = model(
+                    vision_x=images,
+                    lang_x=input_ids,
+                    attention_mask=attention_mask,
+                    hidden_state_mask= hidden_state_mask if args.seq_training else None,
+                    vision_gripper=gripper,
+                    state_tensor=state_tensor if (args.use_state or args.sep_lm_head) else None
+                )
 
         # compute loss
         num_actions, bin_actions = output.logits[0], output.logits[1]
@@ -516,17 +704,19 @@ def validate(
             )
             mv_avg_loss.append(loss.item())
 
-            mean_loss += loss.item()
-            mean_loss_num += loss_calvin_num.item()
-            mean_loss_bin += loss_calvin_bin.item()
+            batch_samples = batch_calvin[0].shape[0]
+            sample_count += batch_samples
+            mean_loss += loss.item() * batch_samples
+            mean_loss_num += loss_calvin_num.item() * batch_samples
+            mean_loss_bin += loss_calvin_bin.item() * batch_samples
         
         avg_horizon = min(100, len(mv_avg_loss))
         t.set_postfix(
             {
             "avg  val loss": "{:.4f}".format(sum(mv_avg_loss[-avg_horizon:]) / avg_horizon),
-            "mean val loss": "{:.4f}".format(mean_loss / (num_steps + 1)),
-            "mean Val Lnum": "{:.4f}".format(mean_loss_num / (num_steps + 1)),
-            "mean Val Lbin": "{:.4f}".format(mean_loss_bin / (num_steps + 1)),
+            "mean val loss": "{:.4f}".format(mean_loss / sample_count),
+            "mean Val Lnum": "{:.4f}".format(mean_loss_num / sample_count),
+            "mean Val Lbin": "{:.4f}".format(mean_loss_bin / sample_count),
             }
         )
     
@@ -535,17 +725,51 @@ def validate(
             wandb.log(
                 {
                     "eval_loss_calvin": divided_loss_calvin.item(),
-                    "mean_val_loss": mean_loss,
-                    "mean_val_loss_num": mean_loss_num,
-                    "mean_val_loss_bin": mean_loss_bin,
+                    "mean_val_loss": mean_loss / sample_count,
+                    "mean_val_loss_num": mean_loss_num / sample_count,
+                    "mean_val_loss_bin": mean_loss_bin / sample_count,
                 },
                 commit=False,
             )
 
-    return mv_avg_loss, saved_hidden_state
+    mean_loss /= sample_count
+    mean_loss_num /= sample_count
+    mean_loss_bin /= sample_count
+    _append_metric(
+        args,
+        {
+            "event": "validation",
+            "epoch": epoch,
+            "num_batches": num_batches_per_epoch,
+            "num_samples": sample_count,
+            "mean_loss": mean_loss,
+            "mean_continuous_action_loss": mean_loss_num,
+            "mean_gripper_bce": mean_loss_bin,
+            "selection_metric": "mean_behavior_cloning_loss",
+        },
+    )
+    print(
+        f"Validation complete: mean_loss={mean_loss:.6f}, "
+        f"samples={sample_count}, batches={num_batches_per_epoch}"
+    )
+    return mean_loss, saved_hidden_state
 
-def save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step):
-    print("Saving checkpoint at epoch {0} and global step {1}".format(epoch, global_step))
+def save_checkpoint(
+    args,
+    model,
+    optimizer,
+    lr_scheduler,
+    epoch,
+    global_step,
+    checkpoint_label=None,
+    validation_loss=None,
+    epoch_complete=False,
+):
+    completed_global_step = global_step + 1
+    print(
+        "Saving checkpoint at epoch {0} and completed global step {1} "
+        "(zero-based index {2})".format(epoch, completed_global_step, global_step)
+    )
     if args.rank == 0:
         import os
         if not os.path.exists(args.run_name):
@@ -553,22 +777,96 @@ def save_checkpoint(args, model, optimizer, lr_scheduler, epoch, global_step):
 
         checkpoint_dict = {
             "epoch": epoch,
+            "epoch_complete": epoch_complete,
+            "global_step": global_step,
+            "completed_global_step": completed_global_step,
+            "validation_loss": validation_loss,
+            "experiment_id": getattr(args, "experiment_id", "unregistered"),
+            "training_seed": args.seed,
             "model_state_dict": get_checkpoint(model),
             "optimizer_state_dict": optimizer.state_dict(),
             "lr_scheduler_state_dict": lr_scheduler.state_dict(),
         }
         
-        if args.delete_previous_checkpoint:
+        if args.delete_previous_checkpoint and checkpoint_label is None:
             files = glob.glob(os.path.join(args.run_name, "*.pth"))
             if len(files) > 0:
                 for file in files:
                     os.remove(file)
 
 
-        ckpt_name = get_ckpt_name(args, global_step)
+        if checkpoint_label is None:
+            ckpt_name = get_ckpt_name(args, global_step)
+        else:
+            ckpt_name = f"{checkpoint_label}_checkpoint.pth"
         ckpt_path = os.path.join(args.run_name, ckpt_name)
         print(f"Saving checkpoint to {ckpt_path}")
-        torch.save(checkpoint_dict, ckpt_path)
+        temporary_path = f"{ckpt_path}.tmp"
+        torch.save(checkpoint_dict, temporary_path)
+        os.replace(temporary_path, ckpt_path)
+        if checkpoint_label == "best_validation":
+            selection = {
+                "checkpoint": ckpt_name,
+                "epoch": epoch,
+                "global_step": global_step,
+                "completed_global_step": completed_global_step,
+                "metric": "mean_behavior_cloning_loss",
+                "mode": "min",
+                "validation_loss": validation_loss,
+                "final_test_used_for_selection": False,
+            }
+            selection_path = os.path.join(args.run_name, "best_checkpoint.json")
+            with open(f"{selection_path}.tmp", "w", encoding="utf-8") as handle:
+                json.dump(selection, handle, indent=2, sort_keys=True)
+                handle.write("\n")
+            os.replace(f"{selection_path}.tmp", selection_path)
+        _append_metric(
+            args,
+            {
+                "event": "checkpoint_saved",
+                "checkpoint": ckpt_name,
+                "checkpoint_label": checkpoint_label,
+                "epoch": epoch,
+                "global_step": global_step,
+                "completed_global_step": completed_global_step,
+                "validation_loss": validation_loss,
+                "epoch_complete": epoch_complete,
+            },
+        )
+
+
+def preserve_epoch_checkpoint(args, epoch):
+    """Keep the current latest checkpoint under a stable epoch filename.
+
+    The hard link points to the same inode, so retaining an epoch does not
+    duplicate the multi-gigabyte checkpoint data. Replacing latest at the next
+    epoch leaves the older inode reachable through its epoch filename.
+    """
+    if args.rank != 0:
+        return
+    latest_path = os.path.join(args.run_name, "latest_checkpoint.pth")
+    epoch_name = f"epoch_{epoch + 1:02d}_checkpoint.pth"
+    epoch_path = os.path.join(args.run_name, epoch_name)
+    temporary_path = f"{epoch_path}.tmp_link"
+    if os.path.lexists(temporary_path):
+        os.unlink(temporary_path)
+    os.link(latest_path, temporary_path)
+    os.replace(temporary_path, epoch_path)
+    print(
+        f"Preserved epoch {epoch + 1} checkpoint as {epoch_path} "
+        "(hard link; no duplicate checkpoint data)"
+    )
+    _append_metric(
+        args,
+        {
+            "event": "epoch_checkpoint_preserved",
+            "checkpoint": epoch_name,
+            "source_checkpoint": "latest_checkpoint.pth",
+            "epoch": epoch,
+            "epoch_number": epoch + 1,
+            "storage": "hard_link",
+        },
+    )
 
 
 def train_one_epoch_diff(
@@ -870,4 +1168,4 @@ class LowdimMaskGenerator(nn.Module):
             if self.obs_dim <= 0:
                 assert self.fix_obs_steps, "We require fix obs steps to obtain obs masks"
                 obs_mask = obs_mask[0,:,0]
-            return action_mask, obs_mask   
+            return action_mask, obs_mask
