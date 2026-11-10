@@ -1,0 +1,73 @@
+{
+  "leakage_check": {
+    "all_pairwise_overlaps_are_zero": true,
+    "pairwise_episode_overlap": {
+      "train__test": 0,
+      "train__validation": 0,
+      "validation__test": 0
+    },
+    "pairwise_group_overlap": {
+      "train__test": 0,
+      "train__validation": 0,
+      "validation__test": 0
+    }
+  },
+  "observed_total_episodes": 1120,
+  "observed_total_object_combinations": 31,
+  "protocol": "MetaCALVIN-RA-L-P0-7Object-v1",
+  "schema_version": 1,
+  "source_contains_legacy_test_combinations": true,
+  "source_dataset_name": "training_7_objs_pos_4",
+  "source_index_sha256": "4101bff7dd94a61c44d3a0472edb2757c9d66acaa706e7cff64b6d32fd832597",
+  "split_seed": 20260813,
+  "splits": {
+    "test": {
+      "manifest_sha256": "c78a5e1bb766f8ce0399fc7138f02e29b0bc9724717786f34eb39d67f5c60e3c",
+      "num_episodes": 504,
+      "num_frames": 165134,
+      "num_object_combinations": 10,
+      "num_windows_ws12": 159086,
+      "object_coverage": [
+        "blue_block",
+        "drawer",
+        "led",
+        "lightbulb",
+        "pink_block",
+        "red_block",
+        "slider"
+      ]
+    },
+    "train": {
+      "manifest_sha256": "be87b51518604303870922dc150f6eefd8c5c24682aa664d8a406f83a4fc0e62",
+      "num_episodes": 482,
+      "num_frames": 168894,
+      "num_object_combinations": 17,
+      "num_windows_ws12": 163110,
+      "object_coverage": [
+        "blue_block",
+        "drawer",
+        "led",
+        "lightbulb",
+        "pink_block",
+        "red_block",
+        "slider"
+      ]
+    },
+    "validation": {
+      "manifest_sha256": "4fdad27e1f73997536c0ed5c7b097995745b582706f7b397c4fb0efee16f0492",
+      "num_episodes": 134,
+      "num_frames": 48824,
+      "num_object_combinations": 4,
+      "num_windows_ws12": 47216,
+      "object_coverage": [
+        "blue_block",
+        "drawer",
+        "led",
+        "lightbulb",
+        "pink_block",
+        "red_block",
+        "slider"
+      ]
+    }
+  }
+}

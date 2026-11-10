@@ -1,0 +1,511 @@
+{
+  "manual_selection": false,
+  "mappings": [
+    {
+      "donor_episode_id": "combined_test_00025",
+      "episode_id": "combined_test_00000",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00026",
+      "episode_id": "combined_test_00001",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00027",
+      "episode_id": "combined_test_00002",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00028",
+      "episode_id": "combined_test_00003",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00029",
+      "episode_id": "combined_test_00004",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00030",
+      "episode_id": "combined_test_00005",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00031",
+      "episode_id": "combined_test_00006",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00032",
+      "episode_id": "combined_test_00007",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00033",
+      "episode_id": "combined_test_00008",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00034",
+      "episode_id": "combined_test_00009",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00035",
+      "episode_id": "combined_test_00010",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00036",
+      "episode_id": "combined_test_00011",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00037",
+      "episode_id": "combined_test_00012",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00038",
+      "episode_id": "combined_test_00013",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00039",
+      "episode_id": "combined_test_00014",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00040",
+      "episode_id": "combined_test_00015",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00041",
+      "episode_id": "combined_test_00016",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00042",
+      "episode_id": "combined_test_00017",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00043",
+      "episode_id": "combined_test_00018",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00044",
+      "episode_id": "combined_test_00019",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00045",
+      "episode_id": "combined_test_00020",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00046",
+      "episode_id": "combined_test_00021",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00047",
+      "episode_id": "combined_test_00022",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00048",
+      "episode_id": "combined_test_00023",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00049",
+      "episode_id": "combined_test_00024",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00050",
+      "episode_id": "combined_test_00025",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00051",
+      "episode_id": "combined_test_00026",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00052",
+      "episode_id": "combined_test_00027",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00053",
+      "episode_id": "combined_test_00028",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00054",
+      "episode_id": "combined_test_00029",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00055",
+      "episode_id": "combined_test_00030",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00056",
+      "episode_id": "combined_test_00031",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00057",
+      "episode_id": "combined_test_00032",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00058",
+      "episode_id": "combined_test_00033",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00059",
+      "episode_id": "combined_test_00034",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00060",
+      "episode_id": "combined_test_00035",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00061",
+      "episode_id": "combined_test_00036",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00062",
+      "episode_id": "combined_test_00037",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00063",
+      "episode_id": "combined_test_00038",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00064",
+      "episode_id": "combined_test_00039",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00065",
+      "episode_id": "combined_test_00040",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00066",
+      "episode_id": "combined_test_00041",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00067",
+      "episode_id": "combined_test_00042",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00068",
+      "episode_id": "combined_test_00043",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00069",
+      "episode_id": "combined_test_00044",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00070",
+      "episode_id": "combined_test_00045",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00071",
+      "episode_id": "combined_test_00046",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00072",
+      "episode_id": "combined_test_00047",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00073",
+      "episode_id": "combined_test_00048",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00074",
+      "episode_id": "combined_test_00049",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00075",
+      "episode_id": "combined_test_00050",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00076",
+      "episode_id": "combined_test_00051",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00077",
+      "episode_id": "combined_test_00052",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00078",
+      "episode_id": "combined_test_00053",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00079",
+      "episode_id": "combined_test_00054",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00080",
+      "episode_id": "combined_test_00055",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00081",
+      "episode_id": "combined_test_00056",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00082",
+      "episode_id": "combined_test_00057",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00083",
+      "episode_id": "combined_test_00058",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00084",
+      "episode_id": "combined_test_00059",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00085",
+      "episode_id": "combined_test_00060",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00086",
+      "episode_id": "combined_test_00061",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00087",
+      "episode_id": "combined_test_00062",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00088",
+      "episode_id": "combined_test_00063",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00089",
+      "episode_id": "combined_test_00064",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00090",
+      "episode_id": "combined_test_00065",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00091",
+      "episode_id": "combined_test_00066",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00092",
+      "episode_id": "combined_test_00067",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00093",
+      "episode_id": "combined_test_00068",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00094",
+      "episode_id": "combined_test_00069",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00095",
+      "episode_id": "combined_test_00070",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00096",
+      "episode_id": "combined_test_00071",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00097",
+      "episode_id": "combined_test_00072",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00098",
+      "episode_id": "combined_test_00073",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00099",
+      "episode_id": "combined_test_00074",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00000",
+      "episode_id": "combined_test_00075",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00001",
+      "episode_id": "combined_test_00076",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00002",
+      "episode_id": "combined_test_00077",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00003",
+      "episode_id": "combined_test_00078",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00004",
+      "episode_id": "combined_test_00079",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00005",
+      "episode_id": "combined_test_00080",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00006",
+      "episode_id": "combined_test_00081",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00007",
+      "episode_id": "combined_test_00082",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00008",
+      "episode_id": "combined_test_00083",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00009",
+      "episode_id": "combined_test_00084",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00010",
+      "episode_id": "combined_test_00085",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00011",
+      "episode_id": "combined_test_00086",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00012",
+      "episode_id": "combined_test_00087",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00013",
+      "episode_id": "combined_test_00088",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00014",
+      "episode_id": "combined_test_00089",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00015",
+      "episode_id": "combined_test_00090",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00016",
+      "episode_id": "combined_test_00091",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00017",
+      "episode_id": "combined_test_00092",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00018",
+      "episode_id": "combined_test_00093",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00019",
+      "episode_id": "combined_test_00094",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00020",
+      "episode_id": "combined_test_00095",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00021",
+      "episode_id": "combined_test_00096",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00022",
+      "episode_id": "combined_test_00097",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00023",
+      "episode_id": "combined_test_00098",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    },
+    {
+      "donor_episode_id": "combined_test_00024",
+      "episode_id": "combined_test_00099",
+      "match_key": "four_static_objects+same_reset_index+same_trial_index"
+    }
+  ],
+  "pairing_rule": "next task_pair_index modulo 4; same reset and trial index",
+  "protocol": "MetaCALVIN-RA-L-T5-Shuffled-Donors-v1",
+  "schema_version": 1,
+  "source_rollout_manifest": "/home/yxt/thesis/rebuttal/RAL-rebuttal/thesis/RoboTest/protocol/manifests/combined_test_rollouts.json",
+  "source_rollout_manifest_sha256": "8b394e9085a9f9a4f6399f73311fc5cb699381b253da36858033fef4c2c2c7f0",
+  "split": "test"
+}

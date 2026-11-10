@@ -1,0 +1,5622 @@
+{
+  "episodes": [
+    {
+      "end": 794,
+      "episode_index": 1,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 474
+    },
+    {
+      "end": 1227,
+      "episode_index": 2,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 795
+    },
+    {
+      "end": 2294,
+      "episode_index": 5,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 2010
+    },
+    {
+      "end": 2825,
+      "episode_index": 7,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 2626
+    },
+    {
+      "end": 3104,
+      "episode_index": 8,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 2826
+    },
+    {
+      "end": 3526,
+      "episode_index": 9,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 3105
+    },
+    {
+      "end": 3794,
+      "episode_index": 10,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 3527
+    },
+    {
+      "end": 6282,
+      "episode_index": 17,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 6082
+    },
+    {
+      "end": 7595,
+      "episode_index": 21,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 7292
+    },
+    {
+      "end": 8257,
+      "episode_index": 23,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 7988
+    },
+    {
+      "end": 9790,
+      "episode_index": 27,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 9568
+    },
+    {
+      "end": 10171,
+      "episode_index": 28,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 9791
+    },
+    {
+      "end": 10530,
+      "episode_index": 29,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 10172
+    },
+    {
+      "end": 10801,
+      "episode_index": 30,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 10531
+    },
+    {
+      "end": 11197,
+      "episode_index": 31,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 10802
+    },
+    {
+      "end": 11610,
+      "episode_index": 32,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 11198
+    },
+    {
+      "end": 12092,
+      "episode_index": 34,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 11859
+    },
+    {
+      "end": 12422,
+      "episode_index": 35,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 12093
+    },
+    {
+      "end": 13744,
+      "episode_index": 39,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 13555
+    },
+    {
+      "end": 14747,
+      "episode_index": 42,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 14455
+    },
+    {
+      "end": 14980,
+      "episode_index": 43,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 14748
+    },
+    {
+      "end": 16243,
+      "episode_index": 47,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 15956
+    },
+    {
+      "end": 19015,
+      "episode_index": 55,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 18660
+    },
+    {
+      "end": 19586,
+      "episode_index": 57,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 19404
+    },
+    {
+      "end": 20001,
+      "episode_index": 58,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 19587
+    },
+    {
+      "end": 20296,
+      "episode_index": 59,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 20002
+    },
+    {
+      "end": 21381,
+      "episode_index": 62,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 21005
+    },
+    {
+      "end": 21798,
+      "episode_index": 63,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 21382
+    },
+    {
+      "end": 24368,
+      "episode_index": 69,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 24067
+    },
+    {
+      "end": 24644,
+      "episode_index": 70,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 24369
+    },
+    {
+      "end": 25499,
+      "episode_index": 73,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 25179
+    },
+    {
+      "end": 26099,
+      "episode_index": 75,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 25794
+    },
+    {
+      "end": 27439,
+      "episode_index": 79,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 27095
+    },
+    {
+      "end": 27779,
+      "episode_index": 80,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 27440
+    },
+    {
+      "end": 28107,
+      "episode_index": 81,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 27780
+    },
+    {
+      "end": 29004,
+      "episode_index": 84,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 28690
+    },
+    {
+      "end": 29360,
+      "episode_index": 85,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 29005
+    },
+    {
+      "end": 30347,
+      "episode_index": 88,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 30159
+    },
+    {
+      "end": 30554,
+      "episode_index": 89,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 30348
+    },
+    {
+      "end": 30883,
+      "episode_index": 90,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 30555
+    },
+    {
+      "end": 31231,
+      "episode_index": 91,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 30884
+    },
+    {
+      "end": 31772,
+      "episode_index": 93,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 31573
+    },
+    {
+      "end": 32814,
+      "episode_index": 96,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 32336
+    },
+    {
+      "end": 33278,
+      "episode_index": 97,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 32815
+    },
+    {
+      "end": 35929,
+      "episode_index": 104,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 35513
+    },
+    {
+      "end": 37576,
+      "episode_index": 109,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 37270
+    },
+    {
+      "end": 39207,
+      "episode_index": 113,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 38836
+    },
+    {
+      "end": 40306,
+      "episode_index": 116,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 39944
+    },
+    {
+      "end": 43930,
+      "episode_index": 126,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 43398
+    },
+    {
+      "end": 44503,
+      "episode_index": 128,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 44304
+    },
+    {
+      "end": 46062,
+      "episode_index": 132,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 45641
+    },
+    {
+      "end": 46417,
+      "episode_index": 133,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 46063
+    },
+    {
+      "end": 46608,
+      "episode_index": 134,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 46418
+    },
+    {
+      "end": 46922,
+      "episode_index": 135,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 46609
+    },
+    {
+      "end": 47488,
+      "episode_index": 137,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 47129
+    },
+    {
+      "end": 47850,
+      "episode_index": 138,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 47489
+    },
+    {
+      "end": 48250,
+      "episode_index": 139,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 47851
+    },
+    {
+      "end": 49720,
+      "episode_index": 143,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 49350
+    },
+    {
+      "end": 50063,
+      "episode_index": 144,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 49721
+    },
+    {
+      "end": 50694,
+      "episode_index": 146,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 50437
+    },
+    {
+      "end": 50973,
+      "episode_index": 147,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 50695
+    },
+    {
+      "end": 53278,
+      "episode_index": 154,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 53040
+    },
+    {
+      "end": 53633,
+      "episode_index": 155,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 53279
+    },
+    {
+      "end": 54754,
+      "episode_index": 158,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 54326
+    },
+    {
+      "end": 58296,
+      "episode_index": 167,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 58001
+    },
+    {
+      "end": 58641,
+      "episode_index": 168,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 58297
+    },
+    {
+      "end": 61828,
+      "episode_index": 176,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 61492
+    },
+    {
+      "end": 62119,
+      "episode_index": 177,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 61829
+    },
+    {
+      "end": 62892,
+      "episode_index": 179,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 62593
+    },
+    {
+      "end": 63703,
+      "episode_index": 181,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 63255
+    },
+    {
+      "end": 64391,
+      "episode_index": 183,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 64094
+    },
+    {
+      "end": 64968,
+      "episode_index": 185,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 64751
+    },
+    {
+      "end": 65667,
+      "episode_index": 187,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 65295
+    },
+    {
+      "end": 66230,
+      "episode_index": 189,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 65868
+    },
+    {
+      "end": 66843,
+      "episode_index": 191,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 66484
+    },
+    {
+      "end": 67214,
+      "episode_index": 192,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 66844
+    },
+    {
+      "end": 67525,
+      "episode_index": 193,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 67215
+    },
+    {
+      "end": 68294,
+      "episode_index": 195,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 67949
+    },
+    {
+      "end": 68642,
+      "episode_index": 196,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 68295
+    },
+    {
+      "end": 69365,
+      "episode_index": 198,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 69010
+    },
+    {
+      "end": 70945,
+      "episode_index": 203,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 70719
+    },
+    {
+      "end": 71744,
+      "episode_index": 205,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 71255
+    },
+    {
+      "end": 72118,
+      "episode_index": 206,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 71745
+    },
+    {
+      "end": 72759,
+      "episode_index": 208,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 72459
+    },
+    {
+      "end": 73533,
+      "episode_index": 210,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 73242
+    },
+    {
+      "end": 74994,
+      "episode_index": 214,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 74742
+    },
+    {
+      "end": 75280,
+      "episode_index": 215,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 74995
+    },
+    {
+      "end": 75536,
+      "episode_index": 216,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 75281
+    },
+    {
+      "end": 75863,
+      "episode_index": 217,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 75537
+    },
+    {
+      "end": 76479,
+      "episode_index": 219,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 76143
+    },
+    {
+      "end": 77037,
+      "episode_index": 221,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 76714
+    },
+    {
+      "end": 77359,
+      "episode_index": 222,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 77038
+    },
+    {
+      "end": 77681,
+      "episode_index": 223,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 77360
+    },
+    {
+      "end": 78024,
+      "episode_index": 224,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 77682
+    },
+    {
+      "end": 78683,
+      "episode_index": 226,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 78432
+    },
+    {
+      "end": 79118,
+      "episode_index": 227,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 78684
+    },
+    {
+      "end": 81899,
+      "episode_index": 234,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 81364
+    },
+    {
+      "end": 82403,
+      "episode_index": 235,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 81900
+    },
+    {
+      "end": 85905,
+      "episode_index": 245,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 85562
+    },
+    {
+      "end": 87052,
+      "episode_index": 248,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 86697
+    },
+    {
+      "end": 87324,
+      "episode_index": 249,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 87053
+    },
+    {
+      "end": 87541,
+      "episode_index": 250,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 87325
+    },
+    {
+      "end": 87898,
+      "episode_index": 251,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 87542
+    },
+    {
+      "end": 88670,
+      "episode_index": 253,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 88401
+    },
+    {
+      "end": 89398,
+      "episode_index": 255,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 89064
+    },
+    {
+      "end": 89625,
+      "episode_index": 256,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 89399
+    },
+    {
+      "end": 90178,
+      "episode_index": 257,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 89626
+    },
+    {
+      "end": 91334,
+      "episode_index": 260,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 91029
+    },
+    {
+      "end": 92911,
+      "episode_index": 264,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 92555
+    },
+    {
+      "end": 94332,
+      "episode_index": 268,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 94075
+    },
+    {
+      "end": 94989,
+      "episode_index": 270,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 94668
+    },
+    {
+      "end": 96296,
+      "episode_index": 274,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 96013
+    },
+    {
+      "end": 96640,
+      "episode_index": 275,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 96297
+    },
+    {
+      "end": 97447,
+      "episode_index": 277,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 97108
+    },
+    {
+      "end": 97872,
+      "episode_index": 278,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 97448
+    },
+    {
+      "end": 98664,
+      "episode_index": 280,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 98250
+    },
+    {
+      "end": 99274,
+      "episode_index": 282,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 98920
+    },
+    {
+      "end": 100441,
+      "episode_index": 286,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 100123
+    },
+    {
+      "end": 101185,
+      "episode_index": 288,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 100887
+    },
+    {
+      "end": 101918,
+      "episode_index": 290,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 101545
+    },
+    {
+      "end": 102682,
+      "episode_index": 292,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 102345
+    },
+    {
+      "end": 103108,
+      "episode_index": 293,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 102683
+    },
+    {
+      "end": 103813,
+      "episode_index": 295,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 103423
+    },
+    {
+      "end": 104448,
+      "episode_index": 297,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 104145
+    },
+    {
+      "end": 105167,
+      "episode_index": 299,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 104790
+    },
+    {
+      "end": 106095,
+      "episode_index": 302,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 105805
+    },
+    {
+      "end": 106325,
+      "episode_index": 303,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 106096
+    },
+    {
+      "end": 107069,
+      "episode_index": 305,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 106658
+    },
+    {
+      "end": 107484,
+      "episode_index": 306,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 107070
+    },
+    {
+      "end": 107759,
+      "episode_index": 307,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 107485
+    },
+    {
+      "end": 109362,
+      "episode_index": 311,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 108875
+    },
+    {
+      "end": 111111,
+      "episode_index": 316,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 110921
+    },
+    {
+      "end": 112066,
+      "episode_index": 319,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 111792
+    },
+    {
+      "end": 112734,
+      "episode_index": 321,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 112367
+    },
+    {
+      "end": 114340,
+      "episode_index": 326,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 113880
+    },
+    {
+      "end": 114697,
+      "episode_index": 327,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 114341
+    },
+    {
+      "end": 115427,
+      "episode_index": 329,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 115064
+    },
+    {
+      "end": 116430,
+      "episode_index": 332,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 116065
+    },
+    {
+      "end": 116660,
+      "episode_index": 333,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 116431
+    },
+    {
+      "end": 117335,
+      "episode_index": 335,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 116978
+    },
+    {
+      "end": 117569,
+      "episode_index": 336,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 117336
+    },
+    {
+      "end": 118153,
+      "episode_index": 338,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 117887
+    },
+    {
+      "end": 118508,
+      "episode_index": 339,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 118154
+    },
+    {
+      "end": 118868,
+      "episode_index": 340,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 118509
+    },
+    {
+      "end": 119248,
+      "episode_index": 341,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 118869
+    },
+    {
+      "end": 119602,
+      "episode_index": 342,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 119249
+    },
+    {
+      "end": 120001,
+      "episode_index": 343,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 119603
+    },
+    {
+      "end": 120287,
+      "episode_index": 344,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 120002
+    },
+    {
+      "end": 121836,
+      "episode_index": 349,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 121595
+    },
+    {
+      "end": 122136,
+      "episode_index": 350,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 121837
+    },
+    {
+      "end": 122500,
+      "episode_index": 351,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 122137
+    },
+    {
+      "end": 123686,
+      "episode_index": 354,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 123354
+    },
+    {
+      "end": 123972,
+      "episode_index": 355,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 123687
+    },
+    {
+      "end": 124303,
+      "episode_index": 356,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 123973
+    },
+    {
+      "end": 126113,
+      "episode_index": 362,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 125847
+    },
+    {
+      "end": 126501,
+      "episode_index": 363,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 126114
+    },
+    {
+      "end": 127412,
+      "episode_index": 365,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 127002
+    },
+    {
+      "end": 128172,
+      "episode_index": 367,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 127816
+    },
+    {
+      "end": 128772,
+      "episode_index": 369,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 128472
+    },
+    {
+      "end": 129166,
+      "episode_index": 370,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 128773
+    },
+    {
+      "end": 129491,
+      "episode_index": 371,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 129167
+    },
+    {
+      "end": 129788,
+      "episode_index": 372,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 129492
+    },
+    {
+      "end": 130177,
+      "episode_index": 373,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 129789
+    },
+    {
+      "end": 130785,
+      "episode_index": 375,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 130496
+    },
+    {
+      "end": 131065,
+      "episode_index": 376,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 130786
+    },
+    {
+      "end": 131549,
+      "episode_index": 377,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 131066
+    },
+    {
+      "end": 132210,
+      "episode_index": 379,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 131902
+    },
+    {
+      "end": 132545,
+      "episode_index": 380,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 132211
+    },
+    {
+      "end": 134309,
+      "episode_index": 385,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 133917
+    },
+    {
+      "end": 136161,
+      "episode_index": 390,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 135818
+    },
+    {
+      "end": 136621,
+      "episode_index": 391,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 136162
+    },
+    {
+      "end": 137245,
+      "episode_index": 393,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 137020
+    },
+    {
+      "end": 138344,
+      "episode_index": 396,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 138030
+    },
+    {
+      "end": 138601,
+      "episode_index": 397,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 138345
+    },
+    {
+      "end": 139055,
+      "episode_index": 398,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 138602
+    },
+    {
+      "end": 140054,
+      "episode_index": 401,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 139698
+    },
+    {
+      "end": 140788,
+      "episode_index": 403,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 140432
+    },
+    {
+      "end": 142225,
+      "episode_index": 407,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 141900
+    },
+    {
+      "end": 142575,
+      "episode_index": 408,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 142226
+    },
+    {
+      "end": 142847,
+      "episode_index": 409,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 142576
+    },
+    {
+      "end": 143472,
+      "episode_index": 411,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 143192
+    },
+    {
+      "end": 144078,
+      "episode_index": 413,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 143888
+    },
+    {
+      "end": 144402,
+      "episode_index": 414,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 144079
+    },
+    {
+      "end": 145789,
+      "episode_index": 418,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 145475
+    },
+    {
+      "end": 146319,
+      "episode_index": 420,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 146100
+    },
+    {
+      "end": 146577,
+      "episode_index": 421,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 146320
+    },
+    {
+      "end": 146844,
+      "episode_index": 422,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 146578
+    },
+    {
+      "end": 147239,
+      "episode_index": 423,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 146845
+    },
+    {
+      "end": 147572,
+      "episode_index": 424,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 147240
+    },
+    {
+      "end": 147928,
+      "episode_index": 425,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 147573
+    },
+    {
+      "end": 148813,
+      "episode_index": 428,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 148522
+    },
+    {
+      "end": 150150,
+      "episode_index": 432,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 149849
+    },
+    {
+      "end": 150440,
+      "episode_index": 433,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 150151
+    },
+    {
+      "end": 150792,
+      "episode_index": 434,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 150441
+    },
+    {
+      "end": 151672,
+      "episode_index": 437,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 151407
+    },
+    {
+      "end": 152437,
+      "episode_index": 439,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 152051
+    },
+    {
+      "end": 152777,
+      "episode_index": 440,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 152438
+    },
+    {
+      "end": 153086,
+      "episode_index": 441,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 152778
+    },
+    {
+      "end": 153724,
+      "episode_index": 443,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 153380
+    },
+    {
+      "end": 154044,
+      "episode_index": 444,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 153725
+    },
+    {
+      "end": 154383,
+      "episode_index": 445,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 154045
+    },
+    {
+      "end": 154678,
+      "episode_index": 446,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 154384
+    },
+    {
+      "end": 155064,
+      "episode_index": 447,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 154679
+    },
+    {
+      "end": 155827,
+      "episode_index": 449,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 155416
+    },
+    {
+      "end": 156245,
+      "episode_index": 450,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 155828
+    },
+    {
+      "end": 156924,
+      "episode_index": 452,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 156584
+    },
+    {
+      "end": 157555,
+      "episode_index": 454,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 157204
+    },
+    {
+      "end": 158735,
+      "episode_index": 458,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 158459
+    },
+    {
+      "end": 159122,
+      "episode_index": 459,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 158736
+    },
+    {
+      "end": 159461,
+      "episode_index": 460,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 159123
+    },
+    {
+      "end": 160182,
+      "episode_index": 462,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 159922
+    },
+    {
+      "end": 160392,
+      "episode_index": 463,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 160183
+    },
+    {
+      "end": 162995,
+      "episode_index": 470,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 162667
+    },
+    {
+      "end": 163327,
+      "episode_index": 471,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 162996
+    },
+    {
+      "end": 163762,
+      "episode_index": 472,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 163328
+    },
+    {
+      "end": 164722,
+      "episode_index": 475,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 164367
+    },
+    {
+      "end": 165032,
+      "episode_index": 476,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 164723
+    },
+    {
+      "end": 165354,
+      "episode_index": 477,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 165033
+    },
+    {
+      "end": 165716,
+      "episode_index": 478,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 165355
+    },
+    {
+      "end": 166058,
+      "episode_index": 479,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 165717
+    },
+    {
+      "end": 166475,
+      "episode_index": 480,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 166059
+    },
+    {
+      "end": 166820,
+      "episode_index": 481,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 166476
+    },
+    {
+      "end": 167087,
+      "episode_index": 482,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 166821
+    },
+    {
+      "end": 167410,
+      "episode_index": 483,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 167088
+    },
+    {
+      "end": 167786,
+      "episode_index": 484,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 167411
+    },
+    {
+      "end": 168330,
+      "episode_index": 486,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 168098
+    },
+    {
+      "end": 168654,
+      "episode_index": 487,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 168331
+    },
+    {
+      "end": 170105,
+      "episode_index": 491,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 169696
+    },
+    {
+      "end": 171381,
+      "episode_index": 495,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 171083
+    },
+    {
+      "end": 171733,
+      "episode_index": 496,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 171382
+    },
+    {
+      "end": 172407,
+      "episode_index": 498,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 172065
+    },
+    {
+      "end": 173895,
+      "episode_index": 503,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 173577
+    },
+    {
+      "end": 174234,
+      "episode_index": 504,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 173896
+    },
+    {
+      "end": 174861,
+      "episode_index": 506,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 174585
+    },
+    {
+      "end": 175524,
+      "episode_index": 508,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 175217
+    },
+    {
+      "end": 176162,
+      "episode_index": 510,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 175815
+    },
+    {
+      "end": 176385,
+      "episode_index": 511,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 176163
+    },
+    {
+      "end": 176700,
+      "episode_index": 512,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 176386
+    },
+    {
+      "end": 177332,
+      "episode_index": 514,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 177026
+    },
+    {
+      "end": 177562,
+      "episode_index": 515,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 177333
+    },
+    {
+      "end": 178083,
+      "episode_index": 517,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 177817
+    },
+    {
+      "end": 179206,
+      "episode_index": 520,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 178732
+    },
+    {
+      "end": 179477,
+      "episode_index": 521,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 179207
+    },
+    {
+      "end": 180170,
+      "episode_index": 523,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 179839
+    },
+    {
+      "end": 181016,
+      "episode_index": 525,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 180714
+    },
+    {
+      "end": 181559,
+      "episode_index": 527,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 181318
+    },
+    {
+      "end": 182423,
+      "episode_index": 529,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 182095
+    },
+    {
+      "end": 183186,
+      "episode_index": 531,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 182785
+    },
+    {
+      "end": 183469,
+      "episode_index": 532,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 183187
+    },
+    {
+      "end": 183852,
+      "episode_index": 533,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 183470
+    },
+    {
+      "end": 184732,
+      "episode_index": 535,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 184430
+    },
+    {
+      "end": 185033,
+      "episode_index": 536,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 184733
+    },
+    {
+      "end": 185300,
+      "episode_index": 537,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 185034
+    },
+    {
+      "end": 185962,
+      "episode_index": 539,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 185635
+    },
+    {
+      "end": 186251,
+      "episode_index": 540,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 185963
+    },
+    {
+      "end": 186654,
+      "episode_index": 541,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 186252
+    },
+    {
+      "end": 187583,
+      "episode_index": 544,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 187269
+    },
+    {
+      "end": 187826,
+      "episode_index": 545,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 187584
+    },
+    {
+      "end": 188909,
+      "episode_index": 548,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 188600
+    },
+    {
+      "end": 189171,
+      "episode_index": 549,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 188910
+    },
+    {
+      "end": 189422,
+      "episode_index": 550,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 189172
+    },
+    {
+      "end": 189896,
+      "episode_index": 551,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 189423
+    },
+    {
+      "end": 190828,
+      "episode_index": 554,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 190500
+    },
+    {
+      "end": 191142,
+      "episode_index": 555,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 190829
+    },
+    {
+      "end": 192064,
+      "episode_index": 558,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 191827
+    },
+    {
+      "end": 192332,
+      "episode_index": 559,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 192065
+    },
+    {
+      "end": 192661,
+      "episode_index": 560,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 192333
+    },
+    {
+      "end": 193039,
+      "episode_index": 561,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 192662
+    },
+    {
+      "end": 193374,
+      "episode_index": 562,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 193040
+    },
+    {
+      "end": 193719,
+      "episode_index": 563,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 193375
+    },
+    {
+      "end": 194072,
+      "episode_index": 564,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 193720
+    },
+    {
+      "end": 194468,
+      "episode_index": 565,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 194073
+    },
+    {
+      "end": 194773,
+      "episode_index": 566,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 194469
+    },
+    {
+      "end": 195681,
+      "episode_index": 569,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 195426
+    },
+    {
+      "end": 195957,
+      "episode_index": 570,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 195682
+    },
+    {
+      "end": 196604,
+      "episode_index": 572,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 196359
+    },
+    {
+      "end": 196920,
+      "episode_index": 573,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 196605
+    },
+    {
+      "end": 198590,
+      "episode_index": 578,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 198147
+    },
+    {
+      "end": 199195,
+      "episode_index": 580,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 198916
+    },
+    {
+      "end": 199985,
+      "episode_index": 582,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 199511
+    },
+    {
+      "end": 200647,
+      "episode_index": 584,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 200261
+    },
+    {
+      "end": 200953,
+      "episode_index": 585,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 200648
+    },
+    {
+      "end": 203313,
+      "episode_index": 592,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 202962
+    },
+    {
+      "end": 206567,
+      "episode_index": 601,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 206260
+    },
+    {
+      "end": 206872,
+      "episode_index": 602,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 206568
+    },
+    {
+      "end": 207786,
+      "episode_index": 605,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 207447
+    },
+    {
+      "end": 209029,
+      "episode_index": 609,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 208700
+    },
+    {
+      "end": 209595,
+      "episode_index": 611,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 209286
+    },
+    {
+      "end": 209996,
+      "episode_index": 612,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 209596
+    },
+    {
+      "end": 210654,
+      "episode_index": 614,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 210383
+    },
+    {
+      "end": 210944,
+      "episode_index": 615,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 210655
+    },
+    {
+      "end": 211309,
+      "episode_index": 616,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 210945
+    },
+    {
+      "end": 211716,
+      "episode_index": 617,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 211310
+    },
+    {
+      "end": 212285,
+      "episode_index": 619,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 212014
+    },
+    {
+      "end": 212569,
+      "episode_index": 620,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 212286
+    },
+    {
+      "end": 212872,
+      "episode_index": 621,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 212570
+    },
+    {
+      "end": 213823,
+      "episode_index": 624,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 213530
+    },
+    {
+      "end": 214910,
+      "episode_index": 627,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 214511
+    },
+    {
+      "end": 215597,
+      "episode_index": 629,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 215239
+    },
+    {
+      "end": 216010,
+      "episode_index": 630,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 215598
+    },
+    {
+      "end": 216237,
+      "episode_index": 631,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 216011
+    },
+    {
+      "end": 216885,
+      "episode_index": 633,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 216591
+    },
+    {
+      "end": 217166,
+      "episode_index": 634,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 216886
+    },
+    {
+      "end": 217413,
+      "episode_index": 635,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 217167
+    },
+    {
+      "end": 217625,
+      "episode_index": 636,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 217414
+    },
+    {
+      "end": 217928,
+      "episode_index": 637,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 217626
+    },
+    {
+      "end": 218608,
+      "episode_index": 639,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 218281
+    },
+    {
+      "end": 221124,
+      "episode_index": 646,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 220785
+    },
+    {
+      "end": 222045,
+      "episode_index": 649,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 221807
+    },
+    {
+      "end": 223328,
+      "episode_index": 652,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 223017
+    },
+    {
+      "end": 224527,
+      "episode_index": 655,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 224218
+    },
+    {
+      "end": 224818,
+      "episode_index": 656,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 224528
+    },
+    {
+      "end": 225146,
+      "episode_index": 657,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 224819
+    },
+    {
+      "end": 226889,
+      "episode_index": 662,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 226540
+    },
+    {
+      "end": 227512,
+      "episode_index": 664,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 227207
+    },
+    {
+      "end": 228405,
+      "episode_index": 667,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 228136
+    },
+    {
+      "end": 228628,
+      "episode_index": 668,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 228406
+    },
+    {
+      "end": 229276,
+      "episode_index": 670,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 228928
+    },
+    {
+      "end": 229558,
+      "episode_index": 671,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 229277
+    },
+    {
+      "end": 232225,
+      "episode_index": 679,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 231916
+    },
+    {
+      "end": 233002,
+      "episode_index": 681,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 232569
+    },
+    {
+      "end": 233647,
+      "episode_index": 683,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 233348
+    },
+    {
+      "end": 234218,
+      "episode_index": 685,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 233905
+    },
+    {
+      "end": 234615,
+      "episode_index": 686,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 234219
+    },
+    {
+      "end": 235476,
+      "episode_index": 688,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 235117
+    },
+    {
+      "end": 236674,
+      "episode_index": 691,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 236253
+    },
+    {
+      "end": 237015,
+      "episode_index": 692,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 236675
+    },
+    {
+      "end": 237409,
+      "episode_index": 693,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 237016
+    },
+    {
+      "end": 238547,
+      "episode_index": 696,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 238202
+    },
+    {
+      "end": 240077,
+      "episode_index": 700,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 239790
+    },
+    {
+      "end": 240654,
+      "episode_index": 702,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 240320
+    },
+    {
+      "end": 241858,
+      "episode_index": 705,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 241540
+    },
+    {
+      "end": 242235,
+      "episode_index": 706,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 241859
+    },
+    {
+      "end": 242939,
+      "episode_index": 708,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 242614
+    },
+    {
+      "end": 244539,
+      "episode_index": 713,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 244208
+    },
+    {
+      "end": 244871,
+      "episode_index": 714,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 244540
+    },
+    {
+      "end": 246212,
+      "episode_index": 718,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 245858
+    },
+    {
+      "end": 247122,
+      "episode_index": 721,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 246857
+    },
+    {
+      "end": 247391,
+      "episode_index": 722,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 247123
+    },
+    {
+      "end": 247612,
+      "episode_index": 723,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 247392
+    },
+    {
+      "end": 247921,
+      "episode_index": 724,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 247613
+    },
+    {
+      "end": 248865,
+      "episode_index": 727,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 248652
+    },
+    {
+      "end": 249190,
+      "episode_index": 728,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 248866
+    },
+    {
+      "end": 250213,
+      "episode_index": 731,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 249865
+    },
+    {
+      "end": 250557,
+      "episode_index": 732,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 250214
+    },
+    {
+      "end": 251754,
+      "episode_index": 736,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 251510
+    },
+    {
+      "end": 252456,
+      "episode_index": 738,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 252111
+    },
+    {
+      "end": 252886,
+      "episode_index": 739,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 252457
+    },
+    {
+      "end": 253748,
+      "episode_index": 741,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 253219
+    },
+    {
+      "end": 254323,
+      "episode_index": 743,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 254036
+    },
+    {
+      "end": 255743,
+      "episode_index": 747,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 255362
+    },
+    {
+      "end": 256058,
+      "episode_index": 748,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 255744
+    },
+    {
+      "end": 256345,
+      "episode_index": 749,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 256059
+    },
+    {
+      "end": 256686,
+      "episode_index": 750,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 256346
+    },
+    {
+      "end": 257340,
+      "episode_index": 752,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 257020
+    },
+    {
+      "end": 258240,
+      "episode_index": 754,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 257852
+    },
+    {
+      "end": 260303,
+      "episode_index": 760,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 259982
+    },
+    {
+      "end": 260642,
+      "episode_index": 761,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 260304
+    },
+    {
+      "end": 261412,
+      "episode_index": 763,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 261108
+    },
+    {
+      "end": 261705,
+      "episode_index": 764,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 261413
+    },
+    {
+      "end": 263355,
+      "episode_index": 769,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 263024
+    },
+    {
+      "end": 263640,
+      "episode_index": 770,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 263356
+    },
+    {
+      "end": 265388,
+      "episode_index": 775,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 265095
+    },
+    {
+      "end": 266417,
+      "episode_index": 778,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 266093
+    },
+    {
+      "end": 267124,
+      "episode_index": 780,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 266850
+    },
+    {
+      "end": 267462,
+      "episode_index": 781,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 267125
+    },
+    {
+      "end": 267769,
+      "episode_index": 782,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 267463
+    },
+    {
+      "end": 268024,
+      "episode_index": 783,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 267770
+    },
+    {
+      "end": 269056,
+      "episode_index": 786,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 268757
+    },
+    {
+      "end": 272030,
+      "episode_index": 794,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 271766
+    },
+    {
+      "end": 272999,
+      "episode_index": 797,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 272711
+    },
+    {
+      "end": 273312,
+      "episode_index": 798,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 273000
+    },
+    {
+      "end": 274113,
+      "episode_index": 801,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 273857
+    },
+    {
+      "end": 274812,
+      "episode_index": 803,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 274437
+    },
+    {
+      "end": 275774,
+      "episode_index": 806,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 275497
+    },
+    {
+      "end": 276969,
+      "episode_index": 809,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 276605
+    },
+    {
+      "end": 277627,
+      "episode_index": 811,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 277208
+    },
+    {
+      "end": 278016,
+      "episode_index": 812,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 277628
+    },
+    {
+      "end": 279467,
+      "episode_index": 816,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 279095
+    },
+    {
+      "end": 280183,
+      "episode_index": 818,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 279886
+    },
+    {
+      "end": 280540,
+      "episode_index": 819,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 280184
+    },
+    {
+      "end": 280820,
+      "episode_index": 820,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 280541
+    },
+    {
+      "end": 281230,
+      "episode_index": 821,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 280821
+    },
+    {
+      "end": 282253,
+      "episode_index": 824,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 281915
+    },
+    {
+      "end": 282940,
+      "episode_index": 826,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 282608
+    },
+    {
+      "end": 283325,
+      "episode_index": 827,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 282941
+    },
+    {
+      "end": 283619,
+      "episode_index": 828,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 283326
+    },
+    {
+      "end": 284211,
+      "episode_index": 830,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 283979
+    },
+    {
+      "end": 285939,
+      "episode_index": 835,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 285655
+    },
+    {
+      "end": 286880,
+      "episode_index": 838,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 286577
+    },
+    {
+      "end": 287812,
+      "episode_index": 841,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 287396
+    },
+    {
+      "end": 288552,
+      "episode_index": 843,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 288128
+    },
+    {
+      "end": 288804,
+      "episode_index": 844,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 288553
+    },
+    {
+      "end": 289140,
+      "episode_index": 845,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 288805
+    },
+    {
+      "end": 289976,
+      "episode_index": 847,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 289619
+    },
+    {
+      "end": 290352,
+      "episode_index": 848,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 289977
+    },
+    {
+      "end": 290793,
+      "episode_index": 849,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 290353
+    },
+    {
+      "end": 293439,
+      "episode_index": 857,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 293194
+    },
+    {
+      "end": 294357,
+      "episode_index": 860,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 294011
+    },
+    {
+      "end": 294834,
+      "episode_index": 861,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 294358
+    },
+    {
+      "end": 295213,
+      "episode_index": 862,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 294835
+    },
+    {
+      "end": 295888,
+      "episode_index": 864,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 295537
+    },
+    {
+      "end": 297117,
+      "episode_index": 868,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 296765
+    },
+    {
+      "end": 297521,
+      "episode_index": 869,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 297118
+    },
+    {
+      "end": 298219,
+      "episode_index": 871,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 297896
+    },
+    {
+      "end": 298611,
+      "episode_index": 872,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 298220
+    },
+    {
+      "end": 299918,
+      "episode_index": 876,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 299633
+    },
+    {
+      "end": 300339,
+      "episode_index": 877,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 299919
+    },
+    {
+      "end": 302574,
+      "episode_index": 884,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 302181
+    },
+    {
+      "end": 302921,
+      "episode_index": 885,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 302575
+    },
+    {
+      "end": 303217,
+      "episode_index": 886,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 302922
+    },
+    {
+      "end": 304704,
+      "episode_index": 890,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 304477
+    },
+    {
+      "end": 305419,
+      "episode_index": 892,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 305069
+    },
+    {
+      "end": 305676,
+      "episode_index": 893,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 305420
+    },
+    {
+      "end": 307449,
+      "episode_index": 897,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 307045
+    },
+    {
+      "end": 307711,
+      "episode_index": 898,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 307450
+    },
+    {
+      "end": 308687,
+      "episode_index": 901,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 308369
+    },
+    {
+      "end": 309406,
+      "episode_index": 903,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 309080
+    },
+    {
+      "end": 310406,
+      "episode_index": 906,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 310174
+    },
+    {
+      "end": 311107,
+      "episode_index": 908,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 310766
+    },
+    {
+      "end": 312447,
+      "episode_index": 912,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 312115
+    },
+    {
+      "end": 313168,
+      "episode_index": 914,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 312895
+    },
+    {
+      "end": 314326,
+      "episode_index": 917,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 314023
+    },
+    {
+      "end": 314592,
+      "episode_index": 918,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 314327
+    },
+    {
+      "end": 315232,
+      "episode_index": 920,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 314936
+    },
+    {
+      "end": 315570,
+      "episode_index": 921,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 315233
+    },
+    {
+      "end": 316819,
+      "episode_index": 924,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 316372
+    },
+    {
+      "end": 317620,
+      "episode_index": 926,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 317217
+    },
+    {
+      "end": 319909,
+      "episode_index": 932,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 319552
+    },
+    {
+      "end": 320293,
+      "episode_index": 933,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 319910
+    },
+    {
+      "end": 320882,
+      "episode_index": 935,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 320614
+    },
+    {
+      "end": 321303,
+      "episode_index": 936,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 320883
+    },
+    {
+      "end": 322708,
+      "episode_index": 940,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 322336
+    },
+    {
+      "end": 324181,
+      "episode_index": 944,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 323852
+    },
+    {
+      "end": 324516,
+      "episode_index": 945,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 324182
+    },
+    {
+      "end": 324832,
+      "episode_index": 946,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 324517
+    },
+    {
+      "end": 325161,
+      "episode_index": 947,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 324833
+    },
+    {
+      "end": 326148,
+      "episode_index": 950,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 325862
+    },
+    {
+      "end": 326366,
+      "episode_index": 951,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 326149
+    },
+    {
+      "end": 326689,
+      "episode_index": 952,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 326367
+    },
+    {
+      "end": 326928,
+      "episode_index": 953,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 326690
+    },
+    {
+      "end": 327230,
+      "episode_index": 954,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 326929
+    },
+    {
+      "end": 328227,
+      "episode_index": 957,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 327934
+    },
+    {
+      "end": 328490,
+      "episode_index": 958,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 328228
+    },
+    {
+      "end": 329591,
+      "episode_index": 961,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 329126
+    },
+    {
+      "end": 329876,
+      "episode_index": 962,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 329592
+    },
+    {
+      "end": 330166,
+      "episode_index": 963,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 329877
+    },
+    {
+      "end": 330450,
+      "episode_index": 964,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 330167
+    },
+    {
+      "end": 331125,
+      "episode_index": 966,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 330827
+    },
+    {
+      "end": 331496,
+      "episode_index": 967,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 331126
+    },
+    {
+      "end": 332173,
+      "episode_index": 969,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 331833
+    },
+    {
+      "end": 333142,
+      "episode_index": 972,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 332798
+    },
+    {
+      "end": 333813,
+      "episode_index": 974,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 333458
+    },
+    {
+      "end": 334768,
+      "episode_index": 977,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 334478
+    },
+    {
+      "end": 335467,
+      "episode_index": 979,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 335146
+    },
+    {
+      "end": 336401,
+      "episode_index": 982,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 336160
+    },
+    {
+      "end": 336708,
+      "episode_index": 983,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 336402
+    },
+    {
+      "end": 336990,
+      "episode_index": 984,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 336709
+    },
+    {
+      "end": 337304,
+      "episode_index": 985,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 336991
+    },
+    {
+      "end": 338160,
+      "episode_index": 987,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 337745
+    },
+    {
+      "end": 339271,
+      "episode_index": 991,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 338992
+    },
+    {
+      "end": 339563,
+      "episode_index": 992,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 339272
+    },
+    {
+      "end": 339872,
+      "episode_index": 993,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 339564
+    },
+    {
+      "end": 342172,
+      "episode_index": 999,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 341880
+    },
+    {
+      "end": 343530,
+      "episode_index": 1003,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 343230
+    },
+    {
+      "end": 343813,
+      "episode_index": 1004,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 343531
+    },
+    {
+      "end": 344131,
+      "episode_index": 1005,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 343814
+    },
+    {
+      "end": 345347,
+      "episode_index": 1009,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 345033
+    },
+    {
+      "end": 345769,
+      "episode_index": 1010,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 345348
+    },
+    {
+      "end": 346842,
+      "episode_index": 1013,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 346493
+    },
+    {
+      "end": 347153,
+      "episode_index": 1014,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 346843
+    },
+    {
+      "end": 348327,
+      "episode_index": 1017,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 348069
+    },
+    {
+      "end": 349491,
+      "episode_index": 1020,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 348989
+    },
+    {
+      "end": 350202,
+      "episode_index": 1022,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 349828
+    },
+    {
+      "end": 350821,
+      "episode_index": 1024,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 350497
+    },
+    {
+      "end": 351180,
+      "episode_index": 1025,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 350822
+    },
+    {
+      "end": 352100,
+      "episode_index": 1028,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 351773
+    },
+    {
+      "end": 352367,
+      "episode_index": 1029,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 352101
+    },
+    {
+      "end": 353775,
+      "episode_index": 1033,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 353437
+    },
+    {
+      "end": 354050,
+      "episode_index": 1034,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 353776
+    },
+    {
+      "end": 355931,
+      "episode_index": 1039,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 355365
+    },
+    {
+      "end": 357701,
+      "episode_index": 1043,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 357390
+    },
+    {
+      "end": 358046,
+      "episode_index": 1044,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 357702
+    },
+    {
+      "end": 358411,
+      "episode_index": 1045,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 358047
+    },
+    {
+      "end": 359388,
+      "episode_index": 1048,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 359049
+    },
+    {
+      "end": 359683,
+      "episode_index": 1049,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 359389
+    },
+    {
+      "end": 360887,
+      "episode_index": 1053,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 360561
+    },
+    {
+      "end": 362895,
+      "episode_index": 1059,
+      "object_combination": [
+        "drawer",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 362582
+    },
+    {
+      "end": 363595,
+      "episode_index": 1061,
+      "object_combination": [
+        "blue_block",
+        "drawer",
+        "led",
+        "slider"
+      ],
+      "start": 363214
+    },
+    {
+      "end": 364210,
+      "episode_index": 1063,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "red_block",
+        "slider"
+      ],
+      "start": 363891
+    },
+    {
+      "end": 364804,
+      "episode_index": 1065,
+      "object_combination": [
+        "blue_block",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 364516
+    },
+    {
+      "end": 367572,
+      "episode_index": 1073,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 367207
+    },
+    {
+      "end": 368942,
+      "episode_index": 1077,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 368609
+    },
+    {
+      "end": 369951,
+      "episode_index": 1080,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 369680
+    },
+    {
+      "end": 371939,
+      "episode_index": 1086,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 371636
+    },
+    {
+      "end": 374048,
+      "episode_index": 1092,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 373780
+    },
+    {
+      "end": 375816,
+      "episode_index": 1098,
+      "object_combination": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "slider"
+      ],
+      "start": 375523
+    },
+    {
+      "end": 376104,
+      "episode_index": 1099,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 375817
+    },
+    {
+      "end": 377198,
+      "episode_index": 1102,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "pink_block",
+        "slider"
+      ],
+      "start": 376865
+    },
+    {
+      "end": 379585,
+      "episode_index": 1109,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 379280
+    },
+    {
+      "end": 379882,
+      "episode_index": 1110,
+      "object_combination": [
+        "drawer",
+        "led",
+        "pink_block",
+        "slider"
+      ],
+      "start": 379586
+    },
+    {
+      "end": 380792,
+      "episode_index": 1113,
+      "object_combination": [
+        "led",
+        "pink_block",
+        "red_block",
+        "slider"
+      ],
+      "start": 380511
+    },
+    {
+      "end": 381655,
+      "episode_index": 1115,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 381322
+    },
+    {
+      "end": 382282,
+      "episode_index": 1117,
+      "object_combination": [
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ],
+      "start": 381959
+    }
+  ],
+  "grouping_unit": "object_combination",
+  "num_episodes": 504,
+  "num_frames": 165134,
+  "num_object_combinations": 10,
+  "num_windows_ws12": 159086,
+  "object_combinations": [
+    [
+      "blue_block",
+      "drawer",
+      "led",
+      "slider"
+    ],
+    [
+      "blue_block",
+      "led",
+      "lightbulb",
+      "slider"
+    ],
+    [
+      "blue_block",
+      "led",
+      "pink_block",
+      "slider"
+    ],
+    [
+      "blue_block",
+      "led",
+      "red_block",
+      "slider"
+    ],
+    [
+      "drawer",
+      "led",
+      "lightbulb",
+      "slider"
+    ],
+    [
+      "drawer",
+      "led",
+      "pink_block",
+      "slider"
+    ],
+    [
+      "drawer",
+      "led",
+      "red_block",
+      "slider"
+    ],
+    [
+      "led",
+      "lightbulb",
+      "pink_block",
+      "slider"
+    ],
+    [
+      "led",
+      "lightbulb",
+      "red_block",
+      "slider"
+    ],
+    [
+      "led",
+      "pink_block",
+      "red_block",
+      "slider"
+    ]
+  ],
+  "protocol": "MetaCALVIN-RA-L-P0-7Object-v1",
+  "schema_version": 1,
+  "selection_rule": "test: all valid 4-object configurations containing slider and led; validation: Python random.Random(split_seed).sample over the sorted remaining configurations; train: all remaining configurations",
+  "source_dataset_name": "training_7_objs_pos_4",
+  "source_index_sha256": "4101bff7dd94a61c44d3a0472edb2757c9d66acaa706e7cff64b6d32fd832597",
+  "split": "test",
+  "split_seed": 20260813
+}

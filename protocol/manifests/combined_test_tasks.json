@@ -1,0 +1,32 @@
+{
+  "episodes": [],
+  "grouping_unit": "unordered_meta_task_pair",
+  "meta_task_pairs": [
+    [
+      "close_drawer",
+      "turn_on_lightbulb"
+    ],
+    [
+      "move_slider_left",
+      "open_drawer"
+    ],
+    [
+      "move_slider_right",
+      "turn_off_led"
+    ],
+    [
+      "turn_off_lightbulb",
+      "turn_on_led"
+    ]
+  ],
+  "note": "Task-only split definition. Final rollout episodes must be created and frozen separately; source training episodes are never test data.",
+  "num_episodes": 0,
+  "num_meta_task_pairs": 4,
+  "protocol": "MetaCALVIN-RA-L-P0-Combined-v1",
+  "schema_version": 1,
+  "selection_rule": "test: the four legacy held-out unordered task pairs; validation: Python random.Random(split_seed).sample over the sorted 20 remaining pairs, with all eight subtasks covered; train: all remaining pairs; all source episodes belonging to a test pair are quarantined",
+  "source_dataset_name": "training_explore",
+  "source_index_sha256": "9461c2d889424e404b329428d362d5c01c2a3c2dbb6cbcb349a032f31e909a77",
+  "split": "test",
+  "split_seed": 20260866
+}

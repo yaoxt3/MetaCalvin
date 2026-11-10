@@ -1,0 +1,2062 @@
+{
+  "episodes": [
+    {
+      "end": 519,
+      "episode_index": 0,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 0
+    },
+    {
+      "end": 986,
+      "episode_index": 1,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 520
+    },
+    {
+      "end": 1804,
+      "episode_index": 2,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 987
+    },
+    {
+      "end": 3621,
+      "episode_index": 5,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 3127
+    },
+    {
+      "end": 4116,
+      "episode_index": 6,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 3622
+    },
+    {
+      "end": 4710,
+      "episode_index": 7,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 4117
+    },
+    {
+      "end": 5375,
+      "episode_index": 8,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 4711
+    },
+    {
+      "end": 6178,
+      "episode_index": 9,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 5376
+    },
+    {
+      "end": 6859,
+      "episode_index": 10,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 6179
+    },
+    {
+      "end": 7353,
+      "episode_index": 11,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 6860
+    },
+    {
+      "end": 8021,
+      "episode_index": 12,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 7354
+    },
+    {
+      "end": 9226,
+      "episode_index": 14,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 8566
+    },
+    {
+      "end": 9836,
+      "episode_index": 15,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 9227
+    },
+    {
+      "end": 10599,
+      "episode_index": 16,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 9837
+    },
+    {
+      "end": 11259,
+      "episode_index": 17,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 10600
+    },
+    {
+      "end": 12272,
+      "episode_index": 19,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 11805
+    },
+    {
+      "end": 13719,
+      "episode_index": 21,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 12947
+    },
+    {
+      "end": 14979,
+      "episode_index": 23,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 14270
+    },
+    {
+      "end": 15676,
+      "episode_index": 24,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 14980
+    },
+    {
+      "end": 16326,
+      "episode_index": 25,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 15677
+    },
+    {
+      "end": 17014,
+      "episode_index": 26,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 16327
+    },
+    {
+      "end": 17966,
+      "episode_index": 27,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 17015
+    },
+    {
+      "end": 18529,
+      "episode_index": 28,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 17967
+    },
+    {
+      "end": 19635,
+      "episode_index": 30,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 19002
+    },
+    {
+      "end": 20945,
+      "episode_index": 32,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 20243
+    },
+    {
+      "end": 21578,
+      "episode_index": 33,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 20946
+    },
+    {
+      "end": 22370,
+      "episode_index": 34,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 21579
+    },
+    {
+      "end": 23184,
+      "episode_index": 35,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 22371
+    },
+    {
+      "end": 23869,
+      "episode_index": 36,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 23185
+    },
+    {
+      "end": 24531,
+      "episode_index": 37,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 23870
+    },
+    {
+      "end": 25239,
+      "episode_index": 38,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 24532
+    },
+    {
+      "end": 26285,
+      "episode_index": 40,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 25777
+    },
+    {
+      "end": 26876,
+      "episode_index": 41,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 26286
+    },
+    {
+      "end": 28051,
+      "episode_index": 43,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 27547
+    },
+    {
+      "end": 28640,
+      "episode_index": 44,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 28052
+    },
+    {
+      "end": 29182,
+      "episode_index": 45,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 28641
+    },
+    {
+      "end": 29788,
+      "episode_index": 46,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 29183
+    },
+    {
+      "end": 30325,
+      "episode_index": 47,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 29789
+    },
+    {
+      "end": 31518,
+      "episode_index": 49,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 30857
+    },
+    {
+      "end": 32233,
+      "episode_index": 50,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 31519
+    },
+    {
+      "end": 32818,
+      "episode_index": 51,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 32234
+    },
+    {
+      "end": 33300,
+      "episode_index": 52,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 32819
+    },
+    {
+      "end": 33709,
+      "episode_index": 53,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 33301
+    },
+    {
+      "end": 34839,
+      "episode_index": 55,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 34358
+    },
+    {
+      "end": 35589,
+      "episode_index": 56,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 34840
+    },
+    {
+      "end": 36255,
+      "episode_index": 57,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 35590
+    },
+    {
+      "end": 37086,
+      "episode_index": 58,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 36256
+    },
+    {
+      "end": 37538,
+      "episode_index": 59,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 37087
+    },
+    {
+      "end": 38829,
+      "episode_index": 61,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 38275
+    },
+    {
+      "end": 39382,
+      "episode_index": 62,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 38830
+    },
+    {
+      "end": 40008,
+      "episode_index": 63,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 39383
+    },
+    {
+      "end": 40641,
+      "episode_index": 64,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 40009
+    },
+    {
+      "end": 41704,
+      "episode_index": 66,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 41227
+    },
+    {
+      "end": 42395,
+      "episode_index": 67,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 41705
+    },
+    {
+      "end": 44315,
+      "episode_index": 70,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 43722
+    },
+    {
+      "end": 45134,
+      "episode_index": 71,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 44316
+    },
+    {
+      "end": 45772,
+      "episode_index": 72,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 45135
+    },
+    {
+      "end": 46379,
+      "episode_index": 73,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 45773
+    },
+    {
+      "end": 47024,
+      "episode_index": 74,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 46380
+    },
+    {
+      "end": 48172,
+      "episode_index": 76,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 47680
+    },
+    {
+      "end": 48735,
+      "episode_index": 77,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 48173
+    },
+    {
+      "end": 49269,
+      "episode_index": 78,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 48736
+    },
+    {
+      "end": 49876,
+      "episode_index": 79,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 49270
+    },
+    {
+      "end": 50586,
+      "episode_index": 80,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 49877
+    },
+    {
+      "end": 51191,
+      "episode_index": 81,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 50587
+    },
+    {
+      "end": 51758,
+      "episode_index": 82,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 51192
+    },
+    {
+      "end": 53065,
+      "episode_index": 84,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 52421
+    },
+    {
+      "end": 53939,
+      "episode_index": 85,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 53066
+    },
+    {
+      "end": 54582,
+      "episode_index": 86,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 53940
+    },
+    {
+      "end": 56118,
+      "episode_index": 88,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 55352
+    },
+    {
+      "end": 56901,
+      "episode_index": 89,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 56119
+    },
+    {
+      "end": 57420,
+      "episode_index": 90,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 56902
+    },
+    {
+      "end": 58224,
+      "episode_index": 91,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 57421
+    },
+    {
+      "end": 58787,
+      "episode_index": 92,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 58225
+    },
+    {
+      "end": 59365,
+      "episode_index": 93,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 58788
+    },
+    {
+      "end": 60037,
+      "episode_index": 94,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 59366
+    },
+    {
+      "end": 60613,
+      "episode_index": 95,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 60038
+    },
+    {
+      "end": 61208,
+      "episode_index": 96,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 60614
+    },
+    {
+      "end": 62535,
+      "episode_index": 98,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 61922
+    },
+    {
+      "end": 63179,
+      "episode_index": 99,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 62536
+    },
+    {
+      "end": 63906,
+      "episode_index": 100,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 63180
+    },
+    {
+      "end": 65492,
+      "episode_index": 103,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 64977
+    },
+    {
+      "end": 66139,
+      "episode_index": 104,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 65493
+    },
+    {
+      "end": 66657,
+      "episode_index": 105,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 66140
+    },
+    {
+      "end": 67246,
+      "episode_index": 106,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 66658
+    },
+    {
+      "end": 67838,
+      "episode_index": 107,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 67247
+    },
+    {
+      "end": 68620,
+      "episode_index": 108,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 67839
+    },
+    {
+      "end": 69178,
+      "episode_index": 109,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 68621
+    },
+    {
+      "end": 69788,
+      "episode_index": 110,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 69179
+    },
+    {
+      "end": 70353,
+      "episode_index": 111,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 69789
+    },
+    {
+      "end": 73277,
+      "episode_index": 116,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 72605
+    },
+    {
+      "end": 73848,
+      "episode_index": 117,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 73278
+    },
+    {
+      "end": 74394,
+      "episode_index": 118,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 73849
+    },
+    {
+      "end": 75115,
+      "episode_index": 119,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 74395
+    },
+    {
+      "end": 75875,
+      "episode_index": 120,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 75116
+    },
+    {
+      "end": 76499,
+      "episode_index": 121,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 75876
+    },
+    {
+      "end": 77097,
+      "episode_index": 122,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 76500
+    },
+    {
+      "end": 77643,
+      "episode_index": 123,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 77098
+    },
+    {
+      "end": 78302,
+      "episode_index": 124,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 77644
+    },
+    {
+      "end": 79091,
+      "episode_index": 125,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 78303
+    },
+    {
+      "end": 81092,
+      "episode_index": 128,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 80442
+    },
+    {
+      "end": 81810,
+      "episode_index": 129,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 81093
+    },
+    {
+      "end": 82450,
+      "episode_index": 130,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 81811
+    },
+    {
+      "end": 83666,
+      "episode_index": 132,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 83036
+    },
+    {
+      "end": 84159,
+      "episode_index": 133,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 83667
+    },
+    {
+      "end": 84788,
+      "episode_index": 134,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 84160
+    },
+    {
+      "end": 85366,
+      "episode_index": 135,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 84789
+    },
+    {
+      "end": 86304,
+      "episode_index": 137,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 85871
+    },
+    {
+      "end": 86761,
+      "episode_index": 138,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 86305
+    },
+    {
+      "end": 87292,
+      "episode_index": 139,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 86762
+    },
+    {
+      "end": 87851,
+      "episode_index": 140,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 87293
+    },
+    {
+      "end": 88459,
+      "episode_index": 141,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 87852
+    },
+    {
+      "end": 88954,
+      "episode_index": 142,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 88460
+    },
+    {
+      "end": 89601,
+      "episode_index": 143,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 88955
+    },
+    {
+      "end": 90832,
+      "episode_index": 145,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 90220
+    },
+    {
+      "end": 91459,
+      "episode_index": 146,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 90833
+    },
+    {
+      "end": 91986,
+      "episode_index": 147,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 91460
+    },
+    {
+      "end": 92589,
+      "episode_index": 148,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 91987
+    },
+    {
+      "end": 93365,
+      "episode_index": 149,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 92590
+    },
+    {
+      "end": 94489,
+      "episode_index": 151,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 93885
+    },
+    {
+      "end": 95204,
+      "episode_index": 152,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 94490
+    },
+    {
+      "end": 95894,
+      "episode_index": 153,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 95205
+    },
+    {
+      "end": 97702,
+      "episode_index": 156,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_led"
+      ],
+      "start": 97211
+    },
+    {
+      "end": 98857,
+      "episode_index": 158,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 98202
+    },
+    {
+      "end": 99511,
+      "episode_index": 159,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 98858
+    },
+    {
+      "end": 100477,
+      "episode_index": 161,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 99991
+    },
+    {
+      "end": 101618,
+      "episode_index": 163,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 101089
+    },
+    {
+      "end": 102238,
+      "episode_index": 164,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 101619
+    },
+    {
+      "end": 102932,
+      "episode_index": 165,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 102239
+    },
+    {
+      "end": 103944,
+      "episode_index": 167,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 103395
+    },
+    {
+      "end": 104551,
+      "episode_index": 168,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 103945
+    },
+    {
+      "end": 104997,
+      "episode_index": 169,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 104552
+    },
+    {
+      "end": 105721,
+      "episode_index": 170,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 104998
+    },
+    {
+      "end": 106468,
+      "episode_index": 171,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 105722
+    },
+    {
+      "end": 107105,
+      "episode_index": 172,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 106469
+    },
+    {
+      "end": 107881,
+      "episode_index": 173,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 107106
+    },
+    {
+      "end": 108504,
+      "episode_index": 174,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 107882
+    },
+    {
+      "end": 109042,
+      "episode_index": 175,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 108505
+    },
+    {
+      "end": 109744,
+      "episode_index": 176,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 109043
+    },
+    {
+      "end": 110402,
+      "episode_index": 177,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 109745
+    },
+    {
+      "end": 111146,
+      "episode_index": 178,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 110403
+    },
+    {
+      "end": 112041,
+      "episode_index": 179,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 111147
+    },
+    {
+      "end": 112634,
+      "episode_index": 180,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 112042
+    },
+    {
+      "end": 113102,
+      "episode_index": 181,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_led"
+      ],
+      "start": 112635
+    },
+    {
+      "end": 114427,
+      "episode_index": 183,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 113724
+    },
+    {
+      "end": 115106,
+      "episode_index": 184,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 114428
+    },
+    {
+      "end": 115619,
+      "episode_index": 185,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 115107
+    },
+    {
+      "end": 117034,
+      "episode_index": 187,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 116367
+    },
+    {
+      "end": 117577,
+      "episode_index": 188,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 117035
+    },
+    {
+      "end": 118259,
+      "episode_index": 189,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 117578
+    },
+    {
+      "end": 118743,
+      "episode_index": 190,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 118260
+    },
+    {
+      "end": 119354,
+      "episode_index": 191,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 118744
+    },
+    {
+      "end": 119987,
+      "episode_index": 192,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 119355
+    },
+    {
+      "end": 120442,
+      "episode_index": 193,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 119988
+    },
+    {
+      "end": 122871,
+      "episode_index": 197,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 122382
+    },
+    {
+      "end": 123523,
+      "episode_index": 198,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 122872
+    },
+    {
+      "end": 125431,
+      "episode_index": 201,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 124714
+    },
+    {
+      "end": 126013,
+      "episode_index": 202,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 125432
+    },
+    {
+      "end": 126813,
+      "episode_index": 203,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 126014
+    },
+    {
+      "end": 127645,
+      "episode_index": 204,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 126814
+    },
+    {
+      "end": 128157,
+      "episode_index": 205,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 127646
+    },
+    {
+      "end": 128877,
+      "episode_index": 206,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 128158
+    },
+    {
+      "end": 129469,
+      "episode_index": 207,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 128878
+    },
+    {
+      "end": 130174,
+      "episode_index": 208,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 129470
+    },
+    {
+      "end": 130804,
+      "episode_index": 209,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 130175
+    },
+    {
+      "end": 131451,
+      "episode_index": 210,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 130805
+    },
+    {
+      "end": 132026,
+      "episode_index": 211,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 131452
+    },
+    {
+      "end": 132666,
+      "episode_index": 212,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 132027
+    },
+    {
+      "end": 133167,
+      "episode_index": 213,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_led"
+      ],
+      "start": 132667
+    },
+    {
+      "end": 134142,
+      "episode_index": 215,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 133667
+    },
+    {
+      "end": 134798,
+      "episode_index": 216,
+      "meta_task_pair": [
+        "move_slider_right",
+        "close_drawer"
+      ],
+      "start": 134143
+    },
+    {
+      "end": 136170,
+      "episode_index": 218,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 135466
+    },
+    {
+      "end": 136902,
+      "episode_index": 219,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 136171
+    },
+    {
+      "end": 137472,
+      "episode_index": 220,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 136903
+    },
+    {
+      "end": 138819,
+      "episode_index": 222,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 138117
+    },
+    {
+      "end": 139497,
+      "episode_index": 223,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 138820
+    },
+    {
+      "end": 140102,
+      "episode_index": 224,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 139498
+    },
+    {
+      "end": 140758,
+      "episode_index": 225,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 140103
+    },
+    {
+      "end": 141336,
+      "episode_index": 226,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 140759
+    },
+    {
+      "end": 141991,
+      "episode_index": 227,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_off_lightbulb"
+      ],
+      "start": 141337
+    },
+    {
+      "end": 143627,
+      "episode_index": 229,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 142919
+    },
+    {
+      "end": 144274,
+      "episode_index": 230,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 143628
+    },
+    {
+      "end": 145100,
+      "episode_index": 231,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 144275
+    },
+    {
+      "end": 145995,
+      "episode_index": 232,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 145101
+    },
+    {
+      "end": 146502,
+      "episode_index": 233,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 145996
+    },
+    {
+      "end": 147211,
+      "episode_index": 234,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 146503
+    },
+    {
+      "end": 147805,
+      "episode_index": 235,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 147212
+    },
+    {
+      "end": 148969,
+      "episode_index": 237,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 148342
+    },
+    {
+      "end": 149557,
+      "episode_index": 238,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 148970
+    },
+    {
+      "end": 150046,
+      "episode_index": 239,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 149558
+    },
+    {
+      "end": 151248,
+      "episode_index": 241,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 150668
+    },
+    {
+      "end": 152572,
+      "episode_index": 243,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 151963
+    },
+    {
+      "end": 153349,
+      "episode_index": 244,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 152573
+    },
+    {
+      "end": 153936,
+      "episode_index": 245,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 153350
+    },
+    {
+      "end": 155121,
+      "episode_index": 247,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 154428
+    },
+    {
+      "end": 155653,
+      "episode_index": 248,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 155122
+    },
+    {
+      "end": 157311,
+      "episode_index": 250,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 156624
+    },
+    {
+      "end": 158087,
+      "episode_index": 251,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 157312
+    },
+    {
+      "end": 158693,
+      "episode_index": 252,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_on_led"
+      ],
+      "start": 158088
+    },
+    {
+      "end": 160463,
+      "episode_index": 255,
+      "meta_task_pair": [
+        "turn_off_lightbulb",
+        "turn_off_led"
+      ],
+      "start": 159952
+    },
+    {
+      "end": 161834,
+      "episode_index": 257,
+      "meta_task_pair": [
+        "close_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 161136
+    },
+    {
+      "end": 162643,
+      "episode_index": 258,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 161835
+    },
+    {
+      "end": 163231,
+      "episode_index": 259,
+      "meta_task_pair": [
+        "turn_on_lightbulb",
+        "turn_on_led"
+      ],
+      "start": 162644
+    },
+    {
+      "end": 163791,
+      "episode_index": 260,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 163232
+    },
+    {
+      "end": 165025,
+      "episode_index": 262,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 164395
+    },
+    {
+      "end": 165914,
+      "episode_index": 263,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 165026
+    },
+    {
+      "end": 166366,
+      "episode_index": 264,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 165915
+    },
+    {
+      "end": 167058,
+      "episode_index": 265,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 166367
+    },
+    {
+      "end": 167647,
+      "episode_index": 266,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_on_lightbulb"
+      ],
+      "start": 167059
+    },
+    {
+      "end": 168243,
+      "episode_index": 267,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_led"
+      ],
+      "start": 167648
+    },
+    {
+      "end": 168922,
+      "episode_index": 268,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 168244
+    },
+    {
+      "end": 170352,
+      "episode_index": 270,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 169683
+    },
+    {
+      "end": 171642,
+      "episode_index": 272,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_led"
+      ],
+      "start": 171068
+    },
+    {
+      "end": 172959,
+      "episode_index": 274,
+      "meta_task_pair": [
+        "move_slider_right",
+        "turn_on_lightbulb"
+      ],
+      "start": 172303
+    },
+    {
+      "end": 173640,
+      "episode_index": 275,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 172960
+    },
+    {
+      "end": 175216,
+      "episode_index": 277,
+      "meta_task_pair": [
+        "move_slider_left",
+        "turn_on_lightbulb"
+      ],
+      "start": 174304
+    },
+    {
+      "end": 176001,
+      "episode_index": 278,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 175217
+    },
+    {
+      "end": 177396,
+      "episode_index": 280,
+      "meta_task_pair": [
+        "move_slider_right",
+        "open_drawer"
+      ],
+      "start": 176764
+    },
+    {
+      "end": 178030,
+      "episode_index": 281,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 177397
+    },
+    {
+      "end": 178766,
+      "episode_index": 282,
+      "meta_task_pair": [
+        "open_drawer",
+        "turn_off_lightbulb"
+      ],
+      "start": 178031
+    }
+  ],
+  "grouping_unit": "unordered_meta_task_pair",
+  "meta_task_pairs": [
+    [
+      "close_drawer",
+      "turn_off_led"
+    ],
+    [
+      "close_drawer",
+      "turn_off_lightbulb"
+    ],
+    [
+      "close_drawer",
+      "turn_on_led"
+    ],
+    [
+      "move_slider_left",
+      "turn_off_led"
+    ],
+    [
+      "move_slider_left",
+      "turn_off_lightbulb"
+    ],
+    [
+      "move_slider_left",
+      "turn_on_led"
+    ],
+    [
+      "move_slider_left",
+      "turn_on_lightbulb"
+    ],
+    [
+      "move_slider_right",
+      "close_drawer"
+    ],
+    [
+      "move_slider_right",
+      "open_drawer"
+    ],
+    [
+      "move_slider_right",
+      "turn_on_led"
+    ],
+    [
+      "move_slider_right",
+      "turn_on_lightbulb"
+    ],
+    [
+      "open_drawer",
+      "turn_off_led"
+    ],
+    [
+      "open_drawer",
+      "turn_off_lightbulb"
+    ],
+    [
+      "open_drawer",
+      "turn_on_lightbulb"
+    ],
+    [
+      "turn_off_lightbulb",
+      "turn_off_led"
+    ],
+    [
+      "turn_on_lightbulb",
+      "turn_on_led"
+    ]
+  ],
+  "num_episodes": 220,
+  "num_frames": 139298,
+  "num_meta_task_pairs": 16,
+  "num_windows_ws12": 136658,
+  "protocol": "MetaCALVIN-RA-L-P0-Combined-v1",
+  "schema_version": 1,
+  "selection_rule": "test: the four legacy held-out unordered task pairs; validation: Python random.Random(split_seed).sample over the sorted 20 remaining pairs, with all eight subtasks covered; train: all remaining pairs; all source episodes belonging to a test pair are quarantined",
+  "source_dataset_name": "training_explore",
+  "source_index_sha256": "9461c2d889424e404b329428d362d5c01c2a3c2dbb6cbcb349a032f31e909a77",
+  "split": "train",
+  "split_seed": 20260866
+}

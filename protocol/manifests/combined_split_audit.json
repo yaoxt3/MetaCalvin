@@ -1,0 +1,184 @@
+{
+  "episode_recovery": {
+    "counts_match_meta_task_stats": true,
+    "recovered_episode_count": 285,
+    "source_episode_count": 285,
+    "text_state_disagreement_count": 1,
+    "text_state_disagreements": [
+      {
+        "episode_index": 42,
+        "feedback_frame": 27040,
+        "instructions": [
+          "Turn on the lightbulb by pushing the handle.",
+          "Push the button to turn on the led."
+        ],
+        "state_pair": [
+          "turn_on_lightbulb",
+          "turn_off_led"
+        ],
+        "text_pair": [
+          "turn_on_lightbulb",
+          "turn_on_led"
+        ]
+      }
+    ]
+  },
+  "legacy_protocol_error": {
+    "description": "The legacy eval pair ['turn_on_led','turn_off_lightbulb'] was compared in reverse order against itertools.combinations and therefore also appeared in the training source.",
+    "leaked_pair": [
+      "turn_off_lightbulb",
+      "turn_on_led"
+    ],
+    "quarantined_source_episode_count": 12,
+    "quarantined_source_episode_indices": [
+      4,
+      31,
+      39,
+      113,
+      126,
+      150,
+      154,
+      157,
+      182,
+      240,
+      279,
+      284
+    ]
+  },
+  "mathematical_pair_count": {
+    "final_test": 4,
+    "train": 16,
+    "train_validation_candidates": 20,
+    "valid_unordered_pairs": 24,
+    "validation": 4
+  },
+  "protocol": "MetaCALVIN-RA-L-P0-Combined-v1",
+  "schema_version": 1,
+  "source_dataset_name": "training_explore",
+  "source_index_sha256": "9461c2d889424e404b329428d362d5c01c2a3c2dbb6cbcb349a032f31e909a77",
+  "source_meta_task_stats_sha256": "83769f78ac083de3baa537d0fa4f233b5b54326897601eac73b253fd5e7a791b",
+  "split_seed": 20260866,
+  "splits": {
+    "test": {
+      "pairs": [
+        [
+          "close_drawer",
+          "turn_on_lightbulb"
+        ],
+        [
+          "move_slider_left",
+          "open_drawer"
+        ],
+        [
+          "move_slider_right",
+          "turn_off_led"
+        ],
+        [
+          "turn_off_lightbulb",
+          "turn_on_led"
+        ]
+      ],
+      "source_episodes_used": 0
+    },
+    "train": {
+      "episode_count": 220,
+      "pairs": [
+        [
+          "close_drawer",
+          "turn_off_led"
+        ],
+        [
+          "close_drawer",
+          "turn_off_lightbulb"
+        ],
+        [
+          "close_drawer",
+          "turn_on_led"
+        ],
+        [
+          "move_slider_left",
+          "turn_off_led"
+        ],
+        [
+          "move_slider_left",
+          "turn_off_lightbulb"
+        ],
+        [
+          "move_slider_left",
+          "turn_on_led"
+        ],
+        [
+          "move_slider_left",
+          "turn_on_lightbulb"
+        ],
+        [
+          "move_slider_right",
+          "close_drawer"
+        ],
+        [
+          "move_slider_right",
+          "open_drawer"
+        ],
+        [
+          "move_slider_right",
+          "turn_on_led"
+        ],
+        [
+          "move_slider_right",
+          "turn_on_lightbulb"
+        ],
+        [
+          "open_drawer",
+          "turn_off_led"
+        ],
+        [
+          "open_drawer",
+          "turn_off_lightbulb"
+        ],
+        [
+          "open_drawer",
+          "turn_on_lightbulb"
+        ],
+        [
+          "turn_off_lightbulb",
+          "turn_off_led"
+        ],
+        [
+          "turn_on_lightbulb",
+          "turn_on_led"
+        ]
+      ]
+    },
+    "validation": {
+      "episode_count": 53,
+      "pairs": [
+        [
+          "move_slider_left",
+          "close_drawer"
+        ],
+        [
+          "move_slider_right",
+          "turn_off_lightbulb"
+        ],
+        [
+          "open_drawer",
+          "turn_on_led"
+        ],
+        [
+          "turn_on_lightbulb",
+          "turn_off_led"
+        ]
+      ],
+      "subtask_coverage": [
+        "move_slider_left",
+        "move_slider_right",
+        "open_drawer",
+        "close_drawer",
+        "turn_on_lightbulb",
+        "turn_off_lightbulb",
+        "turn_on_led",
+        "turn_off_led"
+      ]
+    }
+  }
+}
