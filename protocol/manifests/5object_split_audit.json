@@ -1,0 +1,78 @@
+{
+  "leakage_check": {
+    "all_pairwise_overlaps_are_zero": true,
+    "pairwise_episode_overlap": {
+      "train__test": 0,
+      "train__validation": 0,
+      "validation__test": 0
+    },
+    "pairwise_group_overlap": {
+      "train__test": 0,
+      "train__validation": 0,
+      "validation__test": 0
+    }
+  },
+  "observed_total_episodes": 900,
+  "observed_total_object_combinations": 10,
+  "protocol": "MetaCALVIN-RA-L-P0-5Object-T4-v1",
+  "schema_version": 1,
+  "source_contains_legacy_test_combinations": true,
+  "source_dataset_name": "training_5_objs",
+  "source_index_sha256": "c19fa9243bbd28e0044fca1ea8130dda6039fbc2c4511a48967eef48b50961f2",
+  "split_seed": 20260813,
+  "splits": {
+    "test": {
+      "manifest_sha256": "286112427f4e66f966eb6403522f79d6aadcd1e3e2745e4d17ca3806bb8ed9ce",
+      "num_episodes": 367,
+      "num_frames": 93151,
+      "num_object_combinations": 3,
+      "num_windows_ws12": 88747,
+      "object_coverage": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ]
+    },
+    "train": {
+      "manifest_sha256": "c3d3573e683840aa61972f30470518952c9e2760fd664800b36c8f935b6257db",
+      "num_episodes": 422,
+      "num_frames": 120316,
+      "num_object_combinations": 5,
+      "num_windows_ws12": 115252,
+      "object_coverage": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ]
+    },
+    "validation": {
+      "manifest_sha256": "4b6f32d7c4ca4b5d7a633fce2c04e59237a7b51f88f82f1a1e9a289f1d6bb4ff",
+      "num_episodes": 111,
+      "num_frames": 31085,
+      "num_object_combinations": 2,
+      "num_windows_ws12": 29753,
+      "object_coverage": [
+        "drawer",
+        "led",
+        "lightbulb",
+        "red_block",
+        "slider"
+      ]
+    }
+  },
+  "validation_selection": {
+    "absolute_episode_count_error": 4.4,
+    "candidate_rule": "exactly two groups whose union covers all five objects",
+    "eligible_episode_count": 533,
+    "num_best_score_ties": 1,
+    "num_valid_candidates": 6,
+    "selected_validation_episode_count": 111,
+    "target_validation_episode_count": 106.6,
+    "target_validation_episode_fraction": 0.2,
+    "tie_break_seed": 20260813
+  }
+}
