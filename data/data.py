@@ -2,6 +2,7 @@ import sys
 sys.path.append('../')
 
 import functools
+import hashlib
 import json
 import logging
 import math
@@ -21,11 +22,16 @@ from calvin.calvin_models.calvin_agent.datasets.utils.episode_utils import (
     process_depth,
     process_state,
 )
-from data.sampler import SequenceSampler, DistributedSequenceSampler, DistributedRandomSampler
+from data.sampler import (
+    SequenceSampler,
+    DistributedSequenceSampler,
+    DistributedRandomSampler,
+    ManifestSequenceBatchSampler,
+    ResumableBatchSampler,
+)
 
 import numpy as np
 from omegaconf import DictConfig
-import pyhash
 import torch
 from torch.utils.data import Dataset
 
@@ -55,7 +61,20 @@ from pathlib import Path
 from typing import Dict, Tuple, Union
 
 
-hasher = pyhash.fnv1_32()
+def _fnv1_32(value):
+    """Match pyhash.fnv1_32() for Python strings without its C extension.
+
+    pyhash 0.9.3 is not compatible with Python 3.11.  Its string binding hashes
+    UTF-16LE code units with a zero initial value; keeping those details here
+    preserves the validation-window assignments produced by the old package.
+    """
+    hash_value = 0
+    for byte in str(value).encode("utf-16le"):
+        hash_value = ((hash_value * 16777619) & 0xFFFFFFFF) ^ byte
+    return hash_value
+
+
+hasher = _fnv1_32
 logger = logging.getLogger(__name__)
 
 obs_config = DictConfig(
@@ -203,7 +222,8 @@ class BaseCalvinDataset(Dataset):
         traj_cons=False,
         text_aug=False,
         dif_ws=False,
-        act_step=1
+        act_step=1,
+        validation=None,
     ):
         self.observation_space = obs_space
         self.proprio_state = proprio_state
@@ -235,11 +255,14 @@ class BaseCalvinDataset(Dataset):
         if self.gripper_pad != -1:
             self.gripper_shift = RandomShiftsAug(gripper_pad)
 
-        assert (
-            "validation" in self.abs_datasets_dir.as_posix()
-            or "training" in self.abs_datasets_dir.as_posix()
-        )
-        self.validation = "validation" in self.abs_datasets_dir.as_posix()
+        if validation is None:
+            assert (
+                "validation" in self.abs_datasets_dir.as_posix()
+                or "training" in self.abs_datasets_dir.as_posix()
+            )
+            self.validation = "validation" in self.abs_datasets_dir.as_posix()
+        else:
+            self.validation = bool(validation)
         assert self.abs_datasets_dir.is_dir()
         logger.info(f"loading dataset at {self.abs_datasets_dir}")
         logger.info("finished loading dataset")
@@ -577,6 +600,8 @@ class DiskCalvinDataset(BaseCalvinDataset):
         feedback_type: str = "train_feedback",
         pretrain: bool = False,
         partial_data=False,
+        manifest_path=None,
+        manifest_split=None,
         **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
@@ -593,6 +618,8 @@ class DiskCalvinDataset(BaseCalvinDataset):
         self.pretrain = pretrain
         self.skip_frames = skip_frames
         self.feedback_type = feedback_type
+        self.manifest_path = Path(manifest_path) if manifest_path is not None else None
+        self.manifest_split = manifest_split
 
         self.episode_lookup = self._build_file_indices(self.abs_datasets_dir)
 
@@ -648,11 +675,62 @@ class DiskCalvinDataset(BaseCalvinDataset):
 
         episode_lookup = []
 
-        ep_start_end_ids = np.load(abs_datasets_dir / "ep_start_end_ids.npy")
+        index_path = abs_datasets_dir / "ep_start_end_ids.npy"
+        ep_start_end_ids = np.load(index_path)
         logger.info(
             f'Found "ep_start_end_ids.npy" with {len(ep_start_end_ids)} episodes.'
         )
-        for start_idx, end_idx in ep_start_end_ids:
+        selected_ranges = ep_start_end_ids
+        if self.manifest_path is not None:
+            with self.manifest_path.open("r", encoding="utf-8") as handle:
+                manifest = json.load(handle)
+
+            if manifest.get("schema_version") != 1:
+                raise ValueError(
+                    f"Unsupported dataset manifest schema in {self.manifest_path}"
+                )
+            if self.manifest_split is not None and manifest.get("split") != self.manifest_split:
+                raise ValueError(
+                    f"Expected a {self.manifest_split!r} manifest, got "
+                    f"{manifest.get('split')!r}: {self.manifest_path}"
+                )
+            if manifest.get("source_dataset_name") != abs_datasets_dir.name:
+                raise ValueError(
+                    "Dataset directory does not match manifest: "
+                    f"{abs_datasets_dir.name!r} != "
+                    f"{manifest.get('source_dataset_name')!r}"
+                )
+
+            index_sha256 = hashlib.sha256(index_path.read_bytes()).hexdigest()
+            if manifest.get("source_index_sha256") != index_sha256:
+                raise ValueError(
+                    f"Dataset index hash mismatch for {self.manifest_path}; "
+                    "refusing to train on a different dataset index."
+                )
+
+            selected_ranges = []
+            for record in manifest.get("episodes", []):
+                episode_index = int(record["episode_index"])
+                if episode_index < 0 or episode_index >= len(ep_start_end_ids):
+                    raise ValueError(
+                        f"Invalid episode_index {episode_index} in {self.manifest_path}"
+                    )
+                actual_start, actual_end = map(int, ep_start_end_ids[episode_index])
+                expected = (int(record["start"]), int(record["end"]))
+                if (actual_start, actual_end) != expected:
+                    raise ValueError(
+                        f"Episode range mismatch at index {episode_index}: "
+                        f"dataset={(actual_start, actual_end)}, manifest={expected}"
+                    )
+                selected_ranges.append((actual_start, actual_end))
+
+            if not selected_ranges:
+                raise ValueError(f"Manifest contains no episodes: {self.manifest_path}")
+            logger.info(
+                "Using %d episodes from %s", len(selected_ranges), self.manifest_path
+            )
+
+        for start_idx, end_idx in selected_ranges:
             assert end_idx > self.max_window_size
             for idx in range(start_idx, end_idx + 1 - self.min_window_size):
                 episode_lookup.append(idx)
@@ -728,6 +806,8 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         feedback_type: str = "train_feedback",
         pretrain: bool = False,
         partial_data=False,
+        manifest_path=None,
+        manifest_split=None,
         **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
@@ -744,8 +824,14 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         self.pretrain = pretrain
         self.skip_frames = skip_frames
         self.feedback_type = feedback_type
+        self.manifest_path = Path(manifest_path) if manifest_path is not None else None
+        self.manifest_split = manifest_split
 
-        self.episode_lookup, self.start_idx_lookup = self._build_file_indices(self.abs_datasets_dir)
+        (
+            self.episode_lookup,
+            self.start_idx_lookup,
+            self.selected_ranges,
+        ) = self._build_file_indices(self.abs_datasets_dir)
 
         self.naming_pattern, self.n_digits = lookup_naming_pattern(
             self.abs_datasets_dir, self.save_format
@@ -867,16 +953,69 @@ class DiskCalvinSeqDataset(BaseCalvinDataset):
         episode_lookup = []
         start_idx_lookup = []
 
-        ep_start_end_ids = np.load(abs_datasets_dir / "ep_start_end_ids.npy")
+        index_path = abs_datasets_dir / "ep_start_end_ids.npy"
+        ep_start_end_ids = np.load(index_path)
         logger.info(
             f'Found "ep_start_end_ids.npy" with {len(ep_start_end_ids)} episodes.'
         )
-        for start_idx, end_idx in ep_start_end_ids:
+        selected_ranges = [tuple(map(int, item)) for item in ep_start_end_ids]
+        if self.manifest_path is not None:
+            with self.manifest_path.open("r", encoding="utf-8") as handle:
+                manifest = json.load(handle)
+            if manifest.get("schema_version") != 1:
+                raise ValueError(
+                    f"Unsupported dataset manifest schema in {self.manifest_path}"
+                )
+            if self.manifest_split is not None and manifest.get("split") != self.manifest_split:
+                raise ValueError(
+                    f"Expected a {self.manifest_split!r} manifest, got "
+                    f"{manifest.get('split')!r}: {self.manifest_path}"
+                )
+            if manifest.get("source_dataset_name") != abs_datasets_dir.name:
+                raise ValueError(
+                    "Dataset directory does not match manifest: "
+                    f"{abs_datasets_dir.name!r} != "
+                    f"{manifest.get('source_dataset_name')!r}"
+                )
+            index_sha256 = hashlib.sha256(index_path.read_bytes()).hexdigest()
+            if manifest.get("source_index_sha256") != index_sha256:
+                raise ValueError(
+                    f"Dataset index hash mismatch for {self.manifest_path}; "
+                    "refusing to train on a different dataset index."
+                )
+            selected_ranges = []
+            for record in manifest.get("episodes", []):
+                episode_index = int(record["episode_index"])
+                if episode_index < 0 or episode_index >= len(ep_start_end_ids):
+                    raise ValueError(
+                        f"Invalid episode_index {episode_index} in {self.manifest_path}"
+                    )
+                actual_start, actual_end = map(int, ep_start_end_ids[episode_index])
+                expected = (int(record["start"]), int(record["end"]))
+                if (actual_start, actual_end) != expected:
+                    raise ValueError(
+                        f"Episode range mismatch at index {episode_index}: "
+                        f"dataset={(actual_start, actual_end)}, manifest={expected}"
+                    )
+                selected_ranges.append((actual_start, actual_end))
+            if not selected_ranges:
+                raise ValueError(f"Manifest contains no episodes: {self.manifest_path}")
+            logger.info(
+                "Using %d episodic sequences from %s",
+                len(selected_ranges),
+                self.manifest_path,
+            )
+
+        for start_idx, end_idx in selected_ranges:
             assert end_idx > self.max_window_size
             start_idx_lookup.append(start_idx)
             for idx in range(start_idx, end_idx + 1 - self.min_window_size):
                 episode_lookup.append(idx)
-        return np.array(episode_lookup), np.array(start_idx_lookup)
+        return (
+            np.array(episode_lookup),
+            np.array(start_idx_lookup),
+            selected_ranges,
+        )
     
     def _pad_sequence(self, seq: Dict, pad_size: int, head: bool=False) -> Dict:
         """
@@ -1338,7 +1477,7 @@ class DataInfo:
     def set_epoch(self, epoch):
         if self.shared_epoch is not None:
             self.shared_epoch.set_value(epoch)
-        if self.sampler is not None and isinstance(self.sampler, DistributedSampler):
+        if self.sampler is not None and hasattr(self.sampler, "set_epoch"):
             self.sampler.set_epoch(epoch)
 
 
@@ -1374,7 +1513,16 @@ def preprocess_text_calvin(sample, tokenizer):
     attention_mask = text["attention_mask"].view(batch_size, seq_len, -1)
     return input_ids, attention_mask
 
-def get_dataset(args, dataset_path, image_processor, tokenizer, epoch=0, floor=False):
+def get_dataset(
+    args,
+    dataset_path,
+    image_processor,
+    tokenizer,
+    epoch=0,
+    floor=False,
+    manifest_path=None,
+    validation=False,
+):
     # ann is dict including language and info
     shared_epoch = SharedEpoch(epoch=epoch)
     preprocess_image_fn = functools.partial(
@@ -1387,8 +1535,8 @@ def get_dataset(args, dataset_path, image_processor, tokenizer, epoch=0, floor=F
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args.window_size,
-        rgb_pad=args.rgb_pad,
-        gripper_pad=args.gripper_pad,
+        rgb_pad=-1 if validation else args.rgb_pad,
+        gripper_pad=-1 if validation else args.gripper_pad,
         traj_cons=args.traj_cons,
         text_aug=args.text_aug,
         dif_ws=args.dif_ws,
@@ -1397,6 +1545,9 @@ def get_dataset(args, dataset_path, image_processor, tokenizer, epoch=0, floor=F
         act_step=args.multi_step_action,
         partial_data=args.partial_data,
         feedback_type=args.feedback_type,
+        manifest_path=manifest_path,
+        manifest_split="validation" if validation else "train",
+        validation=validation,
     )
 
     round_fn = math.floor if floor else math.ceil
@@ -1412,32 +1563,45 @@ def get_dataset(args, dataset_path, image_processor, tokenizer, epoch=0, floor=F
         calvin_dataset,
         num_replicas=args.world_size,
         rank=args.rank,
-        shuffle=True,
+        shuffle=not validation,
         seed=args.seed,
-        drop_last=True,
+        drop_last=not validation,
     )
 
     # the batch_size and num_workers are per-GPU !
+    batch_sampler = ResumableBatchSampler(
+        sampler,
+        args.batch_size_calvin,
+        drop_last=not validation,
+    )
     dataloader = DataLoader(
         calvin_dataset,
-        batch_size=args.batch_size_calvin,
         pin_memory=False,
         num_workers=num_workers,
         prefetch_factor=3,
-        sampler=sampler,
+        batch_sampler=batch_sampler,
         persistent_workers=True,
         collate_fn=calvin_dataset.collater,
-        drop_last=True
     )
     # dataloader = DataLoader(calvin_dataset, batch_size=args.batch_size_calvin)
 
-    # add meta-data to dataloader instance for convenience
-    dataloader.num_batches = num_batches
-    dataloader.num_samples = num_samples
+    # Use the DataLoader's actual length so progress bars and ETAs match the
+    # number of batches that will really be yielded (including drop_last).
+    dataloader.num_batches = len(dataloader)
+    dataloader.num_samples = dataloader.num_batches * global_batch_size
 
     return DataInfo(dataloader=dataloader, shared_epoch=shared_epoch, sampler=sampler, dataset=calvin_dataset)
 
-def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, floor=False):
+def get_dataset_seq(
+    args,
+    dataset_path,
+    image_processor,
+    tokenizer,
+    epoch=0,
+    floor=False,
+    manifest_path=None,
+    validation=False,
+):
 
     # ann is dict including language and info
     shared_epoch = SharedEpoch(epoch=epoch)
@@ -1451,8 +1615,8 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
         image_fn=preprocess_image_fn,
         text_fn=preprocess_text_fn,
         window_size=args.window_size,
-        rgb_pad=args.rgb_pad,
-        gripper_pad=args.gripper_pad,
+        rgb_pad=-1 if validation else args.rgb_pad,
+        gripper_pad=-1 if validation else args.gripper_pad,
         traj_cons=args.traj_cons,
         text_aug=args.text_aug,
         dif_ws=args.dif_ws,
@@ -1462,6 +1626,9 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
         partial_data=args.partial_data,
         #n_obs_steps=args.n_obs_steps,
         feedback_type=args.feedback_type,
+        manifest_path=manifest_path,
+        manifest_split="validation" if validation else "train",
+        validation=validation,
     )
 
     round_fn = math.floor if floor else math.ceil
@@ -1475,11 +1642,19 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
     num_batches = num_worker_batches * num_workers
     num_samples = num_batches * global_batch_size
 
-    seq_sampler = DistributedSequenceSampler(
-            dataset_path,
-            args.batch_size_calvin,
-            args.window_size,
-        )
+    target_num_batches = None
+    if not validation:
+        target_num_batches = args.train_num_samples_calvin // global_batch_size
+    seq_sampler = ManifestSequenceBatchSampler(
+        calvin_dataset.selected_ranges,
+        args.batch_size_calvin,
+        args.window_size,
+        seed=args.seed,
+        shuffle=not validation,
+        num_batches=target_num_batches,
+        num_replicas=args.world_size,
+        rank=args.rank,
+    )
 
     # the batch_size and num_workers are per-GPU !
     dataloader = DataLoader(
@@ -1494,7 +1669,7 @@ def get_dataset_seq(args, dataset_path, image_processor, tokenizer, epoch=0, flo
     # dataloader = DataLoader(calvin_dataset, batch_size=args.batch_size_calvin)
 
     # add meta-data to dataloader instance for convenience
-    dataloader.num_batches = seq_sampler.num_batches
+    dataloader.num_batches = len(seq_sampler)
     dataloader.num_samples = seq_sampler.num_samples
 
     return DataInfo(dataloader=dataloader, shared_epoch=shared_epoch, sampler=seq_sampler, dataset=calvin_dataset)
@@ -1509,10 +1684,28 @@ def get_dataset_fn(dataset_type):
 
 
 
-def get_data(args, dataset_path, image_processor, tokenizer, dataset_type, epoch=0):
-    return get_dataset_fn(dataset_type)(
-        args, dataset_path, image_processor=image_processor, epoch=epoch, tokenizer=tokenizer
-    )
+def get_data(
+    args,
+    dataset_path,
+    image_processor,
+    tokenizer,
+    dataset_type,
+    epoch=0,
+    manifest_path=None,
+    validation=False,
+):
+    dataset_fn = get_dataset_fn(dataset_type)
+    common_kwargs = {
+        "image_processor": image_processor,
+        "epoch": epoch,
+        "tokenizer": tokenizer,
+    }
+    if dataset_fn is get_dataset or dataset_fn is get_dataset_seq:
+        common_kwargs.update(
+            manifest_path=manifest_path,
+            validation=validation,
+        )
+    return dataset_fn(args, dataset_path, **common_kwargs)
 
 def load_partial_traj_data():
     with open('partial_task_data.json', 'r') as f:
