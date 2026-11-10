@@ -1,5 +1,6 @@
 # Installation Guide and Examples for Running Data Creation, Training and Evaluation
-Datasets and trained models will be released here!
+This guide is mainly for the current datasets stored on the LRZ account and the already downloaded foundation models.
+Branch cleanup is most up to date and should work the best!
 
 ## Installation
 To create the venv meta-calvin run:
@@ -7,8 +8,13 @@ To create the venv meta-calvin run:
 conda env create -f environment.yml
 ```
 
+The required models are already downloaded on the LRZ account in the huggingface hub and the RoboCheckpoint folder\
+**/dss/dssfs04/lwp-dss-0002/pn36ce/pn36ce-dss-0000/RoboCheckpoint**
+
+If you want to install all required models for training from scratch do the following:
+
 ### 1)
-Clone the [CALVIN](https://github.com/mees/calvin) repo
+Clone the [CALVIN](https://github.com/mees/calvin) repo and download the debug dataset into the datasets folder
 
 ### 2)
 Download the released [OpenFlamingo](https://github.com/mlfoundations/open_flamingo) models:
@@ -24,7 +30,7 @@ All other required Hugginface models should install automatically if they are no
 I case of manual installation they can be found here:\
 Gemma-2-27b [huggingface](https://huggingface.co/google/gemma-2-27b-it)\
 CLIP Vit-L/14 [huggingface](https://huggingface.co/openai/clip-vit-large-patch14)\
-MPT [huggingface](https://huggingface.co/mosaicml/mpt-1b-redpajama-200b-dolly)
+MPT [huggingface](https://huggingface.co/mosaicml/mpt-1b-redpajama-200b-dolly)\
 
 
 To instantiate the base RoboFlamingo model:
@@ -51,7 +57,7 @@ python -u create_data.py
     --rollout_steps 1200 
     --num_trials 5  
     --data_episodes 1120
-    --save_dir # Path to store dataset
+    --save_dir /your_path/training_7_example_data # Path to store dataset
     --report_interval 2 
     --one_trial_limit 15
     --two_trial_limit 30 
@@ -62,49 +68,23 @@ python -u create_data.py
 ```
 The actual batch scripts used to create the datasets can be found in the data gen folder
 
+Can download the completed dataset via [MetaCALVIN-dataset](https://huggingface.co/datasets/ele-xiaotong13/metaCalvin_dataset)
+
 ## Training
-Scripts assume the current paths to the dataset on the LRZ account!
+Scripts assume the current paths to the dataset on the specific path!
 
 To train the model on e.g. the 7 objs Explore dataset on a single GPU run:
 
-```
-torchrun --nnodes=1 --nproc_per_node=1 --master_port=6043 train_meta_calvin.py  
-    --calvin_dataset #Path to dataset
-    --run_name #Run name 
-    --rgb_pad 10 
-    --gripper_pad 4 
-    --use_gripper 
-    --traj_cons 
-    --fusion_mode post
-    --window_size 12 
-    --cross_attn_every_n_layers 1 
-    --gradient_accumulation_steps 1 
-    --batch_size_calvin 12 
-    --precision fp32
-    --num_epochs 3
-    --decoder_type lstm 
-    --checkpoint_path_foundation #Path to OpenFlamingo or pretrained RoboFlamingo model
-    --warmup_steps 1000 
-    --learning_rate 1e-5 
-    --save_every_iter 1000
-    --dist
-```
+See ./train/launch/README.md
+
+## More training protocol
+
 
 ## Evaluation
-Example script of evaluating a trained model on the 7 objs Explore dataset:
-```
-python -u evaluate.py \
-    --model_checkpoint #Path to checkpoint \
-    --decoder_type lstm \
-    --window_size 12 \
-    --num_objs 7 \
-    --num_trials 5 \
-    --num_resets 15 \
-    --run_name #Run name \
-    --path_to_results #Path to results csv \
-    --eval \
-    --seed 1 \
-```
+Example script of evaluating a trained model on the 7 objs Explore dataset: 
+
+See ./eval/launch/run_E0-E7_C0-C7_resource_rerun.sh
+
 Batch scripts for all our evaluation results can be found under eval
 
 
