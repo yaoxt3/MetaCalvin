@@ -112,3 +112,15 @@ License:  [MIT](https://github.com/RoboFlamingo/RoboFlamingo/blob/main/LICENSE)
 
 ---
 
+## Citation
+
+If you find this work useful, please cite:
+
+```bibtex
+@article{yao2026metacalvin,
+  title   = {MetaCALVIN: Feedback-Conditioned Behavioral Distillation for Long-Horizon Manipulation},
+  author  = {Yao, Xiangtong and Bornemann, Richard and Meng, Yuan and Zhao, Zhihao and Bing, Zhenshan and Knoll, Alois},
+  journal = {IEEE Robotics and Automation Letters},
+  year    = {2026},
+}
+```
