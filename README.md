@@ -3,6 +3,8 @@ This repostory is the implementation of **MetaCALVIN: Feedback-Conditioned Behav
 
 The required dataset and checkpoints are avaliable on [MetaCALVIN-dataset](https://huggingface.co/datasets/ele-xiaotong13/metaCalvin_dataset) and [checkpoints](https://huggingface.co/datasets/ele-xiaotong13/meta-checkpoints)
 
+---
+
 ## Installation
 To create the venv meta-calvin run:
 ```
@@ -44,6 +46,7 @@ model, image_processor, tokenizer = create_model_and_transforms(
     decoder_type='lstm',
 )
 ```
+---
 
 ## Data Creation
 Example script for dataset generation of 7 objs Explore dataset. Assumes the CALVIN repo to be present in Folder and the current paths of the LRZ account
@@ -66,7 +69,7 @@ python -u create_data.py
 ```
 The actual batch scripts used to create the datasets can be found in the data gen folder
 
-
+---
 
 ## Training
 Scripts assume the current paths to the dataset on the specific path!
@@ -75,8 +78,13 @@ To train the model on e.g. the 7 objs Explore dataset on a single GPU run:
 
 See ./train/launch/README.md
 
+---
+
 ## More training protocol
 
+See ./protocol/README.md
+
+---
 
 ## Evaluation
 Example script of evaluating a trained model on the 7 objs Explore dataset: 
@@ -101,3 +109,6 @@ License: [MIT](https://github.com/mlfoundations/open_flamingo/blob/main/LICENSE)
 #### RoboFlamingo
 Original: [https://github.com/RoboFlamingo/RoboFlamingo](https://github.com/RoboFlamingo/RoboFlamingo?tab=readme-ov-file)
 License:  [MIT](https://github.com/RoboFlamingo/RoboFlamingo/blob/main/LICENSE)
+
+---
+
